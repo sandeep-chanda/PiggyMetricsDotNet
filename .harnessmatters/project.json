@@ -1,0 +1,24 @@
+{
+  "schema": "harnessmatters.project/v1",
+  "product": "HarnessMatters",
+  "project_key": "sandeep-chanda-PiggyMetricsDotNet",
+  "workspace_id": "65ab93b3-9f02-466f-8ea9-e20a19a705f8",
+  "workspace": {
+    "id": "65ab93b3-9f02-466f-8ea9-e20a19a705f8",
+    "name": "Pass23 walk default",
+    "label": "Pass23 walk default"
+  },
+  "associations": [],
+  "connector_id": "38d64bfd-1fd7-4867-b67e-56737834bfb3",
+  "repo": {
+    "host": "github.com",
+    "full_name": "sandeep-chanda/PiggyMetricsDotNet",
+    "default_branch": "main"
+  },
+  "elevated_at": "2026-09-26T14:39:46.248918+00:00",
+  "signature_class": "hm",
+  "context_ref": {
+    "pack_id": "",
+    "content_hash": "f6a794597b68ba27"
+  }
+}
