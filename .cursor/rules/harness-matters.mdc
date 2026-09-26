@@ -1,0 +1,7 @@
+---
+description: HarnessMatters repo
+globs:
+alwaysApply: true
+---
+
+This repository is bound to HarnessMatters project `sandeep-chanda-PiggyMetricsDotNet`.
