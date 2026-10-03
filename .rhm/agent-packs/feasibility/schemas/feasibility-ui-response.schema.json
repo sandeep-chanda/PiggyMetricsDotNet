@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hm.agent-packs.feasibility.ui-response",
+  "title": "FeasibilityUiResponse",
+  "description": "Wire JSON for Approved panel Feasibility · {specId}. Persistable to rhm_spec_feasibility_probes + probe_checks.",
+  "type": "object",
+  "required": [
+    "type",
+    "spec_id",
+    "verdict",
+    "note",
+    "checks",
+    "returned_by",
+    "source_package"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "feasibility"
+    },
+    "spec_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "rhm_specs.id (uuid) or display id for mocks"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["ok", "not ok"],
+      "description": "Agent wire completion only (ok | not ok). Host may show awaiting mid-scan; agents must not emit awaiting."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prose under the verdict chip"
+    },
+    "returned_by": {
+      "type": "object",
+      "required": ["agent_label", "region"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_label": {
+          "type": "string",
+          "description": "UI subtitle left of · e.g. Harness Cloud"
+        },
+        "region": {
+          "type": "string",
+          "description": "UI subtitle right of · e.g. us-east-1"
+        },
+        "account_kind": { "type": "string" },
+        "account_display_name": { "type": "string" }
+      }
+    },
+    "recommended_combo_key": {
+      "type": ["string", "null"],
+      "description": "Optional probe hint for Model combination (A/B/C); null if not ok"
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "UI rows · rhm_spec_feasibility_probe_checks",
+      "items": {
+        "type": "object",
+        "required": ["sort_order", "label", "verdict", "detail"],
+        "additionalProperties": false,
+        "properties": {
+          "sort_order": { "type": "integer", "minimum": 0 },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Mono label: repo graph | write scope | criteria mapping | policy …"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["pass", "fail", "warn", "—"]
+          },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "source_package": {
+      "type": "object",
+      "required": ["playbook_ref", "idag_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "playbook_ref": { "type": "string" },
+        "idag_ref": { "type": "string" },
+        "handoff_ref": { "type": "string" },
+        "manifest_ref": { "type": "string" },
+        "quality_gate": { "type": "string" }
+      }
+    }
+  }
+}
