@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PiggyMetrics.Shared/PiggyMetrics.Shared.csproj" />
+    <Project Path="src/PiggyMetrics.Gateway/PiggyMetrics.Gateway.csproj" />
+    <Project Path="src/PiggyMetrics.AuthService/PiggyMetrics.AuthService.csproj" />
+    <Project Path="src/PiggyMetrics.AccountService/PiggyMetrics.AccountService.csproj" />
+    <Project Path="src/PiggyMetrics.StatisticsService/PiggyMetrics.StatisticsService.csproj" />
+    <Project Path="src/PiggyMetrics.NotificationService/PiggyMetrics.NotificationService.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PiggyMetrics.Shared.Tests/PiggyMetrics.Shared.Tests.csproj" />
+  </Folder>
+</Solution>
