@@ -1,0 +1,11 @@
+---
+description: Critic + gates — 10/10; instructional_pin; reference_trace; constraint_risk
+alwaysApply: false
+globs: workspace/**/review/**
+---
+
+# Quality
+
+Critic assumes the plan is wrong. Soft shapes, instructional pins, missed references, unchecked constraint risk → FAIL.
+Quality gate: every scorecard axis == 10; plan_mode_no_target_writes; stack discovered not assumed.
+Handoff must cover exact **artifact** shape (language-agnostic). Run `validate-replit-bar.py`.

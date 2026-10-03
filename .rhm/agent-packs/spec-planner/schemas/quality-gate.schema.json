@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "quality-gate.schema.json",
+  "title": "QualityGate",
+  "type": "object",
+  "required": ["result", "checks"],
+  "properties": {
+    "result": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "checks": {
+      "type": "object",
+      "required": [
+        "spec_coverage", "evidence_coverage", "decision_coverage",
+        "research_coverage", "repo_consistency", "dag_validity",
+        "test_completeness", "migration_safety", "operational_safety",
+        "decision_entropy_critical_zero", "handoff_test", "plan_mode_no_target_writes",
+        "critic_attack_complete", "handoff_simulation_complete",
+        "quality_scorecard_all_10", "zero_soft_shape", "zero_instructional_pins",
+        "reference_trace_ok", "constraint_risk_ok", "stack_discovered_not_assumed",
+        "letter_to_letter_plan", "idag_full_skeleton", "zero_coding_agent_imagination",
+        "execution_depth_validated", "playbook_cursor_plan_parity",
+        "micro_decisions_pinned", "smart_tools_ok"
+      ],
+      "additionalProperties": { "type": "boolean" }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

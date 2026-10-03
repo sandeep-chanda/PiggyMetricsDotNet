@@ -1,0 +1,58 @@
+---
+description: Final package — native Cursor Plan PLAYBOOK via playbook-importer + full-skeleton DAG
+alwaysApply: false
+globs: workspace/**/final/**
+---
+
+# Output package
+
+`final/` must include PLAYBOOK.md, DAG.yaml, HANDOFF.md, PACKAGE_MANIFEST.yaml, **PLAYBOOK.import.json**.
+
+Instruct coding agents: execute **literally**; do not invent; stop if unspecified (planner defect).
+PLAYBOOK and DAG must be in-depth execution specs (`docs/EXECUTION_SPEC.md`), not outlines.
+Confirm target repo was not modified by the planner.
+
+## PLAYBOOK.md (mandatory origin)
+
+See `docs/PLAYBOOK_FORMAT.md`.
+
+**Improve format only — keep STEP depth** (todos ≈ STEPs; body still letter-to-letter). Nothing from the earlier STEP/iDAG package may be dropped when Plan Mode elaborates.
+
+1. SwitchMode → **plan**
+2. Cursor Plan Mode **creates** the plan (native `.plan.md`) with prior STEP work preserved and elaborated to Cursor default plan quality
+3. SwitchMode → **agent**
+4. **Immediately invoke `playbook-importer`** (copies → `final/PLAYBOOK.md` + `PLAYBOOK.import.json`)
+5. Light adjust only; never thin STEPs; never `render-playbook.py`
+
+`validate-playbook` must PASS. Coding agents execute the playbook like an approved Cursor plan.
+
+## Outcome markdown (PLAYBOOK.md / HANDOFF.md)
+
+SoT: `docs/PLAYBOOK_FORMAT.md` (same pin fields as `docs/QUALITY_BAR.md`).
+
+Fill the placeholder — do not dump source as paragraphs:
+
+exact_snippet (`<path>`):
+
+~~~<lang>
+<complete final source>
+~~~
+
+exact_companion (`<path>`):
+
+~~~<lang>
+<complete final companion text>
+~~~
+
+exact_markup — same fence as `exact_snippet`.
+
+exact_commands:
+
+~~~bash
+<proven command>
+~~~
+
+Exact copy: `<string>`.
+Exact aria: `<template>`.
+
+Never ``` fences in those files (RHM wire is one ```json``` block). Inside a `~~~` fence, no line may start with 4 spaces.

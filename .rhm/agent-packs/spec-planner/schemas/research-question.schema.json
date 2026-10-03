@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research-question.schema.json",
+  "title": "ResearchQuestion",
+  "type": "object",
+  "required": ["id", "question", "status", "dimension"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^Q-" },
+    "question": { "type": "string" },
+    "dimension": {
+      "type": "string",
+      "enum": ["spec", "environment", "repository", "cross_repo", "external"]
+    },
+    "status": { "type": "string", "enum": ["open", "in_progress", "answered", "blocked"] },
+    "finding_refs": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

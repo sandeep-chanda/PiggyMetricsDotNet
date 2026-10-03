@@ -1,0 +1,15 @@
+- id: D-001
+  decision: Use IncrementalPipeline for customer ingestion
+  alternatives:
+    - Reuse IncrementalPipeline
+    - Custom watermark loop
+  chosen: Reuse IncrementalPipeline
+  rationale: Matches orders/payments precedent and satisfies REQ-002
+  evidence_refs: [R-001]
+  consequences:
+    - No new watermark framework
+  constraints:
+    - Do not bypass IncrementalPipeline
+  rejected_with_reason:
+    - alt: Custom watermark loop
+      why: Violates repo consistency and REQ-002
