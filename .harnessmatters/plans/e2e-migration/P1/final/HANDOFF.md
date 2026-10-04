@@ -1,6 +1,6 @@
 # Coding agent handoff: PiggyMetricsDotNet P1
 
-Execute `final/PLAYBOOK.md` in the order `final/DAG.yaml` gives. Do not reinterpret the architecture and do not invent artifact text: every file this plan creates is pinned as complete final source in the playbook.
+Execute `final/PLAYBOOK.md` in the order `final/DAG.yaml` gives. Do not reinterpret the architecture and do not invent artifact text: every file this plan creates is pinned as complete final source in `final/PINS.md`.
 
 ## What you are holding
 
