@@ -1,5 +1,6 @@
 task_id: e2e-migration-p1
 plan_key: P1
+note: Node payloads are executable skeletons; the complete letter-to-letter step bodies live in final/PLAYBOOK.md under the matching STEP heading.
 nodes:
 - id: STEP-001
   playbook_ref: STEP-001
@@ -10,17 +11,16 @@ nodes:
   exact_files:
   - Directory.Build.props
   - Directory.Packages.props
-  summary_spec: Create Directory.Build.props and Directory.Packages.props at the repository root. Directory.Build.props fixes net8.0, C# 12, nullable reference types, implicit usings and warnings-as-errors for every project in the tree, mirroring the single java.version 1.8 / UTF-8 contract the source declares once in its parent pom. Directory.Packages.props turns on central package management and fixes the exact NuGet versions that the Shared library and the Shared test project consume, mirroring the source dependencyManagement block.
+  summary_spec: Directory.Build.props and Directory.Packages.props exist at the repository root, fixing net8.0, C# 12, nullable, implicit usings and warnings-as-errors for every project, and pinning the
+    five NuGet versions centrally. No project declares a framework or a package version of its own.
   verification:
     machine:
     - dotnet --version prints 8.0.x
-    - test -f Directory.Build.props && test -f Directory.Packages.props
     human:
     - Directory.Build.props contains exactly one PropertyGroup and no ItemGroup.
-    - Directory.Packages.props lists MongoDB.Driver, Microsoft.Extensions.Http, Microsoft.NET.Test.Sdk, xunit and xunit.runner.visualstudio and nothing else.
   acceptance:
   - Both props files exist at the repository root with the pinned content.
-  - Every project created by later steps resolves net8.0 and its package versions without declaring them.
+  full_detail_in: final/PLAYBOOK.md section STEP-001 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-002
   playbook_ref: STEP-002
@@ -32,16 +32,16 @@ nodes:
   exact_files:
   - src/Shared/PiggyMetrics.Shared.csproj
   - src/Shared/PiggyMetricsTimeouts.cs
-  summary_spec: 'Create src/Shared/PiggyMetrics.Shared.csproj as a net8.0 class library that takes a FrameworkReference on Microsoft.AspNetCore.App (so Shared can host the authentication handler, the health endpoint and the MVC JSON options) and PackageReferences on MongoDB.Driver and Microsoft.Extensions.Http. Add src/Shared/PiggyMetricsTimeouts.cs holding the two timeout constants read off the source configuration: 10000 ms for every service call and 20000 ms at the gateway.'
+  summary_spec: 'src/Shared is a net8.0 class library referencing the ASP.NET Core shared framework plus MongoDB.Driver and Microsoft.Extensions.Http, and PiggyMetricsTimeouts exposes the source''s two
+    timeouts: 10000 ms for a service call and 20000 ms at the gateway. It builds clean on its own.'
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
     human:
     - PiggyMetricsTimeouts.Default reads TimeSpan.FromMilliseconds(10000).
-    - PiggyMetricsTimeouts.Gateway reads TimeSpan.FromMilliseconds(20000).
   acceptance:
   - The Shared library builds clean on its own.
-  - Both source timeouts are available to every later step as named constants.
+  full_detail_in: final/PLAYBOOK.md section STEP-002 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-003
   playbook_ref: STEP-003
@@ -54,18 +54,16 @@ nodes:
   - src/Shared/Security/UserInfoAuthenticationOptions.cs
   - src/Shared/Security/PiggyMetricsClaims.cs
   - src/Shared/Security/UserInfoAuthenticationHandler.cs
-  summary_spec: Add src/Shared/Security/UserInfoAuthenticationOptions.cs (scheme options carrying the user-info URI and the client id), src/Shared/Security/PiggyMetricsClaims.cs (the client_id and scope claim types), and src/Shared/Security/UserInfoAuthenticationHandler.cs. The handler reads the Authorization header, calls the user-info endpoint with that bearer token over a named HttpClient, treats a non-success status, a transport failure, and a body carrying an error member as a refusal, resolves the principal name by walking the source's PRINCIPAL_KEYS order (user, username, userid, user_id, login, id, name), and projects oauth2Request.clientId and every oauth2Request.scope entry into claims. Challenge answers 401 with WWW-Authenticate Bearer; forbid answers 403.
+  summary_spec: Shared carries a bearer authentication handler that resolves a token by calling the configured user-info endpoint, refuses on a non-success status, a transport failure or an error member,
+    resolves the principal name through the source's PRINCIPAL_KEYS order, and projects oauth2Request.clientId and every scope entry into claims.
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
-    - dotnet test tests/PiggyMetrics.Shared.Tests/PiggyMetrics.Shared.Tests.csproj --filter UserInfoAuthenticationHandlerTest (after STEP-013) reports 8 passing tests
     human:
     - The handler sends GET to the configured user-info URI with an Authorization header of Bearer plus the inbound token.
-    - A 401 from the user-info endpoint produces a failed authenticate result with a null principal.
   acceptance:
   - A token the source's authorization server issued is accepted and carries the principal name the source would report.
-  - A token the source's authorization server did not issue is refused.
-  - A service token carries a scope claim with the value server.
+  full_detail_in: final/PLAYBOOK.md section STEP-003 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-004
   playbook_ref: STEP-004
@@ -77,15 +75,16 @@ nodes:
   exact_files:
   - src/Shared/Security/PiggyMetricsPolicies.cs
   - src/Shared/Security/SecurityServiceCollectionExtensions.cs
-  summary_spec: Add src/Shared/Security/PiggyMetricsPolicies.cs naming the two policies and the server scope value, and src/Shared/Security/SecurityServiceCollectionExtensions.cs exposing AddPiggyMetricsResourceServer. The extension reads security:oauth2:resource:user-info-uri and security:oauth2:client:clientId from configuration, registers the named user-info HttpClient with the source's 10000 ms timeout, registers the UserInfoBearer scheme backed by the handler, and registers the user policy as an authenticated-principal requirement and the server policy as an authenticated principal carrying a scope claim whose value is server.
+  summary_spec: 'AddPiggyMetricsResourceServer registers the UserInfoBearer scheme with the user-info client at the source''s timeout, and registers the two policies the downstream plans name: user (authenticated)
+    and server (authenticated plus a scope claim of server).'
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
     human:
     - PiggyMetricsPolicies.User is the literal user and PiggyMetricsPolicies.Server is the literal server.
-    - AddPiggyMetricsResourceServer registers exactly one authentication scheme, named UserInfoBearer.
   acceptance:
   - A service calling AddPiggyMetricsResourceServer can guard an endpoint with the user policy or the server policy without declaring either itself.
+  full_detail_in: final/PLAYBOOK.md section STEP-004 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-005
   playbook_ref: STEP-005
@@ -97,16 +96,16 @@ nodes:
   exact_files:
   - src/Shared/Persistence/DecimalAsStringSerializer.cs
   - src/Shared/Persistence/MongoConventions.cs
-  summary_spec: 'Add src/Shared/Persistence/DecimalAsStringSerializer.cs and src/Shared/Persistence/MongoConventions.cs. The serializer writes System.Decimal as a BSON string under the invariant culture, matching Spring Data MongoDB''s BigDecimalToStringConverter, and reads String, Double, Int32, Int64 and Decimal128 so it also reads the numeric amounts the source dump seeds. MongoConventions registers one convention pack once per process: camel-case element names (Java field names are camel case and C# properties are Pascal case), ignore-extra-elements, ignore-if-null (Spring Data skips null properties on write), and enum-as-string.'
+  summary_spec: Shared registers one Mongo convention pack (camel-case elements, ignore extra elements, ignore nulls, enums as names) and a decimal serializer that writes a BSON string and reads string,
+    double, int32, int64 and decimal128, so documents the Java services wrote stay readable and writable.
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
-    - dotnet test tests/PiggyMetrics.Shared.Tests/PiggyMetrics.Shared.Tests.csproj --filter MongoConventionsTest (after STEP-013) reports 6 passing tests
     human:
     - Serializing a sample item writes amount as a BSON string.
-    - Deserializing a document whose amount is the number 1300 yields the decimal 1300.
   acceptance:
   - A document the Java account service wrote round-trips through the .NET types without losing a field or changing a BSON type.
+  full_detail_in: final/PLAYBOOK.md section STEP-005 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-006
   playbook_ref: STEP-006
@@ -118,15 +117,16 @@ nodes:
   exact_files:
   - src/Shared/Persistence/MongoStoreOptions.cs
   - src/Shared/Persistence/PersistenceServiceCollectionExtensions.cs
-  summary_spec: Add src/Shared/Persistence/MongoStoreOptions.cs binding the source's spring:data:mongodb section (host, port, database, username, password) and src/Shared/Persistence/PersistenceServiceCollectionExtensions.cs exposing AddPiggyMetricsStore. The extension registers the convention pack, binds the options, and registers a singleton IMongoClient and a singleton IMongoDatabase resolved from the configured database name, authenticating against that same database when a username is set.
+  summary_spec: AddPiggyMetricsStore binds the source's spring:data:mongodb keys and registers a singleton IMongoClient and IMongoDatabase, authenticating against the configured database the way mongodb/init.sh
+    grants readWrite on piggymetrics.
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
     human:
     - MongoStoreOptions.SectionName is the literal spring:data:mongodb.
-    - BuildSettings creates a credential only when a username is configured.
   acceptance:
   - A service configured with the source's mongodb keys resolves an IMongoDatabase pointing at the same database the Java service used.
+  full_detail_in: final/PLAYBOOK.md section STEP-006 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-007
   playbook_ref: STEP-007
@@ -139,17 +139,16 @@ nodes:
   - src/Shared/Http/OAuth2ClientOptions.cs
   - src/Shared/Http/ClientCredentialsTokenCache.cs
   - src/Shared/Http/ClientCredentialsHandler.cs
-  summary_spec: Add src/Shared/Http/OAuth2ClientOptions.cs binding the source's security:oauth2:client section, src/Shared/Http/ClientCredentialsTokenCache.cs, and src/Shared/Http/ClientCredentialsHandler.cs. The cache posts the client-credentials grant to the configured access-token URI with HTTP Basic client authentication and a form carrying grant_type and scope, holds the issued token until the instant expires_in names, and serializes concurrent callers through a mutex so a burst of requests triggers one token request. The delegating handler attaches that token as a bearer header on every outbound call.
+  summary_spec: Shared carries a client-credentials token cache that posts the grant with HTTP Basic client authentication, reuses the token until its expiry instant with no skew, collapses concurrent callers
+    into one token request, and a delegating handler that attaches the token as a bearer header.
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
-    - dotnet test tests/PiggyMetrics.Shared.Tests/PiggyMetrics.Shared.Tests.csproj --filter ClientCredentialsTokenCacheTest (after STEP-013) reports 3 passing tests
     human:
     - Three consecutive token requests against a cache holding a live token produce one outbound call.
-    - The outbound token request carries an Authorization header whose scheme is Basic.
   acceptance:
   - A service edge calling a guarded endpoint carries a bearer token the resource servers accept.
-  - The token is requested once per expiry window rather than once per outbound call.
+  full_detail_in: final/PLAYBOOK.md section STEP-007 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-008
   playbook_ref: STEP-008
@@ -160,15 +159,16 @@ nodes:
   critical_path: true
   exact_files:
   - src/Shared/Http/HttpServiceCollectionExtensions.cs
-  summary_spec: 'Add src/Shared/Http/HttpServiceCollectionExtensions.cs exposing three registrations: AddPiggyMetricsClientCredentials binds the client options, registers the token HttpClient at the source''s 10000 ms timeout and registers the cache as a singleton and the handler as transient; AddPiggyMetricsClient registers a typed client at the source''s timeout with the client-credentials handler attached, for an edge that calls a guarded PiggyMetrics service; AddPiggyMetricsAnonymousClient registers a typed client at the same timeout without the handler, for the rates edge, which the source declares with a url and no token.'
+  summary_spec: 'Shared exposes three registrations: the client-credentials infrastructure, a token-bearing typed client, and an anonymous typed client for the rates edge. Every client carries the source''s
+    10000 ms timeout and an absolute base address.'
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
     human:
     - Both client registrations set Timeout to PiggyMetricsTimeouts.Default.
-    - Only AddPiggyMetricsClient calls AddHttpMessageHandler.
   acceptance:
   - A downstream plan registers its edge with one call and inherits the source's timeout and token behaviour.
+  full_detail_in: final/PLAYBOOK.md section STEP-008 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-009
   playbook_ref: STEP-009
@@ -180,17 +180,16 @@ nodes:
   exact_files:
   - src/Shared/Json/EpochMillisecondsDateTimeConverter.cs
   - src/Shared/Json/PiggyMetricsJson.cs
-  summary_spec: Add src/Shared/Json/EpochMillisecondsDateTimeConverter.cs and src/Shared/Json/PiggyMetricsJson.cs. The converter writes a DateTime as the epoch millisecond count Jackson emits for java.util.Date and reads a number, a numeric string, or an ISO text. PiggyMetricsJson builds the serializer options once (camel-case property names, unknown members skipped, nulls written, enums as names, numbers readable from strings) and exposes AddPiggyMetricsJson to apply the same options to the MVC pipeline.
+  summary_spec: 'Shared exposes JSON options that reproduce the source''s Jackson shape: camel-case names, enums as names including dictionary keys, unknown members skipped, nulls written, and dates written
+    and read as epoch milliseconds.'
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
-    - dotnet test tests/PiggyMetrics.Shared.Tests/PiggyMetrics.Shared.Tests.csproj --filter PiggyMetricsJsonTest (after STEP-013) reports 5 passing tests
     human:
     - Serializing a sample account whose lastSeen is 2018-06-15T10:30:00Z writes the member lastSeen as 1529058600000.
-    - Serializing a sample account whose currency is RUB writes the member currency as the string RUB.
   acceptance:
   - A response body produced by a ported controller matches the source's body for the same document.
-  - A request body the source accepts is accepted unchanged, including one carrying members the type does not declare.
+  full_detail_in: final/PLAYBOOK.md section STEP-009 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-010
   playbook_ref: STEP-010
@@ -201,16 +200,16 @@ nodes:
   critical_path: true
   exact_files:
   - src/Shared/Health/HealthEndpoints.cs
-  summary_spec: Add src/Shared/Health/HealthEndpoints.cs exposing AddPiggyMetricsHealth and MapPiggyMetricsHealth. The endpoint answers at /actuator/health relative to the service's context path, writes the actuator body shape (a single status member reading UP or DOWN, with no detail, matching Boot 2.0's default of hiding details), answers 200 for healthy and degraded and 503 for unhealthy, and stays anonymous because the source permits /actuator/** without authentication.
+  summary_spec: Shared exposes an actuator health endpoint at /actuator/health under the service context path, anonymous, writing a single status member of UP or DOWN with 200 for healthy or degraded and
+    503 for unhealthy.
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
-    - dotnet test tests/PiggyMetrics.Shared.Tests/PiggyMetrics.Shared.Tests.csproj --filter HealthEndpointsTest (after STEP-013) reports 2 passing tests
     human:
     - A healthy service answers the actuator health path with the body {"status":"UP"} and status 200.
-    - An unhealthy service answers with the body {"status":"DOWN"} and status 503.
   acceptance:
   - A container healthcheck written against the source's actuator path succeeds against the ported service.
+  full_detail_in: final/PLAYBOOK.md section STEP-010 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-011
   playbook_ref: STEP-011
@@ -224,17 +223,16 @@ nodes:
   exact_files:
   - src/Shared/Configuration/ServerOptions.cs
   - src/Shared/PiggyMetricsServiceDefaults.cs
-  summary_spec: Add src/Shared/Configuration/ServerOptions.cs naming the two source configuration keys and src/Shared/PiggyMetricsServiceDefaults.cs exposing AddPiggyMetricsDefaults and UsePiggyMetricsDefaults. The builder extension binds the listener to server:port, adds controllers with the ported JSON options, adds the resource server and adds health. The application extension enforces server:servlet:context-path by answering 404 to any request outside that prefix before rebasing the pipeline onto it, then wires routing, authentication, authorization, the health endpoint and the controllers.
+  summary_spec: AddPiggyMetricsDefaults and UsePiggyMetricsDefaults bind the listener to server:port, wire controllers with the ported JSON options, the resource server and health, and enforce server:servlet:context-path
+    by answering 404 outside the prefix before rebasing onto it.
   verification:
     machine:
     - dotnet build src/Shared/PiggyMetrics.Shared.csproj -warnaserror exits 0 with 0 warnings
-    - curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/accounts/actuator/health prints 200
-    - curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/actuator/health prints 404
     human:
     - Starting the account service and requesting /accounts/actuator/health returns {"status":"UP"}.
-    - Requesting /actuator/health on the same service returns 404.
   acceptance:
   - Each ported service listens on the source's port and serves only under the source's context path.
+  full_detail_in: final/PLAYBOOK.md section STEP-011 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-012
   playbook_ref: STEP-012
@@ -259,17 +257,16 @@ nodes:
   - src/NotificationService/PiggyMetrics.NotificationService.csproj
   - src/NotificationService/Program.cs
   - src/NotificationService/appsettings.json
-  summary_spec: Create five web projects under src, each with a csproj referencing Shared, a Program.cs that calls the Shared builder and application extensions and exposes a public partial Program for the later test hosts, and an appsettings.json carrying that service's port, context path and the shared user-info URI. Gateway takes port 4000 with an empty context path; AuthService 5000 and /uaa; AccountService 6000 and /accounts; StatisticsService 7000 and /statistics; NotificationService 8000 and /notifications.
+  summary_spec: Five web projects exist under src on the source's ports and context paths (Gateway 4000 root, AuthService 5000 /uaa, AccountService 6000 /accounts, StatisticsService 7000 /statistics, NotificationService
+    8000 /notifications), each referencing Shared and calling the Shared defaults, each exposing a public partial Program.
   verification:
     machine:
     - each of the five dotnet build commands exits 0 with 0 warnings
-    - test $(ls src | wc -l) -eq 6
     human:
     - src holds exactly Shared, Gateway, AuthService, AccountService, StatisticsService and NotificationService.
-    - AuthService/appsettings.json reads port 5000 and context-path /uaa.
   acceptance:
   - Every runtime service project named by P1.T1 exists and builds.
-  - Each service starts on the source's port and answers its prefixed actuator health path.
+  full_detail_in: final/PLAYBOOK.md section STEP-012 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-013
   playbook_ref: STEP-013
@@ -289,15 +286,16 @@ nodes:
   - tests/PiggyMetrics.Shared.Tests/MongoConventionsTest.cs
   - tests/PiggyMetrics.Shared.Tests/PiggyMetricsJsonTest.cs
   - tests/PiggyMetrics.Shared.Tests/HealthEndpointsTest.cs
-  summary_spec: 'Create tests/PiggyMetrics.Shared.Tests with a csproj referencing Shared and the pinned test packages, three stubs (an HttpMessageHandler recording requests and bodies, an IHttpClientFactory over it, and an IOptionsMonitor), a fixture module holding the exact user-info bodies the source''s authorization server returns for a browser user token and a service token plus the source''s error body, and four test classes: eight bearer handler tests, three token cache tests, six store convention tests, five JSON tests and two health body tests.'
+  summary_spec: tests/PiggyMetrics.Shared.Tests holds three stubs, the source's user-info fixture bodies and five test classes totalling 24 tests that prove the handler accepts and refuses correctly and
+    lock the document shape, the token cache behaviour, the wire shape and the health body. The suite reaches no network.
   verification:
     machine:
     - dotnet test tests/PiggyMetrics.Shared.Tests/PiggyMetrics.Shared.Tests.csproj reports Passed with 24 tests and 0 failures
     human:
     - ShouldAuthenticateTokenIssuedByAuthorizationServer and ShouldRejectTokenTheAuthorizationServerDidNotIssue both appear in the run.
-    - No test takes longer than a second, confirming nothing reaches the network.
   acceptance:
   - 'P1''s done-when clause is demonstrated: the handler accepts a token the source''s authorization server issued and refuses one it did not.'
+  full_detail_in: final/PLAYBOOK.md section STEP-013 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 - id: STEP-014
   playbook_ref: STEP-014
@@ -309,18 +307,16 @@ nodes:
   critical_path: true
   exact_files:
   - PiggyMetrics.sln
-  summary_spec: Generate PiggyMetrics.sln at the repository root with the SDK and add the six projects plus the test project to it in the order Shared, Gateway, AuthService, AccountService, StatisticsService, NotificationService, PiggyMetrics.Shared.Tests. Then build the whole solution with warnings as errors and run the whole test suite, which is the gate the downstream plans P2 and P3 build on.
+  summary_spec: PiggyMetrics.sln exists at the repository root carrying all seven projects, the whole solution builds with zero warnings under warnings-as-errors, and the whole suite reports 24 passing
+    tests.
   verification:
     machine:
     - dotnet build PiggyMetrics.sln -warnaserror exits 0 and prints 0 Warning(s) and 0 Error(s)
-    - dotnet test PiggyMetrics.sln prints Passed with 24 tests
     human:
     - dotnet sln PiggyMetrics.sln list shows seven projects.
-    - The build output names PiggyMetrics.Shared and the five service assemblies.
   acceptance:
   - Every project builds, which is the first half of P1's done-when clause.
-  - The Shared suite is green, which is the second half.
-  - P2 and P3 can start against a solution that already carries their project and the Shared contracts they depend on.
+  full_detail_in: final/PLAYBOOK.md section STEP-014 (complete invariants, edge cases, do-not, verification and acceptance)
   no_imagination: true
 edges:
 - from: STEP-001
@@ -364,13 +360,13 @@ parallel_groups:
   - STEP-007
   - STEP-009
   - STEP-010
-  note: Security, persistence, http, json and health are independent Shared concerns; they share only PiggyMetricsTimeouts.
+  note: Independent Shared concerns; they share only PiggyMetricsTimeouts.
 - id: PG-2
   after: STEP-011
   nodes:
   - STEP-012
   - STEP-013
-  note: The service projects and the Shared test project both depend on the service defaults and on nothing from each other.
+  note: Service projects and the Shared test project depend on the service defaults and on nothing from each other.
 critical_path:
 - STEP-001
 - STEP-002

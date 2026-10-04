@@ -4,7 +4,8 @@ Execute `final/PLAYBOOK.md` in the order `final/DAG.yaml` gives. Do not reinterp
 
 ## What you are holding
 
-- `final/PLAYBOOK.md` - 14 todos, one per STEP, each with its complete final file text, commands, invariants, edge cases, do-not list and verification.
+- `final/PLAYBOOK.md` - 14 todos, one per STEP, each with its why, source anchors, change, invariants, do-not list, commands, verification, acceptance and rollback.
+- `final/PINS.md` - the complete final body of all 47 files this plan creates, grouped by STEP id. A step's playbook section plus its PINS.md section are the whole step.
 - `final/DAG.yaml` - the same 14 ids with dependency edges, per-node files, verification and acceptance.
 - `planning/implementation-plan.yaml` - the machine source of truth for the STEPs.
 - `architecture/decisions.yaml` - 13 decision records; `architecture/migration-plan.yaml` - the compatibility contracts this port must not break.

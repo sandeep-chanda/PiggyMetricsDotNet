@@ -5,49 +5,35 @@ plan_title: Solution skeleton and Shared
 target_repo: sandeep-chanda/PiggyMetricsDotNet
 migration_source: github.com/sqshq/piggymetrics @ 6bb2cf9ddbca980b664d3edbb6ff775d75369278
 files:
-- architecture/decisions.yaml
-- architecture/migration-plan.yaml
-- architecture/options.yaml
+- final/PLAYBOOK.md
+- final/PINS.md
 - final/DAG.yaml
 - final/HANDOFF.md
+- final/PACKAGE_MANIFEST.yaml
 - final/PLAYBOOK.import.json
-- final/PLAYBOOK.md
-- intake/connection.meta.json
-- intake/job.yaml
-- intake/raw-spec.md
-- planning/implementation-dag.yaml
 - planning/implementation-plan.yaml
-- planning/risks.yaml
+- planning/implementation-dag.yaml
 - planning/test-plan.yaml
-- research/cross-repo.yaml
-- research/environment.yaml
-- research/external.yaml
-- research/findings/R-001.yaml
-- research/findings/R-002.yaml
-- research/findings/R-003.yaml
-- research/findings/R-004.yaml
-- research/findings/R-005.yaml
-- research/findings/R-006.yaml
-- research/findings/R-007.yaml
-- research/findings/R-008.yaml
-- research/findings/R-009.yaml
-- research/findings/R-010.yaml
-- research/findings/R-011.yaml
-- research/findings/R-012.yaml
-- research/findings/R-013.yaml
-- research/findings/R-014.yaml
-- research/questions.yaml
-- research/repository.yaml
-- review/critic-attack-log.yaml
-- review/critic.yaml
-- review/decision-entropy.yaml
-- review/gaps.yaml
-- review/handoff-simulation.yaml
-- review/quality-gate.yaml
-- review/quality-scorecard.yaml
-- spec/assumptions.yaml
+- planning/risks.yaml
+- architecture/decisions.yaml
+- architecture/options.yaml
+- architecture/migration-plan.yaml
 - spec/normalized.yaml
+- spec/assumptions.yaml
 - spec/open-questions.yaml
+- research/environment.yaml
+- research/repository.yaml
+- research/cross-repo.yaml
+- research/external.yaml
+- research/questions.yaml
+- research/findings/R-001.yaml ... R-014.yaml
+- review/critic.yaml
+- review/critic-attack-log.yaml
+- review/gaps.yaml
+- review/decision-entropy.yaml
+- review/handoff-simulation.yaml
+- review/quality-scorecard.yaml
+- review/quality-gate.yaml
 - state.yaml
 quality_gate_result: PASS
 plan_mode: true
@@ -83,3 +69,8 @@ harness_note: Produced by the Spec-Planner pack under the HM harness rather than
   playbook was authored in native Cursor plan shape (frontmatter name, overview, todos, isProject plus a situation-shaped
   body) and imported with the pack's own scripts/import-cursor-plan.py, which produced final/PLAYBOOK.import.json. scripts/render-playbook.py
   was not used.
+file_count: 44
+committed_to: .harnessmatters/plans/e2e-migration/P1/
+outcome_files_note: final/PINS.md is a companion outcome file carrying the complete final body of all 47 files plan P1 creates,
+  grouped by STEP id. final/PLAYBOOK.md carries every step's why, source anchors, change, invariants, do-not list, commands,
+  verification, acceptance and rollback, and names the PINS.md section for each step's exact text.
