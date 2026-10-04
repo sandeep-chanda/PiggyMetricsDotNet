@@ -1,0 +1,21 @@
+id: STEP-000
+title: ""
+depends_on: []
+requirement_refs: []
+decision_refs: []
+evidence_refs: []
+files:
+  - ""
+existing_implementation: ""
+change: ""
+do_not:
+  - ""
+compatibility: ""
+error_handling: ""
+tests:
+  - ""
+acceptance:
+  - ""
+rollback: ""
+why: ""
+expected_result: ""

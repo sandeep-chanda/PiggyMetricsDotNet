@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gaps.schema.json",
+  "title": "Gaps",
+  "type": "object",
+  "required": ["gaps"],
+  "properties": {
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "route"],
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "route": {
+            "type": "string",
+            "enum": ["research", "architecture", "planning", "ask_user"]
+          },
+          "question_refs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

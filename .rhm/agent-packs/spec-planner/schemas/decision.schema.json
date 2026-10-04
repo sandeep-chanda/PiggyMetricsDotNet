@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "decision.schema.json",
+  "title": "Decision",
+  "type": "object",
+  "required": ["id", "decision", "alternatives", "chosen", "rationale", "evidence_refs"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^D-" },
+    "decision": { "type": "string" },
+    "alternatives": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+    "chosen": { "type": "string" },
+    "rationale": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "consequences": { "type": "array", "items": { "type": "string" } },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "rejected_with_reason": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["alt", "why"],
+        "properties": {
+          "alt": { "type": "string" },
+          "why": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

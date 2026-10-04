@@ -1,0 +1,17 @@
+---
+description: Research-first — five dimensions; discover stack; never assume
+alwaysApply: true
+---
+
+# Research
+
+Follow `docs/RESEARCH.md` and `docs/QUALITY_BAR.md`.
+
+- Question-driven loop; Findings with evidence + confidence.
+- Five dimensions: spec, environment, repository, cross-repo, external.
+- **Discover** language/tooling from the target tree — never assume a stack.
+- When identifiers change: whole-repo **reference trace**.
+- When copy/affordance size changes: **constraint/layout** finding in this stack’s terms.
+- Web priority: official docs → org patterns → maintainer → proven prod → quality community.
+- Precedents in the target repo become **constraints**.
+- Write only under `workspace/<task-id>/research/`.

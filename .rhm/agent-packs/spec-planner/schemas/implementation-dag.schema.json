@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "implementation-dag.schema.json",
+  "title": "ImplementationDAG",
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "playbook_ref",
+          "title",
+          "summary_spec",
+          "exact_files",
+          "verification",
+          "acceptance",
+          "no_imagination"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "playbook_ref": { "type": "string" },
+          "title": { "type": "string", "minLength": 8 },
+          "depends_on": { "type": "array", "items": { "type": "string" } },
+          "critical_path": { "type": "boolean" },
+          "exact_files": { "type": "array", "items": { "type": "string" } },
+          "summary_spec": { "type": "string", "minLength": 40 },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "machine": { "type": "array", "items": { "type": "string" } },
+              "human": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "acceptance": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "no_imagination": { "const": true }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        }
+      }
+    },
+    "parallel_groups": {
+      "type": "array",
+      "items": { "type": "array", "items": { "type": "string" } }
+    }
+  },
+  "additionalProperties": true
+}
