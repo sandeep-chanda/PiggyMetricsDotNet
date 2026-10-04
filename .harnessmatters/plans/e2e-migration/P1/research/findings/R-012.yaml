@@ -1,0 +1,16 @@
+id: R-012
+dimension: repository
+claim: The source exposes actuator health at /actuator/health, anonymously, and the container orchestration
+  depends on it.
+evidence:
+- config/Dockerfile:7 HEALTHCHECK CMD curl -f http://localhost:8888/actuator/health
+- 'docker-compose.yml waits on condition: service_healthy at lines 30, 45, 64, 89, 115, 140, 163 and 178'
+- config/src/main/java/com/piggymetrics/config/SecurityConfig.java:18 permits antMatchers(/actuator/**)
+- account-service/pom.xml, statistics-service/pom.xml and notification-service/pom.xml declare spring-boot-starter-actuator
+implication: The ported health endpoint lives at /actuator/health under the service context path, is anonymous,
+  and writes the Boot 2.0 default body of a single status member.
+confidence: high
+plan_steps:
+- STEP-010
+- STEP-011
+source_root: /tmp/source-piggymetrics

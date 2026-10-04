@@ -1,0 +1,14 @@
+provider: github
+resolved_from: intake/connection.meta.json and .harnessmatters/context/binding.json
+org: sandeep-chanda
+target_repo: sandeep-chanda/PiggyMetricsDotNet
+sibling_discovery: discovery_unavailable
+sibling_discovery_note: 'No GitHub MCP or org-listing tool is available in this harness, so sibling repositories
+  under sandeep-chanda were not enumerated. This did not block the plan: the migration source is named
+  by the spec''s own source anchors and was cloned read-only over plain HTTPS.'
+source_repo:
+  slug: sqshq/piggymetrics
+  commit: 6bb2cf9ddbca980b664d3edbb6ff775d75369278
+  access: read-only clone at /tmp/source-piggymetrics
+  role: migration source of truth
+writes_to_other_repos: none

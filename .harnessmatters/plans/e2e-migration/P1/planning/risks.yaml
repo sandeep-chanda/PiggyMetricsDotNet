@@ -1,0 +1,43 @@
+risks:
+- id: RISK-001
+  risk: Decimals written as Decimal128 would make documents unreadable to a still-running Java service.
+  severity: high
+  likelihood: high without the pin
+  mitigation: STEP-005 pins a serializer that writes a BSON string, and MongoConventionsTest asserts the BSON type rather than only the value.
+  owner_step: STEP-005
+- id: RISK-002
+  risk: A JWT-based bearer handler would accept or refuse a different set of tokens than the source.
+  severity: high
+  likelihood: high without the decision
+  mitigation: Decision D-004 and STEP-003 pin user-info resolution; the do_not list forbids adding a JWT bearer package.
+  owner_step: STEP-003
+- id: RISK-003
+  risk: UsePathBase alone would serve the unprefixed path, so a later contract replay could pass against a URL the source answers 404 for.
+  severity: medium
+  likelihood: high without the guard
+  mitigation: STEP-011 pins a prefix guard; the behaviour was measured before and after on a running service.
+  owner_step: STEP-011
+- id: RISK-004
+  risk: A date serialized as ISO text would break every client that reads the source's epoch-millisecond dates.
+  severity: medium
+  likelihood: high under ASP.NET Core defaults
+  mitigation: STEP-009 pins the converter and PiggyMetricsJsonTest asserts the exact number for a known instant.
+  owner_step: STEP-009
+- id: RISK-005
+  risk: The build host lacks the .NET 8 SDK or libicu, so the pinned commands fail for an environmental reason.
+  severity: low
+  likelihood: medium
+  mitigation: STEP-001 verifies dotnet --version first, and both STEP-001 and STEP-014 carry the NETSDK1188 libicu edge case.
+  owner_step: STEP-001
+- id: RISK-006
+  risk: A token cache with no expiry skew can present a token that expires in flight.
+  severity: low
+  likelihood: low
+  mitigation: Accepted deliberately in Decision D-009 to match the source; the caller's existing failure path covers it, and a later plan adding fallbacks inherits that path.
+  owner_step: STEP-007
+- id: RISK-007
+  risk: A later plan quietly relaxes a Shared contract to make its own tests pass.
+  severity: medium
+  likelihood: medium
+  mitigation: STEP-013's suite locks the document shape, the wire shape, the token behaviour and the health body, and its do_not list forbids weakening an assertion.
+  owner_step: STEP-013

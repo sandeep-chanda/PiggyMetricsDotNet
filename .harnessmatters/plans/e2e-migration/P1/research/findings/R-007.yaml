@@ -1,0 +1,17 @@
+id: R-007
+dimension: repository
+claim: Spring Data MongoDB 2.0.x stores BigDecimal as a BSON string and skips null properties on write,
+  and the seeded dump holds numeric amounts.
+evidence:
+- spring-data-mongodb 2.0.x MongoConverters.java:72-73 registers BigDecimalToStringConverter and StringToBigDecimalConverter
+- spring-data-mongodb 2.0.x MappingMongoConverter.java:501-505 skips a null property instead of writing
+  it
+- mongodb/dump/account-service-dump.js seeds amount 1300 and interest 3.32 as JSON numbers
+- account-service/.../domain/Item.java:13 and Saving.java:8-12 declare BigDecimal members
+implication: The .NET decimal serializer must write a string and read String, Double, Int32, Int64 and
+  Decimal128, and the conventions must omit nulls. Writing Decimal128 would make the collection unreadable
+  to a still-running Java service.
+confidence: high
+plan_steps:
+- STEP-005
+source_root: /tmp/source-piggymetrics

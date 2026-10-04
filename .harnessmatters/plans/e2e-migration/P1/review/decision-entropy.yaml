@@ -1,0 +1,32 @@
+critical_unresolved_count: 0
+items:
+- id: E-001
+  decision: Target framework
+  severity: normal
+  action: ALLOW
+  resolution: net8.0 pinned by D-002 and proven by a green build.
+- id: E-002
+  decision: Token validation strategy
+  severity: critical
+  action: RESOLVED
+  resolution: User-info resolution pinned by D-004 and proven by 8 handler tests.
+- id: E-003
+  decision: Decimal storage representation
+  severity: critical
+  action: RESOLVED
+  resolution: BSON string pinned by D-006 from the Spring Data converter registration; asserted on BSON type in MongoConventionsTest.
+- id: E-004
+  decision: Context path semantics
+  severity: critical
+  action: RESOLVED
+  resolution: Prefix guard pinned by D-012 and measured on a running service.
+- id: E-005
+  decision: Token cache expiry skew
+  severity: normal
+  action: ALLOW
+  resolution: No skew, matching the source; trade-off recorded in D-009 and RISK-006.
+- id: E-006
+  decision: Service discovery
+  severity: normal
+  action: ALLOW
+  resolution: Not ported; D-003 records the reasoning and the revisit trigger.

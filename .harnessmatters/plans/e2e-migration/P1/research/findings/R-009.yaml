@@ -1,0 +1,18 @@
+id: R-009
+dimension: repository
+claim: The source declares one Feign client per edge, and the rates edge is the only anonymous one.
+evidence:
+- account-service/.../client/StatisticsServiceClient.java:10 @FeignClient(name = statistics-service, fallback
+  = StatisticsServiceClientFallback.class)
+- account-service/.../client/AuthServiceClient.java:9 @FeignClient(name = auth-service)
+- notification-service/.../client/AccountServiceClient.java:9 @FeignClient(name = account-service)
+- statistics-service/.../client/ExchangeRatesClient.java:10 @FeignClient(url = ${rates.url}, name = rates-client,
+  fallback = ExchangeRatesClientFallback.class)
+- notification-service ResourceServerConfig.java registers the interceptor; statistics-service ResourceServerConfig.java
+  does not
+implication: Shared exposes a token-bearing typed client registration and an anonymous one; the rates
+  edge uses the anonymous one.
+confidence: high
+plan_steps:
+- STEP-008
+source_root: /tmp/source-piggymetrics

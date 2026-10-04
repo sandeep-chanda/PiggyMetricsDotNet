@@ -1,0 +1,45 @@
+discovered_from: target tree and the read-only source clone, not assumed
+target_repo:
+  path: /tmp/hm-claude-code-16m21j7w
+  contents_before_plan:
+  - README.md
+  - AGENTS.md
+  - .harnessmatters/
+  - .cursor/
+  - .rhm/
+  stack: none yet; README.md reads 'PiggyMetricsDotNet / Sample .NET Migration'
+  build_files_present: none
+  ci_present: none
+  evidence: ls of the repository root; no csproj, sln, package.json, pom.xml or workflow file exists
+source_system:
+  path: /tmp/source-piggymetrics (read-only clone of github.com/sqshq/piggymetrics @ 6bb2cf9)
+  stack: Java 8, Maven, Spring Boot 2.0.3.RELEASE, Spring Cloud Finchley.RELEASE
+  evidence: pom.xml parent spring-boot-starter-parent 2.0.3.RELEASE; properties java.version 1.8, spring-cloud.version
+    Finchley.RELEASE
+  modules:
+  - config
+  - monitoring
+  - registry
+  - gateway
+  - auth-service
+  - account-service
+  - statistics-service
+  - notification-service
+  - turbine-stream-service
+  stores: 'one MongoDB per service: auth-mongodb, account-mongodb, statistics-mongodb, notification-mongodb,
+    all database piggymetrics'
+planner_sandbox:
+  dotnet_sdk: 8.0.425, installed to /tmp/dotnet-sdk for verification only; not present on the target repo
+    host by default
+  icu: libicu76 installed; without it the SDK aborts with NETSDK1188
+  docker: absent
+  note: Every exact_commands entry in this package was executed in this sandbox against a reference implementation
+    at /tmp/proto/PiggyMetricsDotNet; none was executed against the target repository.
+verified_commands:
+- dotnet --version -> 8.0.425
+- dotnet new sln --name PiggyMetrics -> created
+- dotnet sln PiggyMetrics.sln add <7 projects> -> added
+- dotnet build PiggyMetrics.sln -warnaserror -> Build succeeded, 0 Warning(s), 0 Error(s)
+- dotnet test PiggyMetrics.sln -> Passed, 24 tests, 0 failed
+- curl http://127.0.0.1:6000/accounts/actuator/health -> 200 {"status":"UP"}
+- curl http://127.0.0.1:6000/actuator/health -> 404

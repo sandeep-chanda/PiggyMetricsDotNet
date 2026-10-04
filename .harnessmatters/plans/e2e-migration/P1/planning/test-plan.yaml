@@ -1,0 +1,80 @@
+suite: tests/PiggyMetrics.Shared.Tests
+command: dotnet test PiggyMetrics.sln
+expected: Passed, 24 tests, 0 failed, 0 skipped
+no_external_dependencies: The suite reaches no network and no Mongo instance; every outbound call goes through a recording stub handler.
+cases:
+- class: UserInfoAuthenticationHandlerTest
+  count: 8
+  covers:
+  - REQ-P1.T2
+  - REQ-P1-DONE
+  steps:
+  - STEP-003
+  - STEP-004
+  names:
+  - ShouldAuthenticateTokenIssuedByAuthorizationServer
+  - ShouldCarryServerScopeForServiceToken
+  - ShouldSendBearerTokenToUserInfoEndpoint
+  - ShouldRejectTokenTheAuthorizationServerDidNotIssue
+  - ShouldRejectTokenWhenUserInfoReturnsError
+  - ShouldNotAuthenticateWithoutAuthorizationHeader
+  - ShouldChallengeWith401
+  - ShouldForbidWith403
+- class: ClientCredentialsTokenCacheTest
+  count: 3
+  covers:
+  - REQ-P1.T4
+  steps:
+  - STEP-007
+  names:
+  - ShouldRequestTokenWithBasicAuthAndClientCredentialsGrant
+  - ShouldReuseCachedTokenUntilItExpires
+  - ShouldRequestNewTokenOnceTheCachedOneExpired
+- class: MongoConventionsTest
+  count: 6
+  covers:
+  - REQ-P1.T3
+  steps:
+  - STEP-005
+  names:
+  - ShouldWriteSourceFieldNamesInCamelCase
+  - ShouldWriteDecimalAsStringLikeSpringDataMongo
+  - ShouldWriteEnumAsName
+  - ShouldOmitNullFieldsLikeSpringDataMongo
+  - ShouldReadNumericAmountSeededByTheSourceDump
+  - ShouldReadDecimalAmountStoredAsString
+- class: PiggyMetricsJsonTest
+  count: 5
+  covers:
+  - REQ-P1.T5
+  steps:
+  - STEP-009
+  names:
+  - ShouldWriteEnumAsName
+  - ShouldWriteDateAsEpochMilliseconds
+  - ShouldReadDateFromEpochMilliseconds
+  - ShouldIgnoreUnknownFields
+  - ShouldKeepNullFieldsLikeJackson
+- class: HealthEndpointsTest
+  count: 2
+  covers:
+  - REQ-P1.T5
+  steps:
+  - STEP-010
+  names:
+  - ShouldWriteActuatorUpBody
+  - ShouldWriteActuatorDownBody
+host_level_checks:
+- check: curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/accounts/actuator/health
+  expected: '200'
+  step: STEP-011
+- check: curl -s http://127.0.0.1:6000/accounts/actuator/health
+  expected: '{"status":"UP"}'
+  step: STEP-010
+- check: curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/actuator/health
+  expected: '404'
+  step: STEP-011
+- check: curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/accountsfoo/actuator/health
+  expected: '404'
+  step: STEP-011
+downstream_coverage_note: Contract replays C1 to C3 and C8 to C10 and the 25 ported Java test classes belong to plans P2 and P3. P1 proves only its own done-when clause and the shared contracts those plans rely on.

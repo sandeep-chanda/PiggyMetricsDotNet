@@ -1,0 +1,24 @@
+target_repo_precedents: none; the target repository holds README.md and AGENTS.md only, so no local convention
+  constrains the port
+source_repo_precedents:
+- Build contract declared once in the parent pom and inherited (R-001)
+- One shared security implementation copied into each resource server package (R-004)
+- Configuration centralised per service in config/src/main/resources/shared (R-013)
+- One Feign interface per edge with an explicit fallback where the source wants degradation (R-009)
+constraint: The ported services read databases the Java services wrote, so BSON shape and JSON shape are
+  compatibility contracts (R-006, R-007, R-010, R-011)
+findings:
+- R-001
+- R-002
+- R-003
+- R-004
+- R-005
+- R-006
+- R-007
+- R-008
+- R-009
+- R-010
+- R-011
+- R-012
+- R-013
+- R-014

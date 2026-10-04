@@ -1,0 +1,19 @@
+id: R-006
+dimension: repository
+claim: Every document id and field name on disk is the Java field name; ids are stored as _id.
+evidence:
+- account-service/.../domain/Account.java:13-17 @Document(collection = accounts) with @Id on name
+- auth-service/.../domain/User.java:11-15 @Document(collection = users) with @Id on username
+- statistics-service/.../domain/timeseries/DataPoint.java:15-19 @Document(collection = datapoints) with
+  @Id on a DataPointId
+- notification-service/.../domain/Recipient.java:12-16 @Document(collection = recipients) with @Id on
+  accountName
+- mongodb/dump/account-service-dump.js seeds _id demo with camel-case members lastSeen, note, expenses,
+  incomes, saving
+implication: The driver needs a camel-case element convention plus per-entity id mapping; collection and
+  database names are unchanged.
+confidence: high
+plan_steps:
+- STEP-005
+- STEP-006
+source_root: /tmp/source-piggymetrics

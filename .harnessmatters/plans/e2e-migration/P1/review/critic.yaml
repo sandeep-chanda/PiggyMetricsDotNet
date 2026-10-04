@@ -1,0 +1,11 @@
+task_id: e2e-migration-p1
+result: PASS
+cycles_used: 1
+max_cycles: 3
+vectors_checked: 16
+issues_open: []
+notes:
+- Three defects were found during planning and root-caused rather than soft-patched; see issues_found_and_fixed_during_planning
+  in critic-attack-log.yaml.
+- 'The package is unusual in that its pins are not proposals: the reference implementation was built and tested, so the plan''s
+  claims about build and test outcomes are observations rather than predictions.'

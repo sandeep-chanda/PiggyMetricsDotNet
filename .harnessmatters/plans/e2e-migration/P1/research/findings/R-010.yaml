@@ -1,0 +1,15 @@
+id: R-010
+dimension: external
+claim: No source service overrides Jackson's date handling, so java.util.Date is written as epoch milliseconds.
+evidence:
+- grep for JsonFormat, SimpleDateFormat, date-format, dateFormat and ObjectMapper across the source finds
+  only test-side ObjectMapper instances
+- config/src/main/resources/shared holds no spring.jackson key in any file
+- Jackson's WRITE_DATES_AS_TIMESTAMPS defaults to enabled and Spring's Jackson2ObjectMapperBuilder does
+  not disable it
+implication: The ported converter writes an epoch millisecond number for DateTime and reads a number,
+  a numeric string or ISO text.
+confidence: high
+plan_steps:
+- STEP-009
+source_root: /tmp/source-piggymetrics

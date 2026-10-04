@@ -1,0 +1,16 @@
+open_questions:
+- id: Q-OPEN-001
+  question: The spec text supplied to this run is truncated inside P3.T12; do later plans add a P1 todo?
+  status: resolved_by_scope
+  resolution: The plan key under plan is P1, whose five todos are complete in the supplied text. The truncation
+    falls inside P3, which is out of scope here and depends on P1.
+- id: Q-OPEN-002
+  question: Should the port keep Eureka service discovery and the Spring Cloud Config server?
+  status: resolved_by_decision
+  resolution: 'Decision D-003: no P1 todo names them; service addresses come from configuration, the way
+    the source''s gateway already addresses auth-service by URL. Revisit if a later plan names discovery.'
+- id: Q-OPEN-003
+  question: Should the client-credentials cache refresh early, before the token expires?
+  status: resolved_by_decision
+  resolution: 'Decision D-009: the source refreshes exactly at expiry, so the port does too. Recorded
+    as a deliberate fidelity choice with its operational trade-off written down.'

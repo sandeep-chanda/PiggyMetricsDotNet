@@ -1,0 +1,70 @@
+spec_id: e2e-migration
+title: E2E migration
+plan_key: P1
+plan_title: Solution skeleton and Shared
+target_repo: sandeep-chanda/PiggyMetricsDotNet
+source_system: /tmp/source-piggymetrics (read-only clone of github.com/sqshq/piggymetrics @ 6bb2cf9)
+scope_statement: 'Plan P1 only: the .NET solution skeleton every downstream service plan builds on, plus
+  the Shared library. Plans P2 and later (AuthService, StatisticsService, AccountService, NotificationService,
+  Gateway) are out of scope for this package and depend on P1.'
+requirements:
+- id: REQ-P1.T1
+  todo: P1.T1
+  text: A .NET solution with one project per runtime service (Gateway, AuthService, AccountService, StatisticsService,
+    NotificationService) plus Shared.
+  source_anchor: account-service/pom.xml; pom.xml:41-51
+  plan_steps:
+  - STEP-001
+  - STEP-002
+  - STEP-012
+  - STEP-014
+- id: REQ-P1.T2
+  todo: P1.T2
+  text: Shared carries a bearer handler that validates a token the way the resource servers do, by calling
+    http://auth-service:5000/uaa/users/current.
+  source_anchor: account-service/src/main/java/com/piggymetrics/account/config/ResourceServerConfig.java
+  plan_steps:
+  - STEP-003
+  - STEP-004
+  - STEP-013
+- id: REQ-P1.T3
+  todo: P1.T3
+  text: Shared carries store conventions and serializers for the documents' field names and ids, against
+    the same databases and collections.
+  source_anchor: account-service/src/main/java/com/piggymetrics/account/repository/AccountRepository.java
+  plan_steps:
+  - STEP-005
+  - STEP-006
+- id: REQ-P1.T4
+  todo: P1.T4
+  text: Shared carries a typed-client base with the source's timeout and a client-credentials token cache,
+    one HTTP client per edge.
+  source_anchor: config/src/main/resources/shared/application.yml; account-service ResourceServerConfig.java:40-43
+  plan_steps:
+  - STEP-007
+  - STEP-008
+- id: REQ-P1.T5
+  todo: P1.T5
+  text: 'Shared carries health checks and JSON options: enums as names, unknown fields ignored, the source''s
+    date format.'
+  source_anchor: config/Dockerfile:7; Jackson defaults with no spring.jackson override in config/src/main/resources/shared
+  plan_steps:
+  - STEP-009
+  - STEP-010
+  - STEP-011
+- id: REQ-P1-DONE
+  todo: P1
+  text: Every project builds; Shared's bearer handler accepts a token the source's authorization server
+    issued and refuses one it did not.
+  source_anchor: spec plan P1 done-when clause
+  plan_steps:
+  - STEP-013
+  - STEP-014
+out_of_scope:
+- Plans P2 and later; this package plans P1 only.
+- 'config, registry, monitoring and turbine-stream-service: P1.T1 names five runtime services and none
+  of these is one.'
+- 'Service discovery (Eureka), the config server, RabbitMQ bus and Hystrix dashboard streams: no P1 todo
+  names them.'
+- 'Domain types, repositories, controllers and ported tests for any service: those belong to P2 and later
+  plans.'

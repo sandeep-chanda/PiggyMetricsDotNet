@@ -1,0 +1,19 @@
+id: R-008
+dimension: repository
+claim: The source obtains a service token through a client-credentials grant with HTTP Basic client authentication
+  and holds it in an OAuth2 client context until it expires.
+evidence:
+- account-service/.../config/ResourceServerConfig.java:40-43 builds OAuth2FeignRequestInterceptor(new
+  DefaultOAuth2ClientContext(), clientCredentialsResourceDetails())
+- config/src/main/resources/shared/account-service.yml security.oauth2.client clientId account-service,
+  accessTokenUri http://auth-service:5000/uaa/oauth/token, grant-type client_credentials, scope server
+- auth-service/.../config/OAuth2AuthorizationConfig.java:44-70 registers browser, account-service, statistics-service
+  and notification-service clients
+- Spring's ClientCredentialsResourceDetails defaults its authentication scheme to header
+implication: The ported cache posts the grant with a Basic authorization header and reuses the token until
+  expiry with no skew.
+confidence: high
+plan_steps:
+- STEP-007
+- STEP-008
+source_root: /tmp/source-piggymetrics

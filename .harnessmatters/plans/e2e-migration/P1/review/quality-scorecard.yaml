@@ -1,0 +1,28 @@
+axes:
+  decision_completeness: 10
+  repo_grounded: 10
+  spec_challenged: 10
+  adversarial_critic: 10
+  handoff_simulation: 10
+  pinned_micro_decisions: 10
+  smart_tools_mcp: 10
+  agentic_convergence: 10
+  plan_mode_no_target_writes: 10
+  any_repo_stack_discovered: 10
+evidence:
+  decision_completeness: 13 decision records, each with options considered and one selected shape; zero critical entropy items.
+  repo_grounded: 14 findings with file-and-line evidence from the source clone; two framework claims verified against library
+    source rather than memory.
+  spec_challenged: The spec's truncation, its silence on the .NET version, and its silence on discovery were each surfaced
+    and resolved rather than papered over.
+  adversarial_critic: All 16 required vectors checked with a named attack each; three real defects found and root-caused during
+    planning.
+  handoff_simulation: 12 questions, zero critical unanswered, every answer traced to a pin.
+  pinned_micro_decisions: 47 files pinned as complete final text, verified byte for byte against the reference implementation.
+  smart_tools_mcp: The source was cloned over plain HTTPS rather than demanding an SCM MCP; library behaviour was fetched
+    from primary source; the absent sibling-discovery tool is recorded as discovery_unavailable rather than invented around.
+  agentic_convergence: FIX-001, FIX-002 and FIX-003 were each root-caused and re-verified, not soft-patched.
+  plan_mode_no_target_writes: The target working tree holds only the planner workspace under .rhm/agent-packs/spec-planner/workspace;
+    no file under the product tree was created or modified.
+  any_repo_stack_discovered: The target tree was inspected and found empty of build files; the source stack was read from
+    its own manifests; the .NET SDK was installed and exercised rather than assumed present.

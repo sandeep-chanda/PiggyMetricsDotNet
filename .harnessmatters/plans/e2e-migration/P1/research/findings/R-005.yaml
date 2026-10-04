@@ -1,0 +1,20 @@
+id: R-005
+dimension: repository
+claim: CustomUserInfoTokenServices resolves the principal by walking a fixed key order and refuses on
+  an error member or any transport failure.
+evidence:
+- CustomUserInfoTokenServices.java:36-37 PRINCIPAL_KEYS = { user, username, userid, user_id, login, id,
+  name }
+- CustomUserInfoTokenServices.java:67-75 loadAuthentication throws InvalidTokenException when the map
+  contains error
+- CustomUserInfoTokenServices.java:88-94 getPrincipal returns the literal unknown when no key matches
+- CustomUserInfoTokenServices.java:96-106 getRequest reads oauth2Request.clientId and oauth2Request.scope
+- CustomUserInfoTokenServices.java:112-137 getMap converts any exception into singletonMap(error, Could
+  not fetch user details)
+implication: The ported handler reproduces the key order, the unknown fallback, the error-member refusal
+  and the failure-is-refusal rule exactly.
+confidence: high
+plan_steps:
+- STEP-003
+- STEP-013
+source_root: /tmp/source-piggymetrics

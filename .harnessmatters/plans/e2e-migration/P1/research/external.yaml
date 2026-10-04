@@ -1,0 +1,28 @@
+items:
+- id: X-001
+  question: What does Spring Data MongoDB 2.0.x do with BigDecimal and null properties?
+  answer: BigDecimal is converted to a String by BigDecimalToStringConverter and null properties are skipped
+    on write.
+  evidence: Fetched spring-data-mongodb 2.0.x MongoConverters.java (lines 72-73, 145-157) and MappingMongoConverter.java
+    (lines 501-505) from the project's source.
+  used_by:
+  - R-007
+  - STEP-005
+- id: X-002
+  question: Does ASP.NET Core UsePathBase reject requests outside the base path?
+  answer: No. UsePathBase strips the prefix when present and otherwise leaves the request untouched, so
+    the unprefixed path still routes. Spring's server.servlet.context-path answers 404.
+  evidence: 'Measured on the reference implementation: before the prefix guard, /actuator/health answered
+    200; after it, 404, while /accounts/actuator/health stayed 200.'
+  used_by:
+  - R-013
+  - STEP-011
+- id: X-003
+  question: What is Spring Boot 2.0's default actuator health body?
+  answer: A single status member reading UP or DOWN; details are hidden unless management.endpoint.health.show-details
+    is set, and no source yml sets it.
+  evidence: config/Dockerfile probes /actuator/health with curl -f, which only needs a success status;
+    no show-details key exists in config/src/main/resources/shared.
+  used_by:
+  - R-012
+  - STEP-010

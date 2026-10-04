@@ -1,0 +1,24 @@
+assumptions:
+- id: A-001
+  text: The migration source is github.com/sqshq/piggymetrics; the spec cites its paths (account-service/pom.xml,
+    auth-service/.../UserController.java:L22) and the target repo README names it a .NET migration.
+  validated: true
+  evidence: Cloned read-only to /tmp/source-piggymetrics; every cited path resolves.
+- id: A-002
+  text: The runtime target is .NET 8 (the current LTS at planning time), since the spec says .NET without
+    a version.
+  validated: true
+  evidence: Recorded as Decision D-002; proven by building and testing the whole reference solution on
+    SDK 8.0.425.
+- id: A-003
+  text: 'The source''s timeout for a service edge is the Hystrix default execution timeout, 10000 ms,
+    because every Feign call in the source runs inside a Hystrix command (feign.hystrix.enabled: true).'
+  validated: true
+  evidence: 'config/src/main/resources/shared/application.yml hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds:
+    10000; account-service.yml feign.hystrix.enabled: true.'
+- id: A-004
+  text: The source's date format on the wire is epoch milliseconds, because no service overrides Jackson's
+    date handling.
+  validated: true
+  evidence: No spring.jackson key exists in config/src/main/resources/shared; Jackson's WRITE_DATES_AS_TIMESTAMPS
+    default applies to the java.util.Date members.

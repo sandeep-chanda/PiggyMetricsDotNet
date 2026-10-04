@@ -1,0 +1,46 @@
+migration_triggered: true
+kind: platform port, Java/Spring Boot to .NET
+source:
+  repo: sqshq/piggymetrics
+  commit: 6bb2cf9ddbca980b664d3edbb6ff775d75369278
+target:
+  repo: sandeep-chanda/PiggyMetricsDotNet
+  plan_key: P1
+strategy: 'Strangler-compatible port. The .NET services read and write the same MongoDB databases and
+  collections and speak the same HTTP shapes as the Java services, so a ported service can replace its
+  Java counterpart one at a time behind the gateway. P1 builds the shared substrate that makes that possible:
+  one token-validation implementation, one document-mapping contract, one edge-client contract, one JSON
+  contract and one health contract.'
+compatibility_contracts:
+- contract: BSON document shape
+  rule: Camel-case members, _id for the identifier, decimals as strings, enums as names, nulls omitted
+  enforced_by:
+  - STEP-005
+  - STEP-006
+  regression_risk: A Java service still reading the collection fails to parse a Decimal128 amount
+- contract: Wire JSON shape
+  rule: Camel-case members, enum names, epoch-millisecond dates, unknown members ignored, nulls written
+  enforced_by:
+  - STEP-009
+  regression_risk: A browser client or a sibling service misreads a date or an enum
+- contract: Token validation
+  rule: Resolve every bearer token against http://auth-service:5000/uaa/users/current
+  enforced_by:
+  - STEP-003
+  - STEP-004
+  regression_risk: A forged token is accepted, or a valid token is refused during a mixed-fleet window
+- contract: Service address shape
+  rule: Source port and context path per service, 404 outside the context path
+  enforced_by:
+  - STEP-011
+  - STEP-012
+  regression_risk: The gateway's prefix routes stop resolving
+- contract: Health probe
+  rule: /actuator/health under the context path, single status member, 200 or 503
+  enforced_by:
+  - STEP-010
+  regression_risk: docker-compose service_healthy gates never open
+no_data_migration: No collection is renamed, reshaped or copied; P1.T3 requires the same databases and
+  collections.
+cutover_note: 'P1 ships no runtime behaviour change on its own: it adds projects and a library. The first
+  user-visible cutover happens in a later plan.'

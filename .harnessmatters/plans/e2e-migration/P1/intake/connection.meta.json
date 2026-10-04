@@ -1,0 +1,10 @@
+{
+  "provider": "github",
+  "org": "sandeep-chanda",
+  "target_repo": "sandeep-chanda/PiggyMetricsDotNet",
+  "default_branch": "main",
+  "connector_id": "38d64bfd-1fd7-4867-b67e-56737834bfb3",
+  "sibling_repos": ["sqshq/piggymetrics"],
+  "auth_refs": {"github": "harnessmatters-connector:38d64bfd-1fd7-4867-b67e-56737834bfb3"},
+  "notes": "Migration source is the upstream Java/Spring PiggyMetrics repo; cloned read-only to /tmp/source-piggymetrics for evidence."
+}

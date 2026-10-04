@@ -1,0 +1,16 @@
+id: R-004
+dimension: repository
+claim: Every source resource server resolves a token by calling the authorization server's user-info endpoint;
+  it never parses the token.
+evidence:
+- account-service/.../config/ResourceServerConfig.java:50-53 builds CustomUserInfoTokenServices(sso.getUserInfoUri(),
+  sso.getClientId())
+- statistics-service/.../config/ResourceServerConfig.java:20-23 does the same
+- 'config/src/main/resources/shared/application.yml security.oauth2.resource.user-info-uri: http://auth-service:5000/uaa/users/current'
+implication: The .NET port needs a custom AuthenticationHandler, not JwtBearer. A JWT validator would
+  accept or refuse different tokens than the source.
+confidence: high
+plan_steps:
+- STEP-003
+- STEP-004
+source_root: /tmp/source-piggymetrics

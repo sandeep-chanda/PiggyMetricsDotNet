@@ -1,0 +1,17 @@
+id: R-013
+dimension: repository
+claim: Each service declares a context path and a port, and Spring answers 404 outside that context path.
+evidence:
+- config/src/main/resources/shared/auth-service.yml server.servlet.context-path /uaa, server.port 5000
+- account-service.yml /accounts and 6000; statistics-service.yml /statistics and 7000; notification-service.yml
+  /notifications and 8000; gateway.yml port 4000 with no context path
+- gateway/Dockerfile EXPOSE 4000, auth-service/Dockerfile EXPOSE 5000, account-service/Dockerfile EXPOSE
+  6000, notification-service/Dockerfile EXPOSE 8000
+implication: 'ASP.NET Core''s UsePathBase alone still serves the unprefixed path, which Spring does not.
+  The port adds a prefix guard that answers 404 outside the context path. Proven: /accounts/actuator/health
+  200, /actuator/health 404, /accountsfoo/actuator/health 404.'
+confidence: high
+plan_steps:
+- STEP-011
+- STEP-012
+source_root: /tmp/source-piggymetrics

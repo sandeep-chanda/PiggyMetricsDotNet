@@ -1,0 +1,53 @@
+questions:
+- id: Q-001
+  question: How does the source resource server decide a token is valid?
+  dimension: repository
+  status: answered
+  finding_refs:
+  - R-004
+  - R-005
+- id: Q-002
+  question: What exactly is on disk in the Mongo collections the ported services must read?
+  dimension: repository
+  status: answered
+  finding_refs:
+  - R-006
+  - R-007
+- id: Q-003
+  question: What timeout does a source service edge actually use?
+  dimension: repository
+  status: answered
+  finding_refs:
+  - R-003
+- id: Q-004
+  question: What JSON shape does the source put on the wire for dates, enums and unknown members?
+  dimension: external
+  status: answered
+  finding_refs:
+  - R-010
+  - R-011
+- id: Q-005
+  question: Where does health live and who depends on it?
+  dimension: repository
+  status: answered
+  finding_refs:
+  - R-012
+- id: Q-006
+  question: Does ASP.NET Core's UsePathBase reproduce Spring's context-path semantics?
+  dimension: external
+  status: answered
+  finding_refs:
+  - R-013
+- id: Q-007
+  question: Which modules are in scope for P1.T1?
+  dimension: repository
+  status: answered
+  finding_refs:
+  - R-002
+- id: Q-008
+  question: How does a source service obtain and hold its own service token?
+  dimension: repository
+  status: answered
+  finding_refs:
+  - R-008
+  - R-009

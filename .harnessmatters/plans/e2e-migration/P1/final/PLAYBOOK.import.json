@@ -1,0 +1,7 @@
+{
+  "source_plan": "/tmp/cursor-plans/PiggyMetricsDotNet-P1_e2emigrationp1.plan.md",
+  "dest": "/tmp/hm-claude-code-16m21j7w/.rhm/agent-packs/spec-planner/workspace/e2e-migration-p1/final/PLAYBOOK.md",
+  "imported_at_unix": 1791104502.8080292,
+  "bytes": 111145,
+  "importer": "scripts/import-cursor-plan.py"
+}

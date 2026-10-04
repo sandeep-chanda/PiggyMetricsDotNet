@@ -1,0 +1,9 @@
+task_id: e2e-migration-p1
+phase: approved
+loops: 1
+blockers: []
+approved: true
+plan_mode: true
+target_repo_writes_allowed: false
+plan_key: P1
+quality_gate: PASS

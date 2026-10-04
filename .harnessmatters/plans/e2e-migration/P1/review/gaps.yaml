@@ -1,0 +1,18 @@
+gaps: []
+resolved:
+- id: GAP-001
+  gap: Spring Data MongoDB's BigDecimal and null-write behaviour was initially an assumption.
+  root_cause_research: Fetched spring-data-mongodb 2.0.x MongoConverters.java and MappingMongoConverter.java and read the
+    registered converters and the write loop.
+  closed_by:
+  - R-007
+  - D-006
+  - STEP-005
+- id: GAP-002
+  gap: Whether ASP.NET Core reproduces Spring's context-path 404 was an assumption.
+  root_cause_research: Measured a running service before and after adding a prefix guard.
+  closed_by:
+  - R-013
+  - X-002
+  - D-012
+  - STEP-011

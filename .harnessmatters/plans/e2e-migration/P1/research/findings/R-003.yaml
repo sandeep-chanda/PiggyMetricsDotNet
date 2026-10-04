@@ -1,0 +1,17 @@
+id: R-003
+dimension: repository
+claim: The source's service timeout is the Hystrix default of 10000 ms; the gateway raises it to 20000
+  ms.
+evidence:
+- 'config/src/main/resources/shared/application.yml hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds:
+  10000'
+- config/src/main/resources/shared/gateway.yml repeats the key at 20000 and sets ribbon.ReadTimeout, ribbon.ConnectTimeout,
+  zuul.host.connect-timeout-millis and zuul.host.socket-timeout-millis to 20000
+- 'config/src/main/resources/shared/account-service.yml feign.hystrix.enabled: true'
+implication: PiggyMetricsTimeouts.Default is 10000 ms and PiggyMetricsTimeouts.Gateway is 20000 ms; both
+  are the source's numbers.
+confidence: high
+plan_steps:
+- STEP-002
+- STEP-008
+source_root: /tmp/source-piggymetrics

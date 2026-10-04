@@ -1,0 +1,13 @@
+id: R-001
+dimension: repository
+claim: The source pins its build contract once in the parent pom and each module inherits it.
+evidence:
+- pom.xml:1-50 declares java.version 1.8, UTF-8 and a dependencyManagement import of spring-cloud-dependencies
+- account-service/pom.xml declares only artifactId, packaging and its own dependencies
+implication: Port the pattern with Directory.Build.props plus Directory.Packages.props at the repository
+  root, not per project.
+confidence: high
+plan_steps:
+- STEP-001
+- STEP-014
+source_root: /tmp/source-piggymetrics

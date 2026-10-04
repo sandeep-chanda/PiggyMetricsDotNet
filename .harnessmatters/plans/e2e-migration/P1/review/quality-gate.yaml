@@ -1,0 +1,30 @@
+result: PASS
+checks:
+  spec_coverage: true
+  evidence_coverage: true
+  decision_coverage: true
+  research_coverage: true
+  repo_consistency: true
+  dag_validity: true
+  test_completeness: true
+  migration_safety: true
+  operational_safety: true
+  decision_entropy_critical_zero: true
+  handoff_test: true
+  plan_mode_no_target_writes: true
+  execution_depth_validated: true
+  playbook_importer_completed: true
+validators:
+- 'validate-dag.py: PASS'
+- 'validate-execution-depth.py: PASS'
+- 'validate-replit-bar.py: PASS'
+- 'validate-entropy.py: PASS'
+- 'validate-playbook.py: PASS'
+- 'check-handoff.py: PASS'
+notes:
+- All five P1 todos map to at least one step; the P1 done-when clause maps to STEP-013 and STEP-014.
+- 47 pinned files were verified byte for byte against a reference implementation that builds with 0 warnings and tests green
+  at 24 of 24.
+- 'Harness note: this run is the HM harness, not Cursor, so SwitchMode is unavailable. The playbook was authored in native
+  Cursor plan shape and imported with the pack''s own scripts/import-cursor-plan.py, which produced final/PLAYBOOK.import.json.
+  render-playbook.py was not used.'

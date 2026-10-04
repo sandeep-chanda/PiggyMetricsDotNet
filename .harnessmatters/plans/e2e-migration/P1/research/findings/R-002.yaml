@@ -1,0 +1,15 @@
+id: R-002
+dimension: repository
+claim: P1.T1 names five runtime services; the source has nine Maven modules.
+evidence:
+- pom.xml:41-51 lists config, monitoring, registry, gateway, auth-service, account-service, statistics-service,
+  notification-service, turbine-stream-service
+- The P1.T1 todo text names Gateway, AuthService, AccountService, StatisticsService, NotificationService
+  and Shared
+implication: config, registry, monitoring and turbine-stream-service are out of scope and must not be
+  invented into the solution.
+confidence: high
+plan_steps:
+- STEP-012
+- STEP-014
+source_root: /tmp/source-piggymetrics

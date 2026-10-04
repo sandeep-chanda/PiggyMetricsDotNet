@@ -1,0 +1,46 @@
+result: PASS
+simulated_agent: a cold implementer holding only final/PLAYBOOK.md, final/DAG.yaml, the raw spec and read access to the target
+  repository
+critical_unanswered: []
+qa:
+- q: What exact text goes in each file I create?
+  a: Every step carries an exact_snippet giving the complete final source for each file it names, as a labelled fence in the
+    playbook and as a literal block in planning/implementation-plan.yaml. 47 files are pinned this way; none is described
+    rather than given.
+- q: What .NET version and which package versions do I use?
+  a: net8.0, pinned once in Directory.Build.props, and five package versions pinned once in Directory.Packages.props, both
+    given as final artifact text in STEP-001.
+- q: How does the bearer handler decide a token is valid?
+  a: It calls the configured user-info URI with the inbound bearer token. A non-success status, a transport failure, or a
+    body carrying an error member is a refusal. The principal name comes from the first present member of user, username,
+    userid, user_id, login, id, name. The complete final snippet is pinned in STEP-003.
+- q: Which claim does the server policy check, and why that one?
+  a: 'A scope claim whose value is server, because the source guards those endpoints with #oauth2.hasScope(''server''). Pinned
+    in STEP-004 with the source anchors in its existing_implementation field.'
+- q: How do I store a decimal so the existing documents stay readable?
+  a: As a BSON string, reading string, double, int32, int64 and decimal128. The complete final serializer is pinned in STEP-005,
+    and the reason is Spring Data MongoDB 2.0.x BigDecimalToStringConverter, cited with file and line.
+- q: What timeout do I put on an edge client?
+  a: 10000 ms, the source's Hystrix default from application.yml, exposed as PiggyMetricsTimeouts.Default in STEP-002 and
+    applied by the registrations pinned in STEP-008.
+- q: Does the rates client carry a service token?
+  a: No. The source declares it with a url and never attaches the interceptor to it, so it uses AddPiggyMetricsAnonymousClient.
+    STEP-008 pins both registrations and its do_not forbids attaching the handler to the rates client.
+- q: How should a date appear on the wire?
+  a: As an epoch millisecond number, because no source service overrides Jackson's date handling. The converter is pinned
+    in STEP-009 and PiggyMetricsJsonTest asserts 1529058600000 for 2018-06-15T10:30:00Z.
+- q: What exactly should the health endpoint return?
+  a: The body {"status":"UP"} with status 200 when healthy and {"status":"DOWN"} with status 503 when unhealthy, at /actuator/health
+    under the service context path, anonymously. Pinned in STEP-010 and asserted by HealthEndpointsTest.
+- q: Which projects do I create, on which ports, under which paths?
+  a: 'Five: Gateway 4000 with an empty context path, AuthService 5000 /uaa, AccountService 6000 /accounts, StatisticsService
+    7000 /statistics, NotificationService 8000 /notifications. All fifteen files are pinned in STEP-012.'
+- q: Do I hand-write the solution file?
+  a: No. STEP-014 pins dotnet new sln and dotnet sln add with the exact project list, because the solution file's project
+    identifiers are generated values.
+- q: How do I know I am done?
+  a: dotnet build PiggyMetrics.sln -warnaserror reports 0 warnings and 0 errors, and dotnet test PiggyMetrics.sln reports
+    24 passing tests. Both are STEP-014's machine verification and both are P1's done-when clause.
+artifact_shape_covered: true
+notes: Every answer is drawn from a pinned exact_snippet, exact_commands entry or decision record in the package; none required
+  a design judgement.

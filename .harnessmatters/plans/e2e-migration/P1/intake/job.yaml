@@ -1,0 +1,13 @@
+task_id: e2e-migration-p1
+spec_path: /tmp/spec-in/e2e-migration.md
+target_repo_path: /tmp/hm-claude-code-16m21j7w
+connection_meta_path: /tmp/hm-claude-code-16m21j7w/.rhm/agent-packs/spec-planner/workspace/e2e-migration-p1/intake/connection.meta.json
+related_repos:
+  - /tmp/source-piggymetrics
+mode: plan_only
+constraints:
+  - Cursor Plan Mode only
+  - No writes to target repository
+  - Writes only under this workspace
+  - Use connection.meta sibling_repos + auth refs (docs/CONNECTION.md)
+created_at: 2026-10-04T08:42:15.772047+00:00

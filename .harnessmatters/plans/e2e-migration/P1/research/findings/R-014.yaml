@@ -1,0 +1,16 @@
+id: R-014
+dimension: repository
+claim: The gateway routes by path prefix to fixed service addresses, which is why the port does not need
+  service discovery for P1.
+evidence:
+- config/src/main/resources/shared/gateway.yml routes auth-service path /uaa/** to url http://auth-service:5000
+  with stripPrefix false
+- gateway.yml routes account-service /accounts/**, statistics-service /statistics/** and notification-service
+  /notifications/** by serviceId with stripPrefix false
+- docker-compose.yml maps the gateway container port 4000 to host port 80
+implication: Ported services keep the source's context paths so the same prefix routing works; a later
+  gateway plan can address services by configured URL.
+confidence: high
+plan_steps:
+- STEP-012
+source_root: /tmp/source-piggymetrics

@@ -1,0 +1,99 @@
+option_sets:
+- id: OPT-001
+  decision_ref: D-001
+  question: One solution with a root-level build contract, generated solution file
+  options_considered:
+  - Per-project TargetFramework and package versions
+  - Root Directory.Build.props plus Directory.Packages.props
+  - A hand-written solution file with pinned project identifiers
+  selected: Root Directory.Build.props plus Directory.Packages.props, with PiggyMetrics.sln generated
+    by the SDK
+- id: OPT-002
+  decision_ref: D-002
+  question: Target framework
+  options_considered:
+  - net6.0
+  - net8.0
+  - net9.0
+  selected: net8.0
+- id: OPT-003
+  decision_ref: D-003
+  question: Service discovery and the config server
+  options_considered:
+  - Port Eureka and Spring Cloud Config
+  - Address services by configured URL
+  selected: Address services by configured URL; do not port Eureka or the config server
+- id: OPT-004
+  decision_ref: D-004
+  question: Token validation strategy
+  options_considered:
+  - Validate the token locally as a JWT
+  - Resolve the token against the authorization server's user-info endpoint
+  selected: Resolve the token against the authorization server's user-info endpoint
+- id: OPT-005
+  decision_ref: D-005
+  question: Authorization shape
+  options_considered:
+  - Role claims
+  - Two named policies, user and server, with server keyed on the scope claim
+  selected: Two named policies, user and server, with server keyed on the scope claim
+- id: OPT-006
+  decision_ref: D-006
+  question: Decimal storage
+  options_considered:
+  - BSON Decimal128
+  - BSON string, reading string and numeric
+  selected: BSON string on write; string, double, int32, int64 and decimal128 on read
+- id: OPT-007
+  decision_ref: D-007
+  question: Document mapping conventions
+  options_considered:
+  - Attribute every entity individually
+  - One registered convention pack in Shared
+  selected: 'One registered convention pack in Shared: camel-case elements, ignore extra elements, ignore
+    nulls, enums as names'
+- id: OPT-008
+  decision_ref: D-008
+  question: Edge client shape
+  options_considered:
+  - One shared HttpClient
+  - One typed client per edge at the source's timeout
+  selected: One typed client per edge at the source's 10000 ms timeout, with a token-bearing and an anonymous
+    registration
+- id: OPT-009
+  decision_ref: D-009
+  question: Token cache expiry policy
+  options_considered:
+  - Refresh early with a safety skew
+  - Refresh exactly at expiry, as the source does
+  selected: Refresh exactly at expiry, as the source does
+- id: OPT-010
+  decision_ref: D-010
+  question: Wire JSON shape
+  options_considered:
+  - ASP.NET Core defaults
+  - Options reproducing Jackson's defaults as the source leaves them
+  selected: 'Options reproducing Jackson''s defaults: camel-case names, enum names, unknown members skipped,
+    nulls written, dates as epoch milliseconds'
+- id: OPT-011
+  decision_ref: D-011
+  question: Health endpoint shape
+  options_considered:
+  - The ASP.NET Core default health response
+  - The Boot 2.0 actuator body and path
+  selected: 'The Boot 2.0 actuator body and path: /actuator/health under the context path, a single status
+    member, 200 for up and 503 for down, anonymous'
+- id: OPT-012
+  decision_ref: D-012
+  question: Context path semantics
+  options_considered:
+  - UsePathBase alone
+  - A prefix guard in front of UsePathBase
+  selected: A prefix guard in front of UsePathBase
+- id: OPT-013
+  decision_ref: D-013
+  question: Proving P1's done-when clause
+  options_considered:
+  - Leave it to a manual check
+  - An xunit suite in the same solution
+  selected: An xunit suite in the same solution, with no network and no live Mongo

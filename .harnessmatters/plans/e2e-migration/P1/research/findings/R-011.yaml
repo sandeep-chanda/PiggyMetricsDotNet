@@ -1,0 +1,16 @@
+id: R-011
+dimension: repository
+claim: Unknown JSON members are ignored and enums travel as names, including as map keys.
+evidence:
+- account-service/.../domain/Account.java:14 @JsonIgnoreProperties(ignoreUnknown = true)
+- Spring's Jackson2ObjectMapperBuilder disables FAIL_ON_UNKNOWN_PROPERTIES by default
+- statistics-service/.../domain/Currency.java:5 declares USD, EUR, RUB
+- statistics-service/.../domain/timeseries/DataPoint.java:28-31 holds Map<StatisticMetric, BigDecimal>
+  statistics and Map<Currency, BigDecimal> rates
+- mongodb/dump/account-service-dump.js stores currency USD and period MONTH as strings
+implication: The ported options skip unmapped members, write enums as names, and leave the dictionary
+  key policy unset so enum map keys keep their exact names.
+confidence: high
+plan_steps:
+- STEP-009
+source_root: /tmp/source-piggymetrics
