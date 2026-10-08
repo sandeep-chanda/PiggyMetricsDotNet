@@ -1,0 +1,44 @@
+{
+  "type": "feasibility",
+  "spec_id": "SPEC-126",
+  "verdict": "not ok",
+  "note": "the spec writes to ledger-core, which the plan risk floor holds at write_context · AC8 and AC9 have no plan",
+  "returned_by": {
+    "agent_label": "Harness Cloud",
+    "region": "us-east-1",
+    "account_kind": "hm-cloud",
+    "account_display_name": "Harness Cloud"
+  },
+  "recommended_combo_key": null,
+  "checks": [
+    {
+      "sort_order": 0,
+      "label": "repo graph",
+      "verdict": "pass",
+      "detail": "packages/chargeback · 22 files"
+    },
+    {
+      "sort_order": 1,
+      "label": "write scope",
+      "verdict": "fail",
+      "detail": "ledger-core is outside write_context"
+    },
+    {
+      "sort_order": 2,
+      "label": "criteria mapping",
+      "verdict": "warn",
+      "detail": "7 of 9 claimed · AC8 AC9 unmapped"
+    },
+    {
+      "sort_order": 3,
+      "label": "policy retail-na",
+      "verdict": "pass",
+      "detail": "no external mutation requested"
+    }
+  ],
+  "source_package": {
+    "playbook_ref": "workspace/<task-id>/final/PLAYBOOK.md",
+    "idag_ref": "workspace/<task-id>/final/DAG.yaml",
+    "quality_gate": "PASS"
+  }
+}

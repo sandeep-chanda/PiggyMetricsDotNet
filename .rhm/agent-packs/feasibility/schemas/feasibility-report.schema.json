@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hm.agent-packs.feasibility-report",
+  "title": "FeasibilityReport",
+  "type": "object",
+  "required": ["spec_id", "verdict", "note", "checks", "source_package"],
+  "additionalProperties": false,
+  "properties": {
+    "spec_id": { "type": "string", "minLength": 1 },
+    "verdict": { "type": "string", "enum": ["ok", "not ok"] },
+    "note": { "type": "string", "minLength": 1 },
+    "agent_label": { "type": "string" },
+    "region": { "type": "string" },
+    "source_package": {
+      "type": "object",
+      "required": ["playbook_ref", "idag_ref"],
+      "properties": {
+        "playbook_ref": { "type": "string" },
+        "idag_ref": { "type": "string" },
+        "manifest_ref": { "type": "string" },
+        "quality_gate": { "type": "string" }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["label", "verdict", "detail"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string" },
+          "verdict": { "type": "string", "enum": ["pass", "fail", "warn", "—"] },
+          "detail": { "type": "string" }
+        }
+      }
+    }
+  }
+}

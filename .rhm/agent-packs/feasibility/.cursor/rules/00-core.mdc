@@ -1,0 +1,12 @@
+---
+description: Feasibility checker — package + target evidence only.
+globs:
+alwaysApply: true
+---
+
+# Feasibility core
+
+- Input = Spec-Planner outcome + target. No Spec-only guesses.
+- Output = structured checks + ok|not ok.
+- Plan/read only toward target; writes under pack `workspace/` only.
+- Sequential: blocked until Spec-Planner final/ exists; does not start Model combination.
