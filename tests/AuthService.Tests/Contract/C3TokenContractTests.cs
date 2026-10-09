@@ -74,7 +74,7 @@ public class C3TokenContractTests
         {
             ["grant_type"] = "client_credentials"
         });
-        Assert.Equal(HttpStatusCode.BadRequest, browserClientCredentials.StatusCode);
+        await AssertInvalidClient(browserClientCredentials);
 
         var servicePassword = await PostTokenAsync(destination.Client, "account-service", "account-secret", new Dictionary<string, string>
         {
@@ -82,7 +82,15 @@ public class C3TokenContractTests
             ["username"] = "demo",
             ["password"] = "secret"
         });
-        Assert.Equal(HttpStatusCode.BadRequest, servicePassword.StatusCode);
+        await AssertInvalidClient(servicePassword);
+    }
+
+    private static async Task AssertInvalidClient(HttpResponseMessage response)
+    {
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        using var doc = JsonDocument.Parse(json);
+        Assert.Equal("invalid_client", doc.RootElement.GetProperty("error").GetString());
     }
 
     private static void AssertClient(

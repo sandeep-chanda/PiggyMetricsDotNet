@@ -59,7 +59,7 @@ public static class OAuthTokenEndpoint
 
         if (!client.GrantTypes.Contains(grantType, StringComparer.Ordinal))
         {
-            return OAuthError(StatusCodes.Status400BadRequest, "unauthorized_client", "grant not allowed");
+            return OAuthError(StatusCodes.Status401Unauthorized, "invalid_client", "Unauthorized grant type: " + grantType);
         }
 
         if (!TryResolveScopes(form["scope"].ToString(), client, out var scopes, out var scopeError))
