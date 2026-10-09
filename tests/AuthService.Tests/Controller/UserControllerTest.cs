@@ -47,11 +47,13 @@ public class UserControllerTest
             Username = "t",
             Password = "p"
         };
-        _ = user;
+        var json = JsonSerializer.Serialize(user);
 
         using var server = CreateServer();
         var client = server.CreateClient();
-        var response = await client.PostAsync("/users", new StringContent(string.Empty));
+        var response = await client.PostAsync(
+            "/users",
+            new StringContent(json, Encoding.UTF8, "application/json"));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
