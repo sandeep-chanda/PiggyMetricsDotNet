@@ -91,8 +91,8 @@ tests/Shared.Tests/    xunit over TestHost, five facts on the bearer handler
 
 Todos P1.T1. Depends on nothing. Critical path: yes.
 
-**Why.** P1.T1 derives the .NET solution from account-service/pom.xml
-.
+**Why.** P1.T1 derives the .NET solution from account-service/pom.xml.
+
 **Source.** TargetRepo tracks no project or MSBuild file. Source: pom.xml:1-50, account-service/pom.xml:19-96.
 
 **Files.** `global.json`, `.gitignore`, `Directory.Build.props`, `Directory.Packages.props`
@@ -171,8 +171,8 @@ dotnet --info
 
 Todos P1.T1. Depends on STEP-001. Critical path: yes.
 
-**Why.** P1.T1 names Shared beside the five runtime services, and the P1 goal line calls it the library every service plan builds on
-.
+**Why.** P1.T1 names Shared beside the five runtime services, and the P1 goal line calls it the library every service plan builds on.
+
 **Source.** No solution exists. Source: pom.xml:38-48 (reactor module list); the four infrastructure modules are out of scope per DEC-013.
 
 **Files.** `PiggyMetrics.sln`, `src/Shared/Shared.csproj`
@@ -211,8 +211,8 @@ dotnet restore src/Shared/Shared.csproj
 
 Todos P1.T5. Depends on STEP-002. Critical path: no.
 
-**Why.** P1.T5 asks for enums as names, unknown fields ignored and the source's date format
-.
+**Why.** P1.T5 asks for enums as names, unknown fields ignored and the source's date format.
+
 **Source.** No JSON configuration exists. Source: spring-boot 2.0.3 JacksonAutoConfiguration:86, spring-framework 5.0.7 Jackson2ObjectMapperBuilder:687-694, jackson-databind 2.9.6 StdDateFormat:53 and :151, Currency.java:3-8.
 
 **Files.** `src/Shared/Json/PiggyMetricsJson.cs`
@@ -307,8 +307,8 @@ dotnet build src/Shared/Shared.csproj -c Debug
 
 Todos P1.T3. Depends on STEP-002. Critical path: no.
 
-**Why.** P1.T3 asks for store conventions and serializers against the same databases and collections
-.
+**Why.** P1.T3 asks for store conventions and serializers against the same databases and collections.
+
 **Source.** No store code exists. Source: Account.java:14-37, AccountRepository.java:7-11, User.java:10-17, DataPoint.java:15-24, Recipient.java:11-16, shared/account-service.yml:10-16, shared/auth-service.yml:1-8, mongodb/init.sh:11-13, mongodb/dump/account-service-dump.js.
 
 **Files.** `src/Shared/Mongo/MongoConventions.cs`, `src/Shared/Mongo/MongoExtensions.cs`
@@ -509,8 +509,8 @@ dotnet build src/Shared/Shared.csproj -c Debug
 
 Todos P1.T2. Depends on STEP-002. Critical path: yes.
 
-**Why.** P1.T2 asks for a Shared bearer handler that validates a token the way the resource servers do, calling the user-info endpoint
-.
+**Why.** P1.T2 asks for a Shared bearer handler that validates a token the way the resource servers do, calling the user-info endpoint.
+
 **Source.** No security code exists. Source: account-service ResourceServerConfig.java:23-60, CustomUserInfoTokenServices.java:36, :68-73, :97-107, :129-137, statistics-service ResourceServerConfig.java:17-24, shared/application.yml:20-23.
 
 **Files.** `src/Shared/Security/PiggyMetricsAuth.cs`, `src/Shared/Security/UserInfoAuthenticationHandler.cs`
@@ -741,8 +741,8 @@ dotnet build src/Shared/Shared.csproj -c Debug
 
 Todos P1.T2. Depends on STEP-005. Critical path: yes.
 
-**Why.** P2.T3 and P3.T4 ask for policy user; P2.T4, P3.T5 and P3.T6 ask for policy server
-.
+**Why.** P2.T3 and P3.T4 ask for policy user; P2.T4, P3.T5 and P3.T6 ask for policy server.
+
 **Source.** No registration code exists. Source: account-service ResourceServerConfig.java:55-60, auth-service UserController.java:26-31, statistics-service StatisticsController.java:26-36, OAuth2AuthorizationConfig.java:43-64.
 
 **Files.** `src/Shared/Security/SecurityExtensions.cs`
@@ -812,8 +812,8 @@ dotnet build src/Shared/Shared.csproj -c Debug
 
 Todos P1.T4. Depends on STEP-002. Critical path: no.
 
-**Why.** P1.T4 asks for a typed-client base with the source's timeout, a client-credentials token cache and one HTTP client per edge
-.
+**Why.** P1.T4 asks for a typed-client base with the source's timeout, a client-credentials token cache and one HTTP client per edge.
+
 **Source.** No HTTP client code exists. Source: account-service ResourceServerConfig.java:33-50, shared/account-service.yml:1-8, shared/statistics-service.yml:1-8, shared/application.yml:7-13, ExchangeRatesClient.java:10-16.
 
 **Files.** `src/Shared/Http/ServiceClients.cs`, `src/Shared/Http/HttpClientExtensions.cs`
@@ -1022,8 +1022,8 @@ dotnet build src/Shared/Shared.csproj -c Debug
 
 Todos P1.T5. Depends on STEP-003. Critical path: no.
 
-**Why.** P1.T5 asks for health checks
-.
+**Why.** P1.T5 asks for health checks.
+
 **Source.** No health or bootstrap code exists. Source: account-service/pom.xml:48-51, config/Dockerfile:7, shared/auth-service.yml:9-12, shared/account-service.yml:18-21, shared/statistics-service.yml:18-21, shared/notification-service.yml:9-12, shared/gateway.yml:43-44, docker-compose.yml.
 
 **Files.** `src/Shared/Health/HealthExtensions.cs`, `src/Shared/ServiceDefaults.cs`
@@ -1146,8 +1146,8 @@ dotnet build src/Shared/Shared.csproj -c Debug
 
 Todos P1.T1. Depends on STEP-006, STEP-008. Critical path: yes.
 
-**Why.** P1.T1 names one project per runtime service
-.
+**Why.** P1.T1 names one project per runtime service.
+
 **Source.** No service project exists. Source: GatewayApplication.java:7-15, the four @SpringBootApplication classes, the per-service ports and context paths in config/src/main/resources/shared/, auth-service WebSecurityConfig.java:18-36.
 
 **Files.** `src/Gateway/Gateway.csproj`, `src/Gateway/Program.cs`, `src/Gateway/appsettings.json`, `src/AuthService/AuthService.csproj`, `src/AuthService/Program.cs`, `src/AuthService/appsettings.json`, `src/AccountService/AccountService.csproj`, `src/AccountService/Program.cs`, `src/AccountService/appsettings.json`, `src/StatisticsService/StatisticsService.csproj`, `src/StatisticsService/Program.cs`, `src/StatisticsService/appsettings.json`, `src/NotificationService/NotificationService.csproj`, `src/NotificationService/Program.cs`, `src/NotificationService/appsettings.json`
@@ -1400,8 +1400,8 @@ dotnet build PiggyMetrics.sln -c Debug
 
 Todos P1.T2. Depends on STEP-006. Critical path: no.
 
-**Why.** The P1 done-when clause is that Shared's bearer handler accepts a token the source's authorization server issued and refuses one it did not
-.
+**Why.** The P1 done-when clause is that Shared's bearer handler accepts a token the source's authorization server issued and refuses one it did not.
+
 **Source.** No test project exists. Source: CustomUserInfoTokenServices.java:68-107 and OAuth2AuthorizationConfig.java:43-64; the stub document follows the Jackson rendering of the OAuth2Authentication that /uaa/users/current returns.
 
 **Files.** `tests/Shared.Tests/Shared.Tests.csproj`, `tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs`
@@ -1614,8 +1614,8 @@ dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
 
 Todos P1.T1, P1.T2, P1.T3, P1.T4, P1.T5. Depends on STEP-004, STEP-007, STEP-009, STEP-010. Critical path: yes.
 
-**Why.** The P1 done-when clause has two halves: every project builds, and the bearer handler accepts and refuses correctly
-.
+**Why.** The P1 done-when clause has two halves: every project builds, and the bearer handler accepts and refuses correctly.
+
 **Source.** After STEP-001 to STEP-010 the solution holds Shared, the five service projects and tests/Shared.Tests. Source: pom.xml:38-48 (the reactor build).
 
 **Files.** `PiggyMetrics.sln`

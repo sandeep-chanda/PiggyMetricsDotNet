@@ -1,7 +1,7 @@
 {
   "source_plan": "plan-mode authoring was performed in-session; this harness has no Cursor plans directory, so the plan document was authored directly as a Cursor-shaped .plan.md and landed by the playbook-importer contract",
   "dest": "/tmp/hm-claude-code-sjkuv0jj/.rhm/agent-packs/spec-planner/workspace/mig-java-dotnet-v16-p1/final/PLAYBOOK.md",
-  "imported_at_unix": 1791524330.4867826,
+  "imported_at_unix": 1791524370.9803095,
   "bytes": 57033,
   "importer": "playbook-importer (HM harness mode; SwitchMode unavailable, import-cursor-plan.py copy semantics applied in place)",
   "step_coverage_ok": true,
