@@ -87,22 +87,13 @@ src/NotificationService/ web, port 8000, path /notifications
 tests/Shared.Tests/    xunit over TestHost, five facts on the bearer handler
 ~~~
 
-## Source contracts this plan preserves
-
-- Token validation is a call to `http://auth-service:5000/uaa/users/current` carrying the presented token; the tokens are opaque values in an InMemoryTokenStore, so no local validation is possible (account-service CustomUserInfoTokenServices.java:36-137, shared/application.yml:20-23).
-- Two access shapes: `user` is `anyRequest().authenticated()`, `server` is `#oauth2.hasScope('server')` (auth-service UserController.java:22-31, statistics-service StatisticsController.java:20-36).
-- Collections `accounts`, `users`, `datapoints`, `recipients` with lower-camel field names, the `@Id` member as `_id`, enums as strings, BigDecimal as a string, nulls omitted, dates as UTC BSON datetimes.
-- An outbound service edge times out after 10000 ms (shared/application.yml:7-13); 20000 ms is the gateway's own setting (shared/gateway.yml:1-18).
-- A java.util.Date is written as `2018-06-01T12:00:00.000+0000`: Spring Boot 2.0.3 turns WRITE_DATES_AS_TIMESTAMPS off and Jackson 2.9.6 StdDateFormat renders UTC with a colon-less offset.
-- `GET /actuator/health` answers 200 with the body `{"status":"UP"}` and nothing else (config/Dockerfile:7, Boot 2.0 hides health detail by default).
-
 ## STEP-001 - Create the repository build configuration the whole solution inherits
 
 Todos P1.T1. Depends on nothing. Critical path: yes.
 
-**Why.** P1.T1 derives the .NET solution from account-service/pom.xml. The Maven reactor held the language level and every dependency version in one parent (pom.xml:17-27), so the modules declared none (account-service/pom.xml:19-96). DEC-001 and DEC-012 carry that single source of truth to MSBuild.
-
-**Before.** TargetRepo tracks no project or MSBuild file. Source: pom.xml:1-50, account-service/pom.xml:19-96. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T1 derives the .NET solution from account-service/pom.xml
+.
+**Source.** TargetRepo tracks no project or MSBuild file. Source: pom.xml:1-50, account-service/pom.xml:19-96.
 
 **Files.** `global.json`, `.gitignore`, `Directory.Build.props`, `Directory.Packages.props`
 
@@ -172,28 +163,17 @@ git ls-files
 dotnet --info
 ~~~
 
-**Verify.**
-- test -f global.json && test -f Directory.Build.props && test -f Directory.Packages.props && test -f .gitignore
-- python3 -c "import json;json.load(open('global.json'))"
+**Verify.** test -f global.json && test -f Directory.Build.props && test -f Directory.Packages.props && test -f .gitignore; python3 -c "import json;json.load(open('global.json'))"
 
-**Invariants.**
-- No csproj in this repository declares a TargetFramework element; the property comes from Directory.Build.props only.
-- No csproj in this repository declares a Version attribute on PackageReference; versions come from Directory.Packages.props only.
-- global.json rollForward latestMajor keeps the build working on an SDK newer than 10.0.100 without a second pin.
-
-**Do not.**
-- Do not add a Version attribute to any PackageReference anywhere in the repository.
-- Do not add NuGet.config, a props file per project, or a second TargetFramework declaration.
-- Do not pin an SDK feature band that forbids roll-forward.
-- Do not create any source project in this step.
+**Do not.** Do not add a Version attribute to any PackageReference anywhere in the repository. Do not add NuGet.config, a props file per project, or a second TargetFramework declaration. Do not pin an SDK feature band that forbids roll-forward. Do not create any source project in this step.
 
 ## STEP-002 - Create the solution and the Shared class library project
 
 Todos P1.T1. Depends on STEP-001. Critical path: yes.
 
-**Why.** P1.T1 names Shared beside the five runtime services, and the P1 goal line calls it the library every service plan builds on. Shared holds ASP.NET Core and MongoDB types, so it needs the Microsoft.AspNetCore.App framework reference and the one NuGet dependency P1 uses.
-
-**Before.** No solution exists. Source: pom.xml:38-48 (reactor module list); the four infrastructure modules are out of scope per DEC-013. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T1 names Shared beside the five runtime services, and the P1 goal line calls it the library every service plan builds on
+.
+**Source.** No solution exists. Source: pom.xml:38-48 (reactor module list); the four infrastructure modules are out of scope per DEC-013.
 
 **Files.** `PiggyMetrics.sln`, `src/Shared/Shared.csproj`
 
@@ -223,28 +203,17 @@ dotnet sln PiggyMetrics.sln add src/Shared/Shared.csproj
 dotnet restore src/Shared/Shared.csproj
 ~~~
 
-**Verify.**
-- dotnet sln PiggyMetrics.sln list
-- dotnet build src/Shared/Shared.csproj -c Debug
+**Verify.** dotnet sln PiggyMetrics.sln list; dotnet build src/Shared/Shared.csproj -c Debug
 
-**Invariants.**
-- Shared stays a class library; it never becomes a web project and never gains an entry point.
-- Shared references no service project; dependencies point from the services into Shared only.
-- Shared's assembly name stays Shared so later plans reference it by that name.
-
-**Do not.**
-- Do not hand-author the solution GUIDs; produce PiggyMetrics.sln with dotnet new sln.
-- Do not add a TargetFramework or a package version to Shared.csproj.
-- Do not add Eureka, Spring Cloud Config, Hystrix or Turbine client equivalents to Shared.
-- Do not create the service projects in this step.
+**Do not.** Do not hand-author the solution GUIDs; produce PiggyMetrics.sln with dotnet new sln. Do not add a TargetFramework or a package version to Shared.csproj. Do not add Eureka, Spring Cloud Config, Hystrix or Turbine client equivalents to Shared. Do not create the service projects in this step.
 
 ## STEP-003 - Pin the shared JSON contract and the source's date rendering
 
 Todos P1.T5. Depends on STEP-002. Critical path: no.
 
-**Why.** P1.T5 asks for enums as names, unknown fields ignored and the source's date format. R-007 proves the source renders a java.util.Date through StdDateFormat as UTC yyyy-MM-dd'T'HH:mm:ss.SSSZ with a colon-less offset. DEC-009 reproduces that contract once, in Shared, so no service re-derives it.
-
-**Before.** No JSON configuration exists. Source: spring-boot 2.0.3 JacksonAutoConfiguration:86, spring-framework 5.0.7 Jackson2ObjectMapperBuilder:687-694, jackson-databind 2.9.6 StdDateFormat:53 and :151, Currency.java:3-8. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T5 asks for enums as names, unknown fields ignored and the source's date format
+.
+**Source.** No JSON configuration exists. Source: spring-boot 2.0.3 JacksonAutoConfiguration:86, spring-framework 5.0.7 Jackson2ObjectMapperBuilder:687-694, jackson-databind 2.9.6 StdDateFormat:53 and :151, Currency.java:3-8.
 
 **Files.** `src/Shared/Json/PiggyMetricsJson.cs`
 
@@ -330,28 +299,17 @@ exact_commands:
 dotnet build src/Shared/Shared.csproj -c Debug
 ~~~
 
-**Verify.**
-- dotnet build src/Shared/Shared.csproj -c Debug
+**Verify.** dotnet build src/Shared/Shared.csproj -c Debug
 
-**Invariants.**
-- Every service uses PiggyMetricsJson.Configure; no service builds its own JsonSerializerOptions.
-- A DateTime is always rendered in UTC with exactly three fractional digits and the literal +0000 offset.
-- An incoming member the target type does not declare is skipped and never raises an error.
-- An enum written as an integer in an incoming payload is rejected, because the source's Jackson default rejects it too.
-
-**Do not.**
-- Do not set PropertyNameCaseInsensitive to true; the source's Jackson matches property names case-sensitively.
-- Do not register System.Text.Json's default ISO-8601 DateTime handling; it emits a colon in the offset and a variable fractional length.
-- Do not add Newtonsoft.Json.
-- Do not add a naming policy to the enum converter; the source writes the declared enum constant name.
+**Do not.** Do not set PropertyNameCaseInsensitive to true; the source's Jackson matches property names case-sensitively. Do not register System.Text.Json's default ISO-8601 DateTime handling; it emits a colon in the offset and a variable fractional length. Do not add Newtonsoft.Json. Do not add a naming policy to the enum converter; the source writes the declared enum constant name.
 
 ## STEP-004 - Pin the store conventions, serializers and collection naming
 
 Todos P1.T3. Depends on STEP-002. Critical path: no.
 
-**Why.** P1.T3 asks for store conventions and serializers against the same databases and collections. The source inherits them from Spring Data MongoDB: @Id becomes _id, property names are written in Java camelCase, nulls are skipped, enums are strings and BigDecimal is a string. The MongoDB .NET driver defaults the other way on all four points (R-010), so DEC-005 and DEC-006 state them explicitly.
-
-**Before.** No store code exists. Source: Account.java:14-37, AccountRepository.java:7-11, User.java:10-17, DataPoint.java:15-24, Recipient.java:11-16, shared/account-service.yml:10-16, shared/auth-service.yml:1-8, mongodb/init.sh:11-13, mongodb/dump/account-service-dump.js. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T3 asks for store conventions and serializers against the same databases and collections
+.
+**Source.** No store code exists. Source: Account.java:14-37, AccountRepository.java:7-11, User.java:10-17, DataPoint.java:15-24, Recipient.java:11-16, shared/account-service.yml:10-16, shared/auth-service.yml:1-8, mongodb/init.sh:11-13, mongodb/dump/account-service-dump.js.
 
 **Files.** `src/Shared/Mongo/MongoConventions.cs`, `src/Shared/Mongo/MongoExtensions.cs`
 
@@ -543,31 +501,17 @@ exact_commands:
 dotnet build src/Shared/Shared.csproj -c Debug
 ~~~
 
-**Verify.**
-- dotnet build src/Shared/Shared.csproj -c Debug
+**Verify.** dotnet build src/Shared/Shared.csproj -c Debug
 
-**Invariants.**
-- MongoConventions.Register runs at most once per process and is safe to call from every service.
-- Element names are written with a lower-case first letter so existing documents keep matching.
-- A null member is not written, matching Spring Data MongoDB, so no document grows a null field.
-- An enum member is stored as its declared name, never as an ordinal.
-- A decimal member is written as a BSON string, matching BigDecimalToStringConverter.
-- A DateTime member is stored as a BSON UTC datetime and read back with Kind Utc.
-- A document type without MongoCollectionAttribute fails fast instead of defaulting to a guessed collection name.
-
-**Do not.**
-- Do not register a camelCase convention that also lower-cases the _id element name; the id member is mapped by the driver's id convention.
-- Do not store a decimal as Decimal128; the source stores it as a string.
-- Do not infer a collection name from the class name.
-- Do not create document classes, repositories or indexes here; those belong to the per-service plans.
+**Do not.** Do not register a camelCase convention that also lower-cases the _id element name; the id member is mapped by the driver's id convention. Do not store a decimal as Decimal128; the source stores it as a string. Do not infer a collection name from the class name. Do not create document classes, repositories or indexes here; those belong to the per-service plans.
 
 ## STEP-005 - Pin the bearer handler that resolves a token through the authorization server
 
 Todos P1.T2. Depends on STEP-002. Critical path: yes.
 
-**Why.** P1.T2 asks for a Shared bearer handler that validates a token the way the resource servers do, calling the user-info endpoint. The source's tokens are opaque values in an InMemoryTokenStore with no published key, so resolving them at that endpoint is the only possible validation (DEC-003). The same call also yields the client id and scopes the controllers gate on.
-
-**Before.** No security code exists. Source: account-service ResourceServerConfig.java:23-60, CustomUserInfoTokenServices.java:36, :68-73, :97-107, :129-137, statistics-service ResourceServerConfig.java:17-24, shared/application.yml:20-23. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T2 asks for a Shared bearer handler that validates a token the way the resource servers do, calling the user-info endpoint
+.
+**Source.** No security code exists. Source: account-service ResourceServerConfig.java:23-60, CustomUserInfoTokenServices.java:36, :68-73, :97-107, :129-137, statistics-service ResourceServerConfig.java:17-24, shared/application.yml:20-23.
 
 **Files.** `src/Shared/Security/PiggyMetricsAuth.cs`, `src/Shared/Security/UserInfoAuthenticationHandler.cs`
 
@@ -789,30 +733,17 @@ exact_commands:
 dotnet build src/Shared/Shared.csproj -c Debug
 ~~~
 
-**Verify.**
-- dotnet build src/Shared/Shared.csproj -c Debug
+**Verify.** dotnet build src/Shared/Shared.csproj -c Debug
 
-**Invariants.**
-- A token is never trusted on its own; every authenticated request resolves it against the user-info endpoint.
-- A non-success user-info status, a transport failure and a document carrying an error member all end as a failed authentication, never as an anonymous success.
-- The principal name is taken from the first PRINCIPAL_KEYS member present, in that exact order.
-- One scope claim is added per entry of oauth2Request.scope, so a scope check never has to re-parse a list.
-- No user-info response is cached; the source caches nothing on the resource-server side.
-
-**Do not.**
-- Do not add JWT validation, a signing key, an introspection endpoint or Microsoft.AspNetCore.Authentication.JwtBearer; the source's tokens are opaque in-memory tokens.
-- Do not cache the user-info response.
-- Do not fall back to an anonymous principal when the user-info call fails.
-- Do not read the token from a query string or a cookie.
-- Do not register the scheme here; registration is STEP-006.
+**Do not.** Do not add JWT validation, a signing key, an introspection endpoint or Microsoft.AspNetCore.Authentication.JwtBearer; the source's tokens are opaque in-memory tokens. Do not cache the user-info response. Do not fall back to an anonymous principal when the user-info call fails. Do not read the token from a query string or a cookie. Do not register the scheme here; registration is STEP-006.
 
 ## STEP-006 - Register the bearer scheme and the user and server authorization policies
 
 Todos P1.T2. Depends on STEP-005. Critical path: yes.
 
-**Why.** P2.T3 and P3.T4 ask for policy user; P2.T4, P3.T5 and P3.T6 ask for policy server. In the source those are anyRequest().authenticated() and @PreAuthorize("#oauth2.hasScope('server')"). DEC-004 puts both in Shared under those exact names so no service plan invents one.
-
-**Before.** No registration code exists. Source: account-service ResourceServerConfig.java:55-60, auth-service UserController.java:26-31, statistics-service StatisticsController.java:26-36, OAuth2AuthorizationConfig.java:43-64. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P2.T3 and P3.T4 ask for policy user; P2.T4, P3.T5 and P3.T6 ask for policy server
+.
+**Source.** No registration code exists. Source: account-service ResourceServerConfig.java:55-60, auth-service UserController.java:26-31, statistics-service StatisticsController.java:26-36, OAuth2AuthorizationConfig.java:43-64.
 
 **Files.** `src/Shared/Security/SecurityExtensions.cs`
 
@@ -873,27 +804,17 @@ exact_commands:
 dotnet build src/Shared/Shared.csproj -c Debug
 ~~~
 
-**Verify.**
-- dotnet build src/Shared/Shared.csproj -c Debug
+**Verify.** dotnet build src/Shared/Shared.csproj -c Debug
 
-**Invariants.**
-- The policy names stay the literals user and server; later plans reference PiggyMetricsAuth.UserPolicy and PiggyMetricsAuth.ServerPolicy.
-- Both policies bind to the Bearer scheme explicitly, so adding another scheme later cannot silently satisfy them.
-- An authenticated caller lacking the server scope is forbidden rather than challenged, which is the source's distinction between 401 and 403.
-
-**Do not.**
-- Do not name the policies anything other than user and server.
-- Do not grant the server policy to a caller whose scope claim is ui.
-- Do not register the authorization policies in a service project; they live in Shared.
-- Do not add role-based requirements; the source gates on scope, not on authority.
+**Do not.** Do not name the policies anything other than user and server. Do not grant the server policy to a caller whose scope claim is ui. Do not register the authorization policies in a service project; they live in Shared. Do not add role-based requirements; the source gates on scope, not on authority.
 
 ## STEP-007 - Pin the typed-client base, the source's timeout and the client-credentials token cache
 
 Todos P1.T4. Depends on STEP-002. Critical path: no.
 
-**Why.** P1.T4 asks for a typed-client base with the source's timeout, a client-credentials token cache and one HTTP client per edge. The source wraps each Feign edge in a Hystrix command whose default execution timeout is 10000 ms and caches the token in an OAuth2ClientContext until it expires. DEC-014 keeps two registration methods because statistics-service declares no OAuth2FeignRequestInterceptor.
-
-**Before.** No HTTP client code exists. Source: account-service ResourceServerConfig.java:33-50, shared/account-service.yml:1-8, shared/statistics-service.yml:1-8, shared/application.yml:7-13, ExchangeRatesClient.java:10-16. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T4 asks for a typed-client base with the source's timeout, a client-credentials token cache and one HTTP client per edge
+.
+**Source.** No HTTP client code exists. Source: account-service ResourceServerConfig.java:33-50, shared/account-service.yml:1-8, shared/statistics-service.yml:1-8, shared/application.yml:7-13, ExchangeRatesClient.java:10-16.
 
 **Files.** `src/Shared/Http/ServiceClients.cs`, `src/Shared/Http/HttpClientExtensions.cs`
 
@@ -1093,30 +1014,17 @@ exact_commands:
 dotnet build src/Shared/Shared.csproj -c Debug
 ~~~
 
-**Verify.**
-- dotnet build src/Shared/Shared.csproj -c Debug
+**Verify.** dotnet build src/Shared/Shared.csproj -c Debug
 
-**Invariants.**
-- Every outbound edge uses a 10000 ms timeout, the source's Hystrix default execution timeout.
-- One token is fetched per process and reused until the reported lifetime has elapsed; concurrent callers wait on one fetch rather than issuing several.
-- The token request authenticates the client with HTTP Basic, which is the scheme Spring's client-credentials provider uses by default.
-- A token response carrying no expires_in is treated as already expired, so the next call fetches a fresh token.
-- A failed token request surfaces as an exception on the caller's edge rather than an unauthenticated outbound call.
-
-**Do not.**
-- Do not use 20000 ms here; that value is the gateway's Zuul and Ribbon timeout, not the service edge timeout.
-- Do not add Polly, a circuit breaker or a retry policy; the source's fallback behaviour belongs to the per-service plans.
-- Do not cache the token in a static field shared across services or persist it.
-- Do not add a refresh-token flow; the service clients use the client-credentials grant.
-- Do not create a concrete edge client here; each edge is registered by the plan that owns it.
+**Do not.** Do not use 20000 ms here; that value is the gateway's Zuul and Ribbon timeout, not the service edge timeout. Do not add Polly, a circuit breaker or a retry policy; the source's fallback behaviour belongs to the per-service plans. Do not cache the token in a static field shared across services or persist it. Do not add a refresh-token flow; the service clients use the client-credentials grant. Do not create a concrete edge client here; each edge is registered by the plan that owns it.
 
 ## STEP-008 - Pin the actuator health endpoint and the service default composition
 
 Todos P1.T5. Depends on STEP-003. Critical path: no.
 
-**Why.** P1.T5 asks for health checks. config/Dockerfile:7 probes /actuator/health, which fixes the path and the healthy status code, and Boot 2.0 hides health detail, which fixes the body. DEC-010 reproduces both. The same step composes the defaults every service shares so the five entry points stay three lines long.
-
-**Before.** No health or bootstrap code exists. Source: account-service/pom.xml:48-51, config/Dockerfile:7, shared/auth-service.yml:9-12, shared/account-service.yml:18-21, shared/statistics-service.yml:18-21, shared/notification-service.yml:9-12, shared/gateway.yml:43-44, docker-compose.yml. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T5 asks for health checks
+.
+**Source.** No health or bootstrap code exists. Source: account-service/pom.xml:48-51, config/Dockerfile:7, shared/auth-service.yml:9-12, shared/account-service.yml:18-21, shared/statistics-service.yml:18-21, shared/notification-service.yml:9-12, shared/gateway.yml:43-44, docker-compose.yml.
 
 **Files.** `src/Shared/Health/HealthExtensions.cs`, `src/Shared/ServiceDefaults.cs`
 
@@ -1230,29 +1138,17 @@ exact_commands:
 dotnet build src/Shared/Shared.csproj -c Debug
 ~~~
 
-**Verify.**
-- dotnet build src/Shared/Shared.csproj -c Debug
+**Verify.** dotnet build src/Shared/Shared.csproj -c Debug
 
-**Invariants.**
-- The health path is /actuator/health under the service's own path base, matching the source's actuator path under its servlet context path.
-- The health body carries the single member status whose value is UP or DOWN; no detail is exposed, matching Boot 2.0's default.
-- The health endpoint is always anonymous, so an orchestrator probe never needs a token.
-- UsePiggyMetricsDefaults applies the path base before routing, so every route lands under the source's context path.
-- AddPiggyMetricsDefaults registers authentication and authorization services unconditionally, so UsePiggyMetricsDefaults is valid in a service that adds no scheme of its own.
-
-**Do not.**
-- Do not expose /actuator/info, /actuator/env, /actuator/metrics or any other actuator endpoint; Boot 2.0 exposes health and info over the web and only health is probed.
-- Do not include check names, durations or exception detail in the health body.
-- Do not require authentication on the health endpoint.
-- Do not register MVC controllers in the gateway project; it maps only the health endpoint in P1.
+**Do not.** Do not expose /actuator/info, /actuator/env, /actuator/metrics or any other actuator endpoint; Boot 2.0 exposes health and info over the web and only health is probed. Do not include check names, durations or exception detail in the health body. Do not require authentication on the health endpoint. Do not register MVC controllers in the gateway project; it maps only the health endpoint in P1.
 
 ## STEP-009 - Create the five runtime service projects on the shared defaults
 
 Todos P1.T1. Depends on STEP-006, STEP-008. Critical path: yes.
 
-**Why.** P1.T1 names one project per runtime service. Each must exist and build before its own plan adds endpoints, documents and settings. DEC-002 fixes the project, assembly and namespace names so the later plans address them unambiguously.
-
-**Before.** No service project exists. Source: GatewayApplication.java:7-15, the four @SpringBootApplication classes, the per-service ports and context paths in config/src/main/resources/shared/, auth-service WebSecurityConfig.java:18-36. Full citations in `planning/implementation-plan.yaml`.
+**Why.** P1.T1 names one project per runtime service
+.
+**Source.** No service project exists. Source: GatewayApplication.java:7-15, the four @SpringBootApplication classes, the per-service ports and context paths in config/src/main/resources/shared/, auth-service WebSecurityConfig.java:18-36.
 
 **Files.** `src/Gateway/Gateway.csproj`, `src/Gateway/Program.cs`, `src/Gateway/appsettings.json`, `src/AuthService/AuthService.csproj`, `src/AuthService/Program.cs`, `src/AuthService/appsettings.json`, `src/AccountService/AccountService.csproj`, `src/AccountService/Program.cs`, `src/AccountService/appsettings.json`, `src/StatisticsService/StatisticsService.csproj`, `src/StatisticsService/Program.cs`, `src/StatisticsService/appsettings.json`, `src/NotificationService/NotificationService.csproj`, `src/NotificationService/Program.cs`, `src/NotificationService/appsettings.json`
 
@@ -1496,31 +1392,17 @@ dotnet sln PiggyMetrics.sln add src/Gateway/Gateway.csproj src/AuthService/AuthS
 dotnet build PiggyMetrics.sln -c Debug
 ~~~
 
-**Verify.**
-- dotnet sln PiggyMetrics.sln list
-- dotnet build PiggyMetrics.sln -c Debug
+**Verify.** dotnet sln PiggyMetrics.sln list; dotnet build PiggyMetrics.sln -c Debug
 
-**Invariants.**
-- Each service project's assembly name equals its project name, and its root namespace is PiggyMetrics plus that name.
-- Each service's listening port and context path match the source: 4000 with no path, 5000 with /uaa, 6000 with /accounts, 7000 with /statistics, 8000 with /notifications.
-- AuthService does not register the user-info resource server, because it is the service that issues the tokens.
-- Every service project references Shared and no service project references another service project.
-- appsettings.json carries only the Kestrel listener and the context path in P1; store keys, client credentials, rates addresses and scheduling keys arrive with the per-service settings todos.
-
-**Do not.**
-- Do not add controllers, documents, repositories, store registration or client registration in this step.
-- Do not add Eureka, Spring Cloud Config, Hystrix, Turbine or RabbitMQ client equivalents.
-- Do not add a resource-server registration to Gateway or AuthService.
-- Do not add Swagger, CORS or HTTPS redirection; the source has none of them.
-- Do not move the ports or context paths into code; they stay in appsettings.json.
+**Do not.** Do not add controllers, documents, repositories, store registration or client registration in this step. Do not add Eureka, Spring Cloud Config, Hystrix, Turbine or RabbitMQ client equivalents. Do not add a resource-server registration to Gateway or AuthService. Do not add Swagger, CORS or HTTPS redirection; the source has none of them. Do not move the ports or context paths into code; they stay in appsettings.json.
 
 ## STEP-010 - Add the Shared test project and prove the bearer handler accepts and refuses
 
 Todos P1.T2. Depends on STEP-006. Critical path: no.
 
-**Why.** The P1 done-when clause is that Shared's bearer handler accepts a token the source's authorization server issued and refuses one it did not. DEC-011 makes that machine-checkable here, because no later plan owns Shared. The stub answers the user-info endpoint the way the source's authorization server does, so the assertions bind to the real contract.
-
-**Before.** No test project exists. Source: CustomUserInfoTokenServices.java:68-107 and OAuth2AuthorizationConfig.java:43-64; the stub document follows the Jackson rendering of the OAuth2Authentication that /uaa/users/current returns. Full citations in `planning/implementation-plan.yaml`.
+**Why.** The P1 done-when clause is that Shared's bearer handler accepts a token the source's authorization server issued and refuses one it did not
+.
+**Source.** No test project exists. Source: CustomUserInfoTokenServices.java:68-107 and OAuth2AuthorizationConfig.java:43-64; the stub document follows the Jackson rendering of the OAuth2Authentication that /uaa/users/current returns.
 
 **Files.** `tests/Shared.Tests/Shared.Tests.csproj`, `tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs`
 
@@ -1724,28 +1606,17 @@ dotnet sln PiggyMetrics.sln add tests/Shared.Tests/Shared.Tests.csproj
 dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
 ~~~
 
-**Verify.**
-- dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
+**Verify.** dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
 
-**Invariants.**
-- The tests exercise the real handler through the real policy pipeline; the handler itself is never mocked.
-- The stub answers only the two issued tokens, so a passing accept test cannot come from a permissive stub.
-- The refusal assertions distinguish 401 for an unresolvable token from 403 for a resolved token lacking the server scope.
-- The test project runs with no MongoDB, no network and no authorization server present.
-
-**Do not.**
-- Do not reach the network; the stub is the only transport.
-- Do not assert on log output instead of on status codes.
-- Do not weaken the stub to answer 200 for an unknown token.
-- Do not add a mocking package; the stub is a plain HttpMessageHandler.
+**Do not.** Do not reach the network; the stub is the only transport. Do not assert on log output instead of on status codes. Do not weaken the stub to answer 200 for an unknown token. Do not add a mocking package; the stub is a plain HttpMessageHandler.
 
 ## STEP-011 - Gate P1 on a clean solution build and a green test run
 
 Todos P1.T1, P1.T2, P1.T3, P1.T4, P1.T5. Depends on STEP-004, STEP-007, STEP-009, STEP-010. Critical path: yes.
 
-**Why.** The P1 done-when clause has two halves: every project builds, and the bearer handler accepts and refuses correctly. This is the single gate that proves both before P2 and P3 start, and the commit boundary that names the five P1 todo ids.
-
-**Before.** After STEP-001 to STEP-010 the solution holds Shared, the five service projects and tests/Shared.Tests. Source: pom.xml:38-48 (the reactor build). Full citations in `planning/implementation-plan.yaml`.
+**Why.** The P1 done-when clause has two halves: every project builds, and the bearer handler accepts and refuses correctly
+.
+**Source.** After STEP-001 to STEP-010 the solution holds Shared, the five service projects and tests/Shared.Tests. Source: pom.xml:38-48 (the reactor build).
 
 **Files.** `PiggyMetrics.sln`
 
@@ -1760,20 +1631,13 @@ git add -A
 git commit -m "P1.T1 P1.T2 P1.T3 P1.T4 P1.T5: solution skeleton and Shared"
 ~~~
 
-**Verify.**
-- dotnet build PiggyMetrics.sln -c Debug --no-restore
-- dotnet test PiggyMetrics.sln -c Debug --no-build
+**Verify.** dotnet build PiggyMetrics.sln -c Debug --no-restore; dotnet test PiggyMetrics.sln -c Debug --no-build
 
-**Invariants.**
-- The build runs from the repository root over PiggyMetrics.sln, not project by project.
-- No warning about a missing package version appears, which proves central package management stayed intact.
-- The commit message names every P1 todo id it completes.
+**Do not.** Do not mark P1 complete while any project fails to build or any test fails. Do not add a project to the solution that P1.T1 does not name. Do not start P2 or P3 work in this commit. Do not push or open a pull request from this step; the runtime owns that.
 
-**Do not.**
-- Do not mark P1 complete while any project fails to build or any test fails.
-- Do not add a project to the solution that P1.T1 does not name.
-- Do not start P2 or P3 work in this commit.
-- Do not push or open a pull request from this step; the runtime owns that.
+## Where the rest of the detail lives
+
+Each step's full why, before-state citations, invariants, edge cases, acceptance list and rollback command are in `planning/implementation-plan.yaml`, committed with this package. Read it before executing a step; this document carries the pins.
 
 ## Done when
 

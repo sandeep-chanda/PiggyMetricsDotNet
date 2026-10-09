@@ -7,12 +7,12 @@ files:
 - final/DAG.yaml
 - final/HANDOFF.md
 - final/PACKAGE_MANIFEST.yaml
-- planning/test-plan.yaml
-- planning/risks.yaml
-- architecture/decisions.yaml
 workspace_artifacts:
 - planning/implementation-plan.yaml
 - planning/implementation-dag.yaml
+- planning/test-plan.yaml
+- planning/risks.yaml
+- architecture/decisions.yaml
 - architecture/options.yaml
 - migration/migration-plan.yaml
 - spec/normalized.yaml
@@ -31,7 +31,7 @@ workspace_artifacts:
 - review/quality-scorecard.yaml
 - review/quality-gate.yaml
 - final/PLAYBOOK.import.json
-workspace_artifacts_note: Committed to the target repository under .rhm/agent-packs/spec-planner/workspace/mig-java-dotnet-v16-p1/. They are kept out of the files list so the wire payload stays within one message; final/PLAYBOOK.md carries every STEP in full.
+workspace_artifacts_note: Committed to the target repository under .harnessmatters/design/migration-java-2-dotnet-v16/P1/ (the planner workspace itself is git-excluded). They are kept out of the files list because the assist wire is one message; final/PLAYBOOK.md still carries every STEP and every pinned file body in full, and planning/implementation-plan.yaml carries each step full why, before-state citations, invariants, edge cases, acceptance and rollback.
 steps: 11
 dag_nodes: 11
 pinned_files: 32
