@@ -20,15 +20,17 @@ public sealed class AuthMongoSettings
             password = Environment.GetEnvironmentVariable("MONGODB_PASSWORD");
         }
 
+        var databasePath = Uri.EscapeDataString(database);
         string connectionString;
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
         {
-            connectionString = $"mongodb://{host}:{port}";
+            connectionString = $"mongodb://{host}:{port}/{databasePath}";
         }
         else
         {
+            // Spring Boot authenticates against spring.data.mongodb.database, not admin.
             connectionString =
-                $"mongodb://{Uri.EscapeDataString(username)}:{Uri.EscapeDataString(password)}@{host}:{port}";
+                $"mongodb://{Uri.EscapeDataString(username)}:{Uri.EscapeDataString(password)}@{host}:{port}/{databasePath}?authSource={databasePath}";
         }
 
         return new AuthMongoSettings

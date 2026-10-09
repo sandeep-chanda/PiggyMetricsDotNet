@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using MongoDB.Driver;
+using PiggyMetrics.AuthService.Config;
 using PiggyMetrics.AuthService.Domain;
 using PiggyMetrics.AuthService.Repository;
 using Xunit;
@@ -39,6 +41,29 @@ public class AuthServiceApplicationTests
         Assert.Equal("27017", configuration["spring:data:mongodb:port"]);
         Assert.Equal("/uaa", configuration["server:servlet:context-path"]);
         Assert.Equal("5000", configuration["server:port"]);
+    }
+
+    [Fact]
+    public void mongo_credentials_authenticate_against_the_service_database()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["spring:data:mongodb:host"] = "auth-mongodb",
+                ["spring:data:mongodb:port"] = "27017",
+                ["spring:data:mongodb:database"] = "piggymetrics",
+                ["spring:data:mongodb:username"] = "user",
+                ["spring:data:mongodb:password"] = "s3cret"
+            })
+            .Build();
+
+        var settings = AuthMongoSettings.From(configuration);
+        var url = new MongoUrl(settings.ConnectionString);
+
+        Assert.Equal("piggymetrics", settings.Database);
+        Assert.Equal("piggymetrics", url.DatabaseName);
+        Assert.Equal("piggymetrics", url.AuthenticationSource);
+        Assert.Equal("user", url.Username);
     }
 
     [Fact]
