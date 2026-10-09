@@ -1,0 +1,34 @@
+target_repo:
+  path: /tmp/hm-claude-code-sjkuv0jj
+  tracked_files:
+  - README.md
+  - AGENTS.md
+  - .cursor/rules/harness-matters.mdc
+  - .harnessmatters/**
+  stack_discovered: none yet; the repository is an empty migration target whose README reads 'Sample .NET Migration'
+  build_tooling_present: none; no solution, project, package manifest, lockfile or CI definition is tracked
+  default_branch: main
+planner_host:
+  dotnet_sdk: absent (dotnet is not on PATH in the planning sandbox)
+  python: 3.x with PyYAML 6.0.2
+  network: available; nuget.org and github.com were reachable during this run
+  consequence: exact_commands are pinned from the .NET SDK contract and from package metadata read from nuget.org during this run, and the solution-wide gate in STEP-011 is the first place they execute
+source_repo:
+  origin: https://github.com/sqshq/piggymetrics.git
+  build: Maven reactor, spring-boot-starter-parent 2.0.3.RELEASE, spring-cloud Finchley.RELEASE, java 1.8
+  modules:
+  - config
+  - monitoring
+  - registry
+  - gateway
+  - auth-service
+  - account-service
+  - statistics-service
+  - notification-service
+  - turbine-stream-service
+  runtime_services_in_scope:
+  - gateway
+  - auth-service
+  - account-service
+  - statistics-service
+  - notification-service

@@ -1,0 +1,67 @@
+task_id: mig-java-dotnet-v16-p1
+rounds: 2
+vectors:
+- vector: wrong_paths
+  checked: true
+  finding: clean
+  evidence: 'Every source path the spec cites was opened in the cloned source tree: account-service/pom.xml, account-service/src/main/java/com/piggymetrics/account/config/ResourceServerConfig.java and account-service/src/main/java/com/piggymetrics/account/repository/AccountRepository.java all exist. Every target path the plan writes is new and is listed in exact_files.'
+- vector: missing_scripts
+  checked: true
+  finding: clean
+  evidence: No dotnet SDK is on PATH in the planning sandbox, so no command was executed against the target. research/environment.yaml records this, every exact_commands entry is a plain SDK or git invocation, and STEP-011 is the gate where they first run.
+- vector: scope_creep
+  checked: true
+  finding: resolved
+  evidence: 'Round 1 flagged document classes, repositories and per-service settings drifting into Shared. Resolved: STEP-004 do_not forbids document classes, STEP-007 do_not forbids concrete edge clients, STEP-009 do_not forbids controllers and store registration, and spec/normalized.yaml lists them as out of scope for P2 and P3.'
+- vector: weak_evidence
+  checked: true
+  finding: resolved
+  evidence: 'Round 1 flagged the date-format claim as asserted rather than proven. Resolved by R-007: spring-boot v2.0.3.RELEASE JacksonAutoConfiguration line 86, spring-framework v5.0.7.RELEASE Jackson2ObjectMapperBuilder lines 687-694, spring-boot-dependencies jackson.version 2.9.6 and jackson-databind 2.9.6 StdDateFormat lines 53 and 151 were all read during this run.'
+- vector: missing_alternatives
+  checked: true
+  finding: clean
+  evidence: 'All fifteen decisions carry at least one rejected alternative, including the two that most invite drift: DEC-003 rejects JWT validation and token introspection, DEC-007 rejects the gateway''s 20000 ms timeout.'
+- vector: dag_order
+  checked: true
+  finding: clean
+  evidence: 'validate-dag.py reports PASS: eleven nodes, fourteen edges, no cycle, every plan step present. STEP-008 depends on STEP-003 because ServiceDefaults consumes PiggyMetricsJson; STEP-009 depends on STEP-006 and STEP-008 because the service entry points consume both.'
+- vector: residual_entropy
+  checked: true
+  finding: clean
+  evidence: review/decision-entropy.yaml lists zero critical unresolved items. The four questions that could have been left open (framework, test ownership, AuthService's scheme, token attachment per edge) are closed by DEC-001, DEC-011, STEP-009 and DEC-014.
+- vector: a11y_or_security_or_ops
+  checked: true
+  finding: resolved
+  evidence: 'Round 1 flagged that a failed user-info call could fall through to an anonymous principal. Resolved: STEP-005 invariants forbid it, the handler returns AuthenticateResult.Fail on every failure path, and ShouldRefuseTokenTheAuthorizationServerDidNotIssue asserts 401. Accessibility is not applicable: P1 ships no user interface, and the gateway''s static assets are untouched.'
+- vector: test_gaps
+  checked: true
+  finding: clean
+  evidence: The P1 done-when clause maps to five named facts in STEP-010 covering acceptance, refusal of an unissued token, refusal without a token, the server policy allowing a server scope and the server policy forbidding a ui scope. The build half of the clause maps to STEP-011.
+- vector: spec_plan_contradiction
+  checked: true
+  finding: resolved
+  evidence: Round 1 flagged that P1.T1 names six projects while the done-when clause needs an executable test. Resolved by DEC-011, which adds tests/Shared.Tests as a test project rather than a seventh runtime service, leaving the P1.T1 project list exactly as written.
+- vector: soft_shape_variance
+  checked: true
+  finding: clean
+  evidence: A regex sweep for the banned soft phrases over every title, change, why, rollback and exact_* field of all eleven steps returns zero hits, and validate-replit-bar.py reports PASS.
+- vector: instructional_pin
+  checked: true
+  finding: clean
+  evidence: 'Every exact_snippet is the complete final file body, delimited by ===== FILE: <path> ===== headers; the same sweep finds no edit-recipe phrasing inside any pin. Thirty-two files are pinned in full.'
+- vector: reference_trace
+  checked: true
+  finding: clean
+  evidence: 'P1 renames, removes and repurposes nothing: the target tree holds no code. Every symbol Shared introduces is consumed only by files this plan also pins, and each later consumer is named by constant (PiggyMetricsAuth.UserPolicy, PiggyMetricsAuth.ServerPolicy, MongoCollectionAttribute, AddPiggyMetricsServiceClient) rather than by a literal a later plan would have to re-derive.'
+- vector: constraint_risk
+  checked: true
+  finding: clean
+  evidence: 'The layout constraints that matter here are MSBuild and runtime, not visual. Checked: central package management forbids per-project versions (STEP-001 invariants), net10.0 resolves against every pinned package nuspec (R-011), the path base must be applied before routing (STEP-008 invariants), and AddAuthorization must be registered before UseAuthorization or the pipeline throws (STEP-008 invariants).'
+- vector: imagination_gap
+  checked: true
+  finding: resolved
+  evidence: 'Round 1 found three gaps: the .sln body, the exact health body and the user-info response shape. Resolved: the solution is produced by a pinned dotnet new sln command instead of hand-written GUIDs, HealthExtensions pins the UP and DOWN literals, and the test stub pins the user-info document the handler reads. A cold implementer writes no text this package does not already contain.'
+- vector: thin_dag
+  checked: true
+  finding: clean
+  evidence: Each of the eleven nodes carries playbook_ref, title, todo_refs, depends_on, critical_path, exact_files, a summary_spec of at least forty characters stating what exists when the node is done, machine and human verification, acceptance, do_not and no_imagination true. validate-execution-depth.py reports PASS.

@@ -1,0 +1,9 @@
+id: R-012
+question: Which access shapes do the controllers express?
+dimension: cross-repo
+evidence: auth-service UserController.java:22-31 (getUser is plain authenticated, createUser carries @PreAuthorize("#oauth2.hasScope('server')")); statistics-service StatisticsController.java:20-36 (getCurrentAccountStatistics authenticated, getStatisticsByAccountName and saveAccountStatistics gate on the server scope, the first also permitting accountName demo); account-service AccountController.java:19-35 and account-service ResourceServerConfig.java:55-60 (/ and /demo permitted anonymously).
+finding: 'Two reusable policies cover the migration: user (authenticated) and server (scope server). The per-resource exceptions such as the demo account are local to their controllers and belong to the service plans.'
+confidence: high
+affects:
+- STEP-006
+- STEP-009

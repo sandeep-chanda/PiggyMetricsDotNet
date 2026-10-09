@@ -1,0 +1,252 @@
+nodes:
+- id: STEP-001
+  playbook_ref: STEP-001
+  title: Create the repository build configuration the whole solution inherits
+  depends_on: []
+  critical_path: true
+  exact_files:
+  - global.json
+  - .gitignore
+  - Directory.Build.props
+  - Directory.Packages.props
+  summary_spec: The repository root carries global.json (SDK 10.0.100, rollForward latestMajor), .gitignore, Directory.Build.props (net10.0) and Directory.Packages.props (central package management with the five pinned versions). No other file declares a framework or a version.
+  verification:
+    machine:
+    - test -f global.json && test -f Directory.Build.props && test -f Directory.Packages.props && test -f .gitignore
+    - python3 -c "import json;json.load(open('global.json'))"
+  acceptance:
+  - The four files exist at the repository root with exactly the pinned bodies.
+  - dotnet --info reports an SDK that global.json resolves without error.
+  no_imagination: true
+- id: STEP-002
+  playbook_ref: STEP-002
+  title: Create the solution and the Shared class library project
+  depends_on:
+  - STEP-001
+  critical_path: true
+  exact_files:
+  - PiggyMetrics.sln
+  - src/Shared/Shared.csproj
+  summary_spec: 'PiggyMetrics.sln exists at the root and lists src/Shared/Shared.csproj: a class library, RootNamespace PiggyMetrics.Shared, AssemblyName Shared, FrameworkReference Microsoft.AspNetCore.App, version-less MongoDB.Driver. It restores and builds on its own.'
+  verification:
+    machine:
+    - dotnet sln PiggyMetrics.sln list
+    - dotnet build src/Shared/Shared.csproj -c Debug
+  acceptance:
+  - PiggyMetrics.sln exists at the repository root and lists src/Shared/Shared.csproj.
+  - dotnet build src/Shared/Shared.csproj succeeds against an empty source set.
+  no_imagination: true
+- id: STEP-003
+  playbook_ref: STEP-003
+  title: Pin the shared JSON contract and the source's date rendering
+  depends_on:
+  - STEP-002
+  critical_path: false
+  exact_files:
+  - src/Shared/Json/PiggyMetricsJson.cs
+  summary_spec: src/Shared/Json/PiggyMetricsJson.cs exists. JacksonDateTimeConverter writes a DateTime as UTC yyyy-MM-dd'T'HH:mm:ss.fff plus the literal +0000 and reads epoch millis and ISO-8601. Configure applies camelCase, case-sensitive matching, skipped unknown members and a name-only enum converter.
+  verification:
+    machine:
+    - dotnet build src/Shared/Shared.csproj -c Debug
+  acceptance:
+  - src/Shared/Json/PiggyMetricsJson.cs exists with exactly the pinned body and the Shared project compiles.
+  - PiggyMetricsJson.Options is read-only after construction, so no caller mutates the shared contract.
+  no_imagination: true
+- id: STEP-004
+  playbook_ref: STEP-004
+  title: Pin the store conventions, serializers and collection naming
+  depends_on:
+  - STEP-002
+  critical_path: false
+  exact_files:
+  - src/Shared/Mongo/MongoConventions.cs
+  - src/Shared/Mongo/MongoExtensions.cs
+  summary_spec: 'src/Shared/Mongo/MongoConventions.cs and MongoExtensions.cs exist: decimal as a BSON string, UTC DateTime, camelCase element names, ignore-extra-elements, ignore-if-null, string enums, MongoCollectionAttribute for collection names, and MongoStoreOptions whose auth source equals the database.'
+  verification:
+    machine:
+    - dotnet build src/Shared/Shared.csproj -c Debug
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - MongoStoreOptions.BuildConnectionString produces mongodb://user:secret@auth-mongodb:27017/piggymetrics?authSource=piggymetrics for the source's auth-service keys.
+  no_imagination: true
+- id: STEP-005
+  playbook_ref: STEP-005
+  title: Pin the bearer handler that resolves a token through the authorization server
+  depends_on:
+  - STEP-002
+  critical_path: true
+  exact_files:
+  - src/Shared/Security/PiggyMetricsAuth.cs
+  - src/Shared/Security/UserInfoAuthenticationHandler.cs
+  summary_spec: src/Shared/Security/PiggyMetricsAuth.cs and UserInfoAuthenticationHandler.cs exist. The handler resolves the presented token at the user-info endpoint, fails closed on a bad status, a transport error or an error member, and emits a principal with the PRINCIPAL_KEYS name, the client id, one claim per scope and the authorities.
+  verification:
+    machine:
+    - dotnet build src/Shared/Shared.csproj -c Debug
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - The handler's failure message is the source's literal Could not fetch user details.
+  no_imagination: true
+- id: STEP-006
+  playbook_ref: STEP-006
+  title: Register the bearer scheme and the user and server authorization policies
+  depends_on:
+  - STEP-005
+  critical_path: true
+  exact_files:
+  - src/Shared/Security/SecurityExtensions.cs
+  summary_spec: src/Shared/Security/SecurityExtensions.cs exists. AddPiggyMetricsResourceServer registers the user-info HTTP client, the Bearer scheme, the user policy (authenticated) and the server policy (authenticated plus a scope claim whose value is server), with an authenticated default policy.
+  verification:
+    machine:
+    - dotnet build src/Shared/Shared.csproj -c Debug
+  acceptance:
+  - src/Shared/Security/SecurityExtensions.cs exists with exactly the pinned body and the Shared project compiles.
+  - AddPiggyMetricsResourceServer registers the user policy, the server policy and the Bearer scheme in one call.
+  no_imagination: true
+- id: STEP-007
+  playbook_ref: STEP-007
+  title: Pin the typed-client base, the source's timeout and the client-credentials token cache
+  depends_on:
+  - STEP-002
+  critical_path: false
+  exact_files:
+  - src/Shared/Http/ServiceClients.cs
+  - src/Shared/Http/HttpClientExtensions.cs
+  summary_spec: 'src/Shared/Http/ServiceClients.cs and HttpClientExtensions.cs exist: ServiceClientOptions with the 10000 ms timeout, a client-credentials token provider caching one token per process behind a semaphore until expiry, a bearer-attaching handler, and the token-carrying and token-free client registrations.'
+  verification:
+    machine:
+    - dotnet build src/Shared/Shared.csproj -c Debug
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - ServiceClientOptions.SourceTimeoutMilliseconds is 10000 and is the only timeout literal in Shared.
+  no_imagination: true
+- id: STEP-008
+  playbook_ref: STEP-008
+  title: Pin the actuator health endpoint and the service default composition
+  depends_on:
+  - STEP-003
+  critical_path: false
+  exact_files:
+  - src/Shared/Health/HealthExtensions.cs
+  - src/Shared/ServiceDefaults.cs
+  summary_spec: src/Shared/Health/HealthExtensions.cs and ServiceDefaults.cs exist. The anonymous /actuator/health answers 200 with the UP body and 503 with the DOWN body; AddPiggyMetricsDefaults and UsePiggyMetricsDefaults wire the JSON contract, authentication, authorization, health and controllers behind the configured path base.
+  verification:
+    machine:
+    - dotnet build src/Shared/Shared.csproj -c Debug
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - ServiceDefaults wires PiggyMetricsJson into both AddControllers().AddJsonOptions and ConfigureHttpJsonOptions.
+  no_imagination: true
+- id: STEP-009
+  playbook_ref: STEP-009
+  title: Create the five runtime service projects on the shared defaults
+  depends_on:
+  - STEP-006
+  - STEP-008
+  critical_path: true
+  exact_files:
+  - src/Gateway/Gateway.csproj
+  - src/Gateway/Program.cs
+  - src/Gateway/appsettings.json
+  - src/AuthService/AuthService.csproj
+  - src/AuthService/Program.cs
+  - src/AuthService/appsettings.json
+  - src/AccountService/AccountService.csproj
+  - src/AccountService/Program.cs
+  - src/AccountService/appsettings.json
+  - src/StatisticsService/StatisticsService.csproj
+  - src/StatisticsService/Program.cs
+  - src/StatisticsService/appsettings.json
+  - src/NotificationService/NotificationService.csproj
+  - src/NotificationService/Program.cs
+  - src/NotificationService/appsettings.json
+  summary_spec: 'Five web projects with Program.cs and appsettings.json exist under src/ and are in the solution: Gateway 4000 health only, AuthService 5000 /uaa without a resource server, AccountService 6000 /accounts, StatisticsService 7000 /statistics and NotificationService 8000 /notifications with one. All reference Shared.'
+  verification:
+    machine:
+    - dotnet sln PiggyMetrics.sln list
+    - dotnet build PiggyMetrics.sln -c Debug
+  acceptance:
+  - All fifteen files exist with exactly the pinned bodies.
+  - dotnet build PiggyMetrics.sln succeeds for all six projects.
+  no_imagination: true
+- id: STEP-010
+  playbook_ref: STEP-010
+  title: Add the Shared test project and prove the bearer handler accepts and refuses
+  depends_on:
+  - STEP-006
+  critical_path: false
+  exact_files:
+  - tests/Shared.Tests/Shared.Tests.csproj
+  - tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs
+  summary_spec: 'tests/Shared.Tests is in the solution and asserts five outcomes against a TestServer whose user-info client is an AuthorizationServerStub: accepted issued token, refused unissued token, refused tokenless request, allowed server scope, forbidden ui scope on the server policy.'
+  verification:
+    machine:
+    - dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
+  acceptance:
+  - Both files exist with exactly the pinned bodies.
+  - dotnet test reports five passed tests and zero failures.
+  - The P1 done-when clause about accepting an issued token and refusing an unissued one is satisfied by named, repeatable tests.
+  no_imagination: true
+- id: STEP-011
+  playbook_ref: STEP-011
+  title: Gate P1 on a clean solution build and a green test run
+  depends_on:
+  - STEP-004
+  - STEP-007
+  - STEP-009
+  - STEP-010
+  critical_path: true
+  exact_files:
+  - PiggyMetrics.sln
+  summary_spec: One run from the repository root restores, builds and tests PiggyMetrics.sln with zero errors and five passing tests, the solution lists the six source projects plus tests/Shared.Tests, and one commit names P1.T1 through P1.T5. Both halves of the P1 done-when clause are proven.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln -c Debug --no-restore
+    - dotnet test PiggyMetrics.sln -c Debug --no-build
+  acceptance:
+  - dotnet build PiggyMetrics.sln succeeds.
+  - dotnet test PiggyMetrics.sln reports five passed tests and zero failures.
+  - dotnet sln list prints exactly the six source projects and tests/Shared.Tests.
+  - 'P1 is done: every project builds, and the bearer handler accepts an issued token and refuses one that was not issued.'
+  no_imagination: true
+edges:
+- from: STEP-001
+  to: STEP-002
+- from: STEP-002
+  to: STEP-003
+- from: STEP-002
+  to: STEP-004
+- from: STEP-002
+  to: STEP-005
+- from: STEP-005
+  to: STEP-006
+- from: STEP-002
+  to: STEP-007
+- from: STEP-003
+  to: STEP-008
+- from: STEP-006
+  to: STEP-009
+- from: STEP-008
+  to: STEP-009
+- from: STEP-006
+  to: STEP-010
+- from: STEP-004
+  to: STEP-011
+- from: STEP-007
+  to: STEP-011
+- from: STEP-009
+  to: STEP-011
+- from: STEP-010
+  to: STEP-011
+parallel_groups:
+- id: PG-1
+  after: STEP-002
+  nodes:
+  - STEP-003
+  - STEP-004
+  - STEP-005
+  - STEP-007
+- id: PG-2
+  after: STEP-006
+  nodes:
+  - STEP-009
+  - STEP-010

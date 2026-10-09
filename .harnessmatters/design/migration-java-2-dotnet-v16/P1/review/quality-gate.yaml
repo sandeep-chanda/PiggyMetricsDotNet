@@ -1,0 +1,22 @@
+task_id: mig-java-dotnet-v16-p1
+result: PASS
+checks:
+  critic_pass: true
+  scorecard_all_tens: true
+  entropy_zero_critical: true
+  dag_valid: true
+  letter_to_letter_plan: true
+  full_skeleton_dag: true
+  zero_coding_agent_imagination: true
+  execution_depth_validated: true
+  plan_mode_no_target_writes: true
+  playbook_importer_completed: true
+  handoff_simulation_pass: true
+validators:
+- 'validate-dag.py: PASS'
+- 'validate-entropy.py: PASS'
+- 'validate-execution-depth.py: PASS'
+- 'validate-replit-bar.py: PASS'
+- 'validate-playbook.py: PASS'
+- 'check-handoff.py: PASS'
+notes: The target repository was not modified by the planner; every artifact lives under the planner workspace.

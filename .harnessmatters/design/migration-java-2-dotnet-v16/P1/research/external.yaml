@@ -1,0 +1,11 @@
+sources_fetched:
+- raw.githubusercontent.com spring-framework v5.0.7.RELEASE Jackson2ObjectMapperBuilder.java
+- raw.githubusercontent.com spring-boot v2.0.3.RELEASE JacksonAutoConfiguration.java
+- raw.githubusercontent.com spring-boot v2.0.3.RELEASE spring-boot-dependencies/pom.xml
+- raw.githubusercontent.com jackson-databind 2.9.6 StdDateFormat.java
+- api.nuget.org flat-container indexes and nuspecs for MongoDB.Driver, xunit, xunit.runner.visualstudio, Microsoft.NET.Test.Sdk, Microsoft.AspNetCore.TestHost, Microsoft.AspNetCore.Mvc.Testing
+findings:
+- R-007
+- R-008
+- R-010
+- R-011

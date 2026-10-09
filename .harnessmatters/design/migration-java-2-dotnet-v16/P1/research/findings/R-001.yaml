@@ -1,0 +1,10 @@
+id: R-001
+question: What does the target repository already contain?
+dimension: repository
+evidence: git ls-files in /tmp/hm-claude-code-sjkuv0jj returns README.md, AGENTS.md, .cursor/rules/harness-matters.mdc and the .harnessmatters tree only. README.md reads 'PiggyMetricsDotNet / Sample .NET Migration'.
+finding: The target is a greenfield .NET repository. No precedent constrains the layout, so the plan must pin the layout itself rather than follow one.
+confidence: high
+affects:
+- STEP-001
+- STEP-002
+- STEP-009

@@ -1,0 +1,40 @@
+options:
+- id: OPT-001
+  question: How does a .NET resource server validate a PiggyMetrics token?
+  candidates:
+  - option: Call the authorization server's user-info endpoint per request
+    chosen: true
+    why: It is what CustomUserInfoTokenServices does, and it is the only option that works against an InMemoryTokenStore.
+  - option: Validate a JWT locally
+    chosen: false
+    why: The source issues opaque tokens and publishes no signing key.
+  - option: Call /oauth/check_token
+    chosen: false
+    why: The source's resource servers never call it and its document differs.
+- id: OPT-002
+  question: Where do the document conventions live?
+  candidates:
+  - option: One convention pack registered from Shared
+    chosen: true
+    why: One place to keep parity with Spring Data's write shape across four stores.
+  - option: Attributes on each document class
+    chosen: false
+    why: The same six rules would be restated per member and would drift between plans.
+- id: OPT-003
+  question: How is the JSON contract applied?
+  candidates:
+  - option: A Configure method applied to both the MVC and the minimal-API options
+    chosen: true
+    why: A service gets the identical contract on both pipelines with one call.
+  - option: A shared static JsonSerializerOptions injected at each call site
+    chosen: false
+    why: Controllers would still use the framework defaults.
+- id: OPT-004
+  question: Does P1 ship a test project?
+  candidates:
+  - option: tests/Shared.Tests in P1
+    chosen: true
+    why: The P1 done-when clause asserts a Shared behaviour and no later plan owns Shared.
+  - option: Defer to P2
+    chosen: false
+    why: P1 would close with an unverifiable clause.

@@ -1,0 +1,43 @@
+task_id: mig-java-dotnet-v16-p1
+triggered: true
+kind: platform migration, Java Spring Boot to .NET
+plan_key: P1
+strategy: Behaviour-preserving rewrite. The source stays the system of record; every .NET shape is pinned from a cited source file. P1 carries over only the cross-cutting concerns, so each later plan ports one service against a fixed base.
+mapping:
+- source: pom.xml reactor module list
+  target: PiggyMetrics.sln
+  step: STEP-002
+- source: spring-boot-starter-parent properties and dependencyManagement
+  target: Directory.Build.props and Directory.Packages.props
+  step: STEP-001
+- source: CustomUserInfoTokenServices plus @EnableResourceServer
+  target: UserInfoAuthenticationHandler plus AddPiggyMetricsResourceServer
+  step: STEP-005, STEP-006
+- source: '@PreAuthorize(#oauth2.hasScope(''server'')) and anyRequest().authenticated()'
+  target: the server policy and the user policy
+  step: STEP-006
+- source: Spring Data MongoDB mapping defaults and BigDecimalToStringConverter
+  target: MongoConventions plus BigDecimalSerializer
+  step: STEP-004
+- source: spring.data.mongodb.* keys
+  target: MongoStoreOptions bound to Spring:Data:MongoDB
+  step: STEP-004
+- source: OAuth2FeignRequestInterceptor plus the Hystrix default timeout
+  target: ClientCredentialsHandler plus the 10000 ms client timeout
+  step: STEP-007
+- source: spring-boot-starter-actuator /actuator/health
+  target: MapPiggyMetricsHealthChecks
+  step: STEP-008
+- source: Jackson defaults under Spring Boot 2.0.3
+  target: PiggyMetricsJson
+  step: STEP-003
+- source: server.port and server.servlet.context-path per service
+  target: Kestrel endpoint URL and Server:Servlet:ContextPath per service
+  step: STEP-009
+not_migrated_in_p1:
+- config
+- registry
+- monitoring
+- turbine-stream-service
+- the RabbitMQ bus
+- the gateway routing table

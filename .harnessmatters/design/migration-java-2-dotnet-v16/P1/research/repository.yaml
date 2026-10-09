@@ -1,0 +1,14 @@
+target_repo_scan:
+  path: /tmp/hm-claude-code-sjkuv0jj
+  tracked_files:
+  - README.md
+  - AGENTS.md
+  - .cursor/rules/harness-matters.mdc
+  - .harnessmatters/**
+  stack_discovered: none yet; the repository is an empty migration target whose README reads 'Sample .NET Migration'
+  build_tooling_present: none; no solution, project, package manifest, lockfile or CI definition is tracked
+  default_branch: main
+precedents_found: []
+note: The target repository tracks no source file, so no in-repo precedent constrains this plan; the layout is pinned by DEC-002 and recorded as finding R-001.
+findings:
+- R-001

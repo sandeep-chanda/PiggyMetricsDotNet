@@ -1,0 +1,10 @@
+id: R-003
+question: How do the resource servers validate a token?
+dimension: cross-repo
+evidence: account-service ResourceServerConfig.java:23-60 builds CustomUserInfoTokenServices from ResourceServerProperties.getUserInfoUri; shared/application.yml:20-23 sets that URI to http://auth-service:5000/uaa/users/current; CustomUserInfoTokenServices.java:36 declares PRINCIPAL_KEYS, :68-73 rejects a map holding error, :97-107 reads oauth2Request.clientId and oauth2Request.scope, :129-137 converts any failure into that error map. auth-service OAuth2AuthorizationConfig.java:25 uses an InMemoryTokenStore and publishes no key.
+finding: The tokens are opaque. Validation is a call to the user-info endpoint carrying the presented token; the response supplies the principal, the client id and the scopes. A JWT-based .NET handler would be wrong.
+confidence: high
+affects:
+- STEP-005
+- STEP-006
+- STEP-010

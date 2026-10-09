@@ -1,0 +1,16 @@
+questions:
+  - id: Q-001
+    question: How are similar features implemented in this repository?
+    dimension: repository
+    status: open
+    finding_refs: []
+  - id: Q-002
+    question: Is there already an abstraction for incremental ingestion?
+    dimension: repository
+    status: open
+    finding_refs: []
+  - id: Q-003
+    question: What does the framework/environment officially recommend?
+    dimension: external
+    status: open
+    finding_refs: []

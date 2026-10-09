@@ -1,0 +1,53 @@
+task_id: mig-java-dotnet-v16-p1
+result: PASS
+simulated_agent: cold coding agent given final/PLAYBOOK.md, final/DAG.yaml, the raw spec and read access to TargetRepo
+critical_unanswered: []
+qa:
+- q: Which target framework and SDK do I use?
+  a: net10.0 from Directory.Build.props, SDK 10.0.100 with rollForward latestMajor from global.json. Both bodies are pinned as exact_snippet in STEP-001; no choice is left open.
+  severity: critical
+  answered: true
+- q: What exactly do I write into the bearer handler?
+  a: The complete final source of src/Shared/Security/UserInfoAuthenticationHandler.cs is pinned as exact_snippet in STEP-005 and repeated in the PLAYBOOK body as a labelled fence. Nothing is described in prose only.
+  severity: critical
+  answered: true
+- q: What does the user-info endpoint return, and which members do I read?
+  a: 'STEP-005 existing_implementation cites CustomUserInfoTokenServices lines 36, 68-73, 97-107 and 129-137, and the STEP-010 stub pins the exact document shape: name, oauth2Request.clientId, oauth2Request.scope and authorities.'
+  severity: critical
+  answered: true
+- q: How do I name the authorization policies the later plans refer to?
+  a: The literals user and server, exposed as PiggyMetricsAuth.UserPolicy and PiggyMetricsAuth.ServerPolicy. Pinned in the STEP-005 and STEP-006 snippets and restated in DEC-004.
+  severity: critical
+  answered: true
+- q: What timeout do I give an outbound client?
+  a: 10000 ms, from ServiceClientOptions.SourceTimeoutMilliseconds in the STEP-007 snippet. DEC-007 records why the gateway's 20000 ms is not used.
+  severity: high
+  answered: true
+- q: How is a decimal stored, given the Java side writes BigDecimal?
+  a: As a BSON string, through BigDecimalSerializer in the STEP-004 snippet, which still reads Double, Int32, Int64 and Decimal128 so hand-seeded documents keep loading.
+  severity: high
+  answered: true
+- q: What body does the health endpoint return?
+  a: The literal {"status":"UP"} with 200 or {"status":"DOWN"} with 503, pinned as UpBody and DownBody in the STEP-008 snippet.
+  severity: high
+  answered: true
+- q: Which files do I create and in what order?
+  a: Thirty-two pinned files across eleven steps; final/DAG.yaml gives exact_files and depends_on per node, and parallel_groups marks STEP-003, STEP-004, STEP-005 and STEP-007 as independent after STEP-002.
+  severity: high
+  answered: true
+- q: Do I add a controller, a document class or a Mongo registration anywhere in P1?
+  a: No. Each step's do_not forbids it explicitly and spec/normalized.yaml lists them as P2 and P3 scope.
+  severity: high
+  answered: true
+- q: How do I know P1 is finished?
+  a: 'STEP-011: dotnet build PiggyMetrics.sln succeeds for all seven projects and dotnet test reports five passed and zero failed, which is both halves of the done-when clause.'
+  severity: critical
+  answered: true
+- q: What indentation do the pinned snippets use?
+  a: One tab per level, in every pinned file, per DEC-015. The artifact text is copied verbatim; no reformatting is required.
+  severity: medium
+  answered: true
+- q: Why does AuthService not register the resource server?
+  a: Because it issues the tokens and authenticates against its own user store; STEP-009 existing_implementation cites auth-service WebSecurityConfig lines 18-36 and the step's invariants state it.
+  severity: high
+  answered: true

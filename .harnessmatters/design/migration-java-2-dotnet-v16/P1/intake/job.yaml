@@ -1,0 +1,12 @@
+task_id: mig-java-dotnet-v16-p1
+spec_path: /tmp/gen/spec.md
+target_repo_path: /tmp/hm-claude-code-sjkuv0jj
+connection_meta_path: ""
+related_repos: []
+mode: plan_only
+constraints:
+  - Cursor Plan Mode only
+  - No writes to target repository
+  - Writes only under this workspace
+  - Use connection.meta sibling_repos + auth refs (docs/CONNECTION.md)
+created_at: 2026-10-09T04:58:53.899166+00:00

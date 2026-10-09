@@ -1,0 +1,53 @@
+task_id: mig-java-dotnet-v16-p1
+critical_unresolved_count: 0
+items:
+- id: E-001
+  topic: Target framework
+  severity: critical
+  action: ALLOW
+  resolution: DEC-001 pins net10.0 and one SDK band.
+- id: E-002
+  topic: Project and assembly naming
+  severity: high
+  action: ALLOW
+  resolution: DEC-002 pins src/<Project> with AssemblyName equal to the project name.
+- id: E-003
+  topic: Token validation strategy
+  severity: critical
+  action: ALLOW
+  resolution: DEC-003 pins the user-info call; JWT and introspection are recorded as rejected.
+- id: E-004
+  topic: Policy names
+  severity: critical
+  action: ALLOW
+  resolution: DEC-004 pins the literals user and server.
+- id: E-005
+  topic: Decimal and date representation in the store
+  severity: high
+  action: ALLOW
+  resolution: DEC-005 pins decimal as a BSON string and DateTime as a UTC BSON datetime.
+- id: E-006
+  topic: Edge timeout
+  severity: high
+  action: ALLOW
+  resolution: DEC-007 pins 10000 ms and records why 20000 ms is wrong here.
+- id: E-007
+  topic: JSON date rendering
+  severity: critical
+  action: ALLOW
+  resolution: DEC-009 pins yyyy-MM-dd'T'HH:mm:ss.fff plus the literal +0000 in UTC.
+- id: E-008
+  topic: Health body
+  severity: high
+  action: ALLOW
+  resolution: DEC-010 pins the UP and DOWN literals and the status codes.
+- id: E-009
+  topic: Ownership of the Shared test project
+  severity: medium
+  action: ALLOW
+  resolution: DEC-011 places tests/Shared.Tests in P1.
+- id: E-010
+  topic: Token attachment per edge
+  severity: high
+  action: ALLOW
+  resolution: DEC-014 pins two registration methods, chosen by the edge's source behaviour.

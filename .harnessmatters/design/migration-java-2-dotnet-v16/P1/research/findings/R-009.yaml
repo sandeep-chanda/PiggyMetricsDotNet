@@ -1,0 +1,8 @@
+id: R-009
+question: Against which database does a service authenticate?
+dimension: cross-repo
+evidence: mongodb/init.sh:11-13 creates the login inside the piggymetrics database with the readWrite role on piggymetrics. shared/*.yml give host, username, password, database piggymetrics and port 27017 and no separate authentication database, and Spring Data MongoDB defaults the authentication database to the configured database.
+finding: The connection string must carry authSource equal to the database name, not admin.
+confidence: high
+affects:
+- STEP-004

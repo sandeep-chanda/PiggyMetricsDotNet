@@ -1,0 +1,27 @@
+task_id: mig-java-dotnet-v16-p1
+gaps:
+- id: G-001
+  from_critic: C-001
+  root_cause: The planner reasoned about Jackson defaults instead of reading them.
+  action: Fetched the four upstream sources and recorded R-007.
+  status: closed
+- id: G-002
+  from_critic: C-002
+  root_cause: Three artifacts were described rather than pinned.
+  action: Pinned a generator command for the solution and literal bodies for the health response and the user-info document.
+  status: closed
+- id: G-003
+  from_critic: C-003
+  root_cause: The done-when clause was read as prose rather than as an acceptance test.
+  action: Added DEC-011 and STEP-010.
+  status: closed
+- id: G-004
+  from_critic: C-004
+  root_cause: The failure path of CustomUserInfoTokenServices.getMap was skimmed.
+  action: Read lines 129-137, which convert any failure into an error map that loadAuthentication rejects, and encoded fail-closed behaviour plus a test.
+  status: closed
+- id: G-005
+  from_critic: C-005
+  root_cause: The boundary between P1 and the service plans was implicit.
+  action: Made it explicit in spec/normalized.yaml out_of_scope and in per-step do_not lists.
+  status: closed

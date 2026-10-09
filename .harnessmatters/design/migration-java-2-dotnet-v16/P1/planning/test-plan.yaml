@@ -1,0 +1,37 @@
+task_id: mig-java-dotnet-v16-p1
+strategy: P1 ships one test project, tests/Shared.Tests, because the P1 done-when clause asserts a behaviour of Shared. Service-level test projects arrive with their own plans (P2 ports nine tests into AuthService.Tests, P3 ports sixteen into StatisticsService.Tests).
+suites:
+- project: tests/Shared.Tests
+  framework: xunit 2.9.3 over Microsoft.AspNetCore.TestHost 10.0.12
+  command: dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
+  cases:
+  - name: ShouldAcceptTokenIssuedByAuthorizationServer
+    asserts: 200 and the principal name demo for a token the stub recognises
+    covers:
+    - REQ-P1-T2
+    - REQ-P1-DONE2
+  - name: ShouldRefuseTokenTheAuthorizationServerDidNotIssue
+    asserts: 401 for a token the stub rejects
+    covers:
+    - REQ-P1-T2
+    - REQ-P1-DONE2
+  - name: ShouldRefuseRequestWithoutToken
+    asserts: 401 when no Authorization header is present
+    covers:
+    - REQ-P1-T2
+  - name: ShouldAllowServerPolicyForServerScope
+    asserts: 200 on the server policy for a token carrying the server scope
+    covers:
+    - REQ-P1-T2
+  - name: ShouldRejectServerPolicyForUiScope
+    asserts: 403 on the server policy for a token carrying only the ui scope
+    covers:
+    - REQ-P1-T2
+build_gate:
+  command: dotnet build PiggyMetrics.sln -c Debug
+  covers:
+  - REQ-P1-T1
+  - REQ-P1-DONE1
+not_covered_in_p1:
+- Mongo document round-trips, which need a document class; covered by the repository tests P2 and P3 port.
+- The client-credentials token cache against a live authorization server; covered once an edge exists in P3.

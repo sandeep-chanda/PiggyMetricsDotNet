@@ -1,0 +1,8 @@
+id: R-006
+question: What timeout does an outbound service call get, and how is its token cached?
+dimension: cross-repo
+evidence: shared/application.yml:7-13 sets hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds to 10000. shared/gateway.yml:1-18 raises the gateway's own Hystrix, Ribbon and Zuul timeouts to 20000. account-service ResourceServerConfig.java:40-48 registers OAuth2FeignRequestInterceptor over a DefaultOAuth2ClientContext, which holds the token until DefaultOAuth2AccessToken.isExpired() becomes true.
+finding: A service edge times out at 10000 ms; 20000 ms belongs to the gateway only. The token is cached per process and renewed exactly at expiry, with no safety margin.
+confidence: high
+affects:
+- STEP-007

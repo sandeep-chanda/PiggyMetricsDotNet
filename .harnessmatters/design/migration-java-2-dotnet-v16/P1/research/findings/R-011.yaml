@@ -1,0 +1,9 @@
+id: R-011
+question: Which .NET line and package versions are current and mutually compatible?
+dimension: external
+evidence: 'nuget.org flat-container indexes read during this run: Microsoft.AspNetCore.Mvc.Testing and Microsoft.AspNetCore.TestHost top out at 10.0.12, Microsoft.NET.Test.Sdk at 18.10.1, xunit at 2.9.3, xunit.runner.visualstudio at 3.1.5, MongoDB.Driver at 3.12.0. The nuspecs of xunit.runner.visualstudio 3.1.5, Microsoft.NET.Test.Sdk 18.10.1 and MongoDB.Driver 3.12.0 all carry a net8.0 or net6.0 dependency group, so a net10.0 project consumes them.'
+finding: net10.0 is the current line and every pinned package resolves against it. Pinning an older target framework would force older ASP.NET Core test packages for no benefit.
+confidence: high
+affects:
+- STEP-001
+- STEP-010

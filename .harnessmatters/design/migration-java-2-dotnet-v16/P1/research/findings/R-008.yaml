@@ -1,0 +1,8 @@
+id: R-008
+question: How are enums and unknown members handled on the wire?
+dimension: external
+evidence: Currency.java:3-8, TimePeriod.java:3-7 and StatisticMetric.java:3-7 are plain enums with no Jackson annotation, so Jackson writes the declared name and rejects an integer. Account.java:3 imports org.codehaus.jackson.annotate.JsonIgnoreProperties, a Jackson 1.x annotation that Jackson 2 ignores, but Jackson2ObjectMapperBuilder already turns FAIL_ON_UNKNOWN_PROPERTIES off.
+finding: Enums travel as names, integers are rejected, and unknown incoming members are skipped irrespective of the stale Jackson 1.x annotation.
+confidence: high
+affects:
+- STEP-003

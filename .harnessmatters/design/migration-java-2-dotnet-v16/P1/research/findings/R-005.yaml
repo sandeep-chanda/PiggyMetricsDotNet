@@ -1,0 +1,10 @@
+id: R-005
+question: Which clients, grants and scopes does the authorization server issue?
+dimension: cross-repo
+evidence: auth-service OAuth2AuthorizationConfig.java:43-64 declares browser (refresh_token, password; scope ui), account-service, statistics-service and notification-service (client_credentials, refresh_token; scope server). shared/account-service.yml:1-8 and statistics-service.yml:1-8 carry clientId, clientSecret, accessTokenUri http://auth-service:5000/uaa/oauth/token, grant-type client_credentials, scope server.
+finding: 'Two scope values matter to the resource servers: ui for a browser token and server for a service token. The .NET policies must be keyed on the scope claim.'
+confidence: high
+affects:
+- STEP-006
+- STEP-007
+- STEP-010

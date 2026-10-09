@@ -1,0 +1,176 @@
+decisions:
+- id: DEC-001
+  title: Target net10.0 with an SDK roll-forward pin
+  status: accepted
+  decision: Directory.Build.props sets TargetFramework net10.0 for every project, and global.json pins SDK 10.0.100 with rollForward latestMajor.
+  alternatives_rejected:
+  - net8.0, whose support window closes in November 2026 and whose ASP.NET Core test packages lag the 10.0.x line read from nuget.org during this run.
+  evidence:
+  - R-011
+  affects:
+  - STEP-001
+- id: DEC-002
+  title: Fixed src and tests layout with PiggyMetrics root namespaces
+  status: accepted
+  decision: A source project lives at src/NAME/NAME.csproj with AssemblyName NAME and RootNamespace PiggyMetrics.NAME; a test project lives at tests/NAME.Tests/NAME.Tests.csproj.
+  alternatives_rejected:
+  - A flat repository root per Maven module, which loses the source and test split the later plans assume.
+  evidence:
+  - R-001
+  - R-002
+  affects:
+  - STEP-002
+  - STEP-009
+  - STEP-010
+- id: DEC-003
+  title: Validate bearer tokens by calling the authorization server's user-info endpoint
+  status: accepted
+  decision: Shared ships a custom AuthenticationHandler that resolves every presented token at http://auth-service:5000/uaa/users/current and builds the principal from the response.
+  alternatives_rejected:
+  - JWT bearer validation, which has no key to validate against.
+  - Token introspection at /oauth/check_token, which the source's resource servers do not call and which returns a different document.
+  evidence:
+  - R-003
+  affects:
+  - STEP-005
+  - STEP-006
+- id: DEC-004
+  title: Name the two authorization policies user and server in Shared
+  status: accepted
+  decision: Shared registers a user policy requiring an authenticated caller and a server policy additionally requiring a scope claim whose value is server.
+  alternatives_rejected:
+  - Per-service policies, which would let each plan pick its own name and break the spec's vocabulary.
+  evidence:
+  - R-005
+  - R-012
+  affects:
+  - STEP-006
+- id: DEC-005
+  title: Register one MongoDB convention pack reproducing Spring Data's write shape
+  status: accepted
+  decision: MongoConventions.Register installs camelCase element names, ignore-extra-elements, ignore-if-null, string enum representation, a decimal-as-BSON-string serializer that still reads numeric values, and UTC DateTime serializers.
+  alternatives_rejected:
+  - Per-document BsonElement attributes, which would restate the same rule on every member and drift.
+  - Storing decimals as Decimal128, which the Java services would read as the wrong type.
+  evidence:
+  - R-004
+  - R-009
+  - R-010
+  affects:
+  - STEP-004
+- id: DEC-006
+  title: Pin collection names with MongoCollectionAttribute
+  status: accepted
+  decision: A document type declares its collection with [MongoCollection("...")] and MongoConventions.CollectionName throws when it is missing.
+  alternatives_rejected:
+  - Deriving the collection name from the class name, which would silently produce accounts for Account but datapoints only by luck for DataPoint.
+  evidence:
+  - R-004
+  affects:
+  - STEP-004
+- id: DEC-007
+  title: Use 10000 ms as the edge timeout
+  status: accepted
+  decision: ServiceClientOptions.SourceTimeoutMilliseconds is 10000 and every client Shared registers uses it.
+  alternatives_rejected:
+  - 20000 ms, which is the gateway's Zuul and Ribbon setting and would make every service edge twice as patient as the source.
+  evidence:
+  - R-006
+  affects:
+  - STEP-007
+- id: DEC-008
+  title: Cache one client-credentials token per process and renew it at expiry
+  status: accepted
+  decision: ClientCredentialsTokenProvider caches the token behind a semaphore and treats it as usable while UtcNow is strictly before the reported expiry, with no safety margin.
+  alternatives_rejected:
+  - A refresh margin, which would change renewal timing relative to the source.
+  - Fetching a token per call, which would multiply authorization-server load.
+  evidence:
+  - R-006
+  affects:
+  - STEP-007
+- id: DEC-009
+  title: Reproduce the source's JSON contract once, in Shared
+  status: accepted
+  decision: PiggyMetricsJson.Configure sets camelCase naming, case-sensitive matching, skipped unknown members, numeric strings accepted, a name-only enum converter and JacksonDateTimeConverter writing yyyy-MM-dd'T'HH:mm:ss.fff+0000 in UTC.
+  alternatives_rejected:
+  - System.Text.Json's default DateTime rendering, which emits a colon in the offset and a variable fractional length.
+  - Case-insensitive property matching, the ASP.NET Core default, which is looser than Jackson.
+  evidence:
+  - R-007
+  - R-008
+  affects:
+  - STEP-003
+- id: DEC-010
+  title: Expose only /actuator/health, with the Boot 2.0 body shape
+  status: accepted
+  decision: MapPiggyMetricsHealthChecks maps an anonymous /actuator/health answering {"status":"UP"} with 200 and {"status":"DOWN"} with 503, with no detail.
+  alternatives_rejected:
+  - The ASP.NET Core default plain-text health body, which no existing probe parses.
+  - Exposing the wider actuator surface, which the source does not probe.
+  evidence:
+  - R-002
+  affects:
+  - STEP-008
+- id: DEC-011
+  title: Create tests/Shared.Tests inside P1
+  status: accepted
+  decision: P1 adds tests/Shared.Tests with five facts covering acceptance, refusal and the two policies.
+  alternatives_rejected:
+  - Deferring the proof to P2's AuthService.Tests, which would leave P1's done-when unverifiable at the P1 commit boundary.
+  evidence:
+  - R-003
+  - R-005
+  affects:
+  - STEP-010
+- id: DEC-012
+  title: Central package management with pinned versions
+  status: accepted
+  decision: Directory.Packages.props carries every PackageVersion and no csproj carries a Version attribute.
+  alternatives_rejected:
+  - Per-project versions, which drift across seven projects and six plans.
+  evidence:
+  - R-001
+  - R-011
+  affects:
+  - STEP-001
+- id: DEC-013
+  title: Carry over no service-discovery, config-server or Hystrix infrastructure
+  status: accepted
+  decision: The .NET solution holds no counterpart for those four modules; configuration comes from appsettings.json plus environment variables, and addresses are configuration values.
+  alternatives_rejected:
+  - Porting Eureka and Spring Cloud Config, which the spec does not ask for and which would add four projects no todo names.
+  evidence:
+  - R-002
+  affects:
+  - STEP-002
+  - STEP-009
+- id: DEC-014
+  title: Offer a token-carrying client registration and a token-free one
+  status: accepted
+  decision: Shared exposes AddPiggyMetricsServiceClient (bearer attached) and AddPiggyMetricsEdgeClient (no bearer), both at the 10000 ms timeout.
+  alternatives_rejected:
+  - One registration that always attaches a token, which would send a PiggyMetrics token to the external exchange-rates host.
+  evidence:
+  - R-006
+  affects:
+  - STEP-007
+- id: DEC-015
+  title: Indent every pinned source file with tabs
+  status: accepted
+  decision: Every pinned file in this package is indented with one tab per level, matching the source repository's own tab indentation.
+  alternatives_rejected:
+  - Four-space indentation, which would break the pinned fences in PLAYBOOK.md and HANDOFF.md.
+  evidence:
+  - R-001
+  affects:
+  - STEP-001
+  - STEP-002
+  - STEP-003
+  - STEP-004
+  - STEP-005
+  - STEP-006
+  - STEP-007
+  - STEP-008
+  - STEP-009
+  - STEP-010

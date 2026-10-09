@@ -1,0 +1,21 @@
+questions:
+- id: OQ-001
+  question: Which .NET target framework does the migration standardise on?
+  status: resolved
+  resolution: DEC-001 pins net10.0 with an SDK roll-forward pin; evidence R-011 shows the current ASP.NET Core package line is 10.0.x.
+  blocking: false
+- id: OQ-002
+  question: Does P1 own a test project, given the done-when clause names a behaviour of Shared?
+  status: resolved
+  resolution: DEC-011 adds tests/Shared.Tests in P1, because no later plan owns Shared and the clause would otherwise be unverifiable.
+  blocking: false
+- id: OQ-003
+  question: Does the Shared bearer handler also serve AuthService?
+  status: resolved
+  resolution: No. AuthService issues the tokens and authenticates against its own user store (WebSecurityConfig), so STEP-009 deliberately omits the resource-server registration there.
+  blocking: false
+- id: OQ-004
+  question: Should every typed client carry a client-credentials token?
+  status: resolved
+  resolution: 'No. DEC-014: account-service declares OAuth2FeignRequestInterceptor, statistics-service does not, so Shared offers a token-carrying registration and a token-free one.'
+  blocking: false

@@ -1,0 +1,29 @@
+task_id: mig-java-dotnet-v16-p1
+result: PASS
+rounds: 2
+round_1:
+  result: FAIL
+  issues:
+  - id: C-001
+    vector: weak_evidence
+    issue: The source's JSON date format was asserted from memory rather than proven.
+    fix: 'Gap G-001: read spring-boot 2.0.3 JacksonAutoConfiguration, spring-framework 5.0.7 Jackson2ObjectMapperBuilder, the Boot dependency pin for jackson.version and jackson-databind 2.9.6 StdDateFormat. Recorded as R-007 and reflected in DEC-009 and the STEP-003 snippet.'
+  - id: C-002
+    vector: imagination_gap
+    issue: The solution file body, the health response body and the user-info document shape were left for the implementer to invent.
+    fix: 'Gap G-002: the solution is produced by a pinned dotnet new sln command, HealthExtensions pins UpBody and DownBody, and the STEP-010 stub pins the user-info document.'
+  - id: C-003
+    vector: spec_plan_contradiction
+    issue: The P1 done-when clause asserts a Shared behaviour while P1.T1 names no test project.
+    fix: 'Gap G-003: DEC-011 adds tests/Shared.Tests as a test project, leaving the P1.T1 runtime project list untouched.'
+  - id: C-004
+    vector: a11y_or_security_or_ops
+    issue: A user-info transport failure could have been read as an anonymous pass-through.
+    fix: 'Gap G-004: the handler fails closed on every failure path, STEP-005 invariants state it, and a named test asserts the 401.'
+  - id: C-005
+    vector: scope_creep
+    issue: The first draft let Shared register concrete edge clients and document classes.
+    fix: 'Gap G-005: do_not entries in STEP-004, STEP-007 and STEP-009 push them to the owning plans.'
+round_2:
+  result: PASS
+  notes: All five round-1 issues are closed by root-cause re-research rather than by re-wording. The sixteen attack vectors in review/critic-attack-log.yaml are each checked with evidence, and none of the six blocking vectors reports an issue.

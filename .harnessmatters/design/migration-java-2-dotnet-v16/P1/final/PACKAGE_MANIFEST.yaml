@@ -1,0 +1,41 @@
+task_id: mig-java-dotnet-v16-p1
+spec: Migration Java 2 .NET v16
+plan_key: P1
+target_repo: sandeep-chanda/PiggyMetricsDotNet
+files:
+- final/PLAYBOOK.md
+- final/DAG.yaml
+- final/HANDOFF.md
+- final/PACKAGE_MANIFEST.yaml
+- planning/test-plan.yaml
+- planning/risks.yaml
+- architecture/decisions.yaml
+workspace_artifacts:
+- planning/implementation-plan.yaml
+- planning/implementation-dag.yaml
+- architecture/options.yaml
+- migration/migration-plan.yaml
+- spec/normalized.yaml
+- spec/open-questions.yaml
+- spec/assumptions.yaml
+- research/environment.yaml
+- research/repository.yaml
+- research/cross-repo.yaml
+- research/external.yaml
+- research/findings/R-001.yaml through research/findings/R-012.yaml
+- review/critic.yaml
+- review/critic-attack-log.yaml
+- review/gaps.yaml
+- review/handoff-simulation.yaml
+- review/decision-entropy.yaml
+- review/quality-scorecard.yaml
+- review/quality-gate.yaml
+- final/PLAYBOOK.import.json
+workspace_artifacts_note: Committed to the target repository under .rhm/agent-packs/spec-planner/workspace/mig-java-dotnet-v16-p1/. They are kept out of the files list so the wire payload stays within one message; final/PLAYBOOK.md carries every STEP in full.
+steps: 11
+dag_nodes: 11
+pinned_files: 32
+quality_gate_result: PASS
+plan_mode: true
+target_repo_modified: false
+created_at: '2026-10-09T00:00:00Z'

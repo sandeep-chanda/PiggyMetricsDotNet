@@ -1,0 +1,18 @@
+task_id: mig-java-dotnet-v16-p1
+axes:
+  decision_completeness: 10
+  repo_grounded: 10
+  spec_challenged: 10
+  adversarial_critic: 10
+  handoff_simulation: 10
+  pinned_micro_decisions: 10
+  smart_tools: 10
+  agentic_convergence: 10
+  plan_mode: 10
+  any_repo: 10
+notes:
+- Every axis is 10; a 9 is not shippable under docs/QUALITY_BAR.md.
+- 'repo_grounded: the target tree was read (it is empty) and the source tree was cloned and read file by file; every citation carries a path and a line range.'
+- 'spec_challenged: the spec''s claim that Shared''s handler must be provable was challenged against the absence of a test project, and DEC-011 resolves it.'
+- 'smart_tools: the source repository and nuget.org were fetched because no local evidence could answer R-003, R-007 and R-011; nothing else was fetched.'
+- 'any_repo: the stack was discovered, not assumed; the target repository holds no manifest, so the plan pins the stack and says so in R-001.'

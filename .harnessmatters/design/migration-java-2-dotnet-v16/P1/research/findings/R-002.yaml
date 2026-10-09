@@ -1,0 +1,10 @@
+id: R-002
+question: What does the source build and run, and on which ports and paths?
+dimension: cross-repo
+evidence: pom.xml:38-48 lists nine modules. config/src/main/resources/shared/gateway.yml:43-44 port 4000; auth-service.yml:9-12 context-path /uaa port 5000; account-service.yml:18-21 /accounts 6000; statistics-service.yml:18-21 /statistics 7000; notification-service.yml:9-12 /notifications 8000. config/Dockerfile:7 probes /actuator/health.
+finding: Five runtime services with fixed ports and servlet context paths, plus an actuator health probe, are the contract P1 must preserve. config, registry, monitoring and turbine-stream-service are infrastructure the spec does not carry over.
+confidence: high
+affects:
+- STEP-008
+- STEP-009
+- STEP-002

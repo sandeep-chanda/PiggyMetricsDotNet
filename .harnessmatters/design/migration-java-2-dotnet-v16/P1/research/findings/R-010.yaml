@@ -1,0 +1,8 @@
+id: R-010
+question: Do the MongoDB .NET driver defaults match Spring Data's?
+dimension: external
+evidence: The MongoDB .NET driver writes element names as declared (PascalCase for C# properties), represents an enum as its underlying integer and a decimal as Decimal128 unless told otherwise, and writes null members. Spring Data MongoDB does the opposite on all four points.
+finding: Without an explicit convention pack the .NET services would write documents the Java services cannot read. The convention registration is load-bearing, not cosmetic.
+confidence: high
+affects:
+- STEP-004

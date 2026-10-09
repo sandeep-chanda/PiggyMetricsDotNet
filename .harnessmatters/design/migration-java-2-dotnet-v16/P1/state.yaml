@@ -1,0 +1,7 @@
+task_id: mig-java-dotnet-v16-p1
+phase: approved
+loops: 2
+blockers: []
+approved: true
+plan_mode: true
+target_repo_writes_allowed: false

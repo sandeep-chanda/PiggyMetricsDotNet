@@ -1,0 +1,1796 @@
+task_id: mig-java-dotnet-v16-p1
+spec: Migration Java 2 .NET v16
+plan_key: P1
+plan_title: Solution skeleton and Shared
+target_repo: sandeep-chanda/PiggyMetricsDotNet
+mode: plan_only
+summary: Stand up PiggyMetrics.sln, the Shared library and the five runtime service projects, with the bearer handler, store conventions, typed-client base, health endpoint and JSON contract every later service plan builds on. Eleven steps pin thirty-two files in full.
+pin_convention: 'An exact_snippet covering more than one file separates them with a line reading ===== FILE: <path> =====; the text after each header is that file''s complete final body. Every pinned file is indented with one tab per level (DEC-015).'
+steps:
+- id: STEP-001
+  title: Create the repository build configuration the whole solution inherits
+  todo_refs:
+  - P1.T1
+  why: P1.T1 derives the .NET solution from account-service/pom.xml. The Maven reactor held the language level and every dependency version in one parent (pom.xml:17-27), so the modules declared none (account-service/pom.xml:19-96). DEC-001 and DEC-012 carry that single source of truth to MSBuild.
+  change: 'Create four repository-root build files that currently do not exist: global.json pinning the SDK band, .gitignore for MSBuild output, Directory.Build.props carrying TargetFramework net10.0 plus the language settings every project inherits, and Directory.Packages.props switching the repository to central package management and pinning MongoDB.Driver 3.12.0, Microsoft.AspNetCore.TestHost 10.0.12, Microsoft.NET.Test.Sdk 18.10.1, xunit 2.9.3 and xunit.runner.visualstudio 3.1.5.'
+  exact_files:
+  - global.json
+  - .gitignore
+  - Directory.Build.props
+  - Directory.Packages.props
+  creates_file: true
+  companion_required: false
+  existing_implementation: TargetRepo tracks only README.md, AGENTS.md, .cursor/rules/harness-matters.mdc and .harnessmatters/**; git ls-files returns no solution, project or MSBuild file. The behaviour carried over is the source reactor pom.xml:1-50 (spring-boot-starter-parent 2.0.3.RELEASE, java.version 1.8, spring-cloud Finchley.RELEASE) and account-service/pom.xml:19-96, whose dependency elements carry no version because the parent owns them.
+  exact_snippet: |
+    ===== FILE: global.json =====
+    {
+    	"sdk": {
+    		"version": "10.0.100",
+    		"rollForward": "latestMajor",
+    		"allowPrerelease": false
+    	}
+    }
+    ===== FILE: .gitignore =====
+    bin/
+    obj/
+    .vs/
+    .vscode/
+    *.user
+    TestResults/
+    artifacts/
+    ===== FILE: Directory.Build.props =====
+    <Project>
+    	<PropertyGroup>
+    		<TargetFramework>net10.0</TargetFramework>
+    		<LangVersion>latest</LangVersion>
+    		<Nullable>enable</Nullable>
+    		<ImplicitUsings>enable</ImplicitUsings>
+    		<InvariantGlobalization>true</InvariantGlobalization>
+    		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+    		<EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    	</PropertyGroup>
+    </Project>
+    ===== FILE: Directory.Packages.props =====
+    <Project>
+    	<PropertyGroup>
+    		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<PackageVersion Include="MongoDB.Driver" Version="3.12.0" />
+    	</ItemGroup>
+    	<ItemGroup>
+    		<PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
+    		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    		<PackageVersion Include="xunit" Version="2.9.3" />
+    		<PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    	</ItemGroup>
+    </Project>
+  exact_commands:
+  - git ls-files
+  - dotnet --info
+  machine_verify:
+  - test -f global.json && test -f Directory.Build.props && test -f Directory.Packages.props && test -f .gitignore
+  - python3 -c "import json;json.load(open('global.json'))"
+  human_verify:
+  - Directory.Build.props declares TargetFramework net10.0 exactly once and no csproj added later repeats it.
+  - Directory.Packages.props is the only file in the repository that carries a package version number.
+  invariants:
+  - No csproj in this repository declares a TargetFramework element; the property comes from Directory.Build.props only.
+  - No csproj in this repository declares a Version attribute on PackageReference; versions come from Directory.Packages.props only.
+  - global.json rollForward latestMajor keeps the build working on an SDK newer than 10.0.100 without a second pin.
+  edge_cases:
+  - 'An SDK older than 10.0.100 is installed: the build stops with a clear global.json SDK-resolution error rather than silently targeting an older framework.'
+  - 'A later plan adds a package: it adds one PackageVersion line to Directory.Packages.props and a version-less PackageReference to the consuming csproj.'
+  acceptance:
+  - The four files exist at the repository root with exactly the pinned bodies.
+  - dotnet --info reports an SDK that global.json resolves without error.
+  do_not:
+  - Do not add a Version attribute to any PackageReference anywhere in the repository.
+  - Do not add NuGet.config, a props file per project, or a second TargetFramework declaration.
+  - Do not pin an SDK feature band that forbids roll-forward.
+  - Do not create any source project in this step.
+  rollback: git rm -f global.json .gitignore Directory.Build.props Directory.Packages.props
+  tests:
+  - Covered by the solution-wide build gate in STEP-011.
+  trace:
+    requirements:
+    - REQ-P1-T1
+    decisions:
+    - DEC-001
+    - DEC-012
+    - DEC-015
+    research:
+    - R-001
+    - R-002
+    - R-011
+- id: STEP-002
+  title: Create the solution and the Shared class library project
+  todo_refs:
+  - P1.T1
+  why: P1.T1 names Shared beside the five runtime services, and the P1 goal line calls it the library every service plan builds on. Shared holds ASP.NET Core and MongoDB types, so it needs the Microsoft.AspNetCore.App framework reference and the one NuGet dependency P1 uses.
+  change: Create the solution file through the SDK so the generated project GUIDs stay internally consistent, then create src/Shared/Shared.csproj as a Microsoft.NET.Sdk class library whose RootNamespace is PiggyMetrics.Shared and whose AssemblyName is Shared, with a FrameworkReference to Microsoft.AspNetCore.App and a version-less PackageReference to MongoDB.Driver, and add it to the solution.
+  exact_files:
+  - PiggyMetrics.sln
+  - src/Shared/Shared.csproj
+  creates_file: true
+  companion_required: false
+  existing_implementation: No solution or project file exists in TargetRepo. The source's aggregation is the reactor module list at pom.xml:38-48 (config, monitoring, registry, gateway, auth-service, account-service, statistics-service, notification-service, turbine-stream-service). P1.T1 scopes the .NET solution to the five runtime services plus Shared, so the four infrastructure modules have no counterpart here (DEC-013).
+  exact_snippet: |
+    ===== FILE: src/Shared/Shared.csproj =====
+    <Project Sdk="Microsoft.NET.Sdk">
+    	<PropertyGroup>
+    		<RootNamespace>PiggyMetrics.Shared</RootNamespace>
+    		<AssemblyName>Shared</AssemblyName>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+    	</ItemGroup>
+    	<ItemGroup>
+    		<PackageReference Include="MongoDB.Driver" />
+    	</ItemGroup>
+    </Project>
+  exact_commands:
+  - dotnet new sln --name PiggyMetrics --output .
+  - mkdir -p src/Shared/Json src/Shared/Security src/Shared/Mongo src/Shared/Http src/Shared/Health
+  - dotnet sln PiggyMetrics.sln add src/Shared/Shared.csproj
+  - dotnet restore src/Shared/Shared.csproj
+  machine_verify:
+  - dotnet sln PiggyMetrics.sln list
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  human_verify:
+  - dotnet sln list prints src/Shared/Shared.csproj.
+  - The Shared project builds with no package-version warning, proving central package management is in effect.
+  invariants:
+  - Shared stays a class library; it never becomes a web project and never gains an entry point.
+  - Shared references no service project; dependencies point from the services into Shared only.
+  - Shared's assembly name stays Shared so later plans reference it by that name.
+  edge_cases:
+  - 'dotnet new sln refuses to run because a solution already exists: keep the existing PiggyMetrics.sln and run only the add commands.'
+  acceptance:
+  - PiggyMetrics.sln exists at the repository root and lists src/Shared/Shared.csproj.
+  - dotnet build src/Shared/Shared.csproj succeeds against an empty source set.
+  do_not:
+  - Do not hand-author the solution GUIDs; produce PiggyMetrics.sln with dotnet new sln.
+  - Do not add a TargetFramework or a package version to Shared.csproj.
+  - Do not add Eureka, Spring Cloud Config, Hystrix or Turbine client equivalents to Shared.
+  - Do not create the service projects in this step.
+  rollback: dotnet sln PiggyMetrics.sln remove src/Shared/Shared.csproj && rm -rf src/Shared PiggyMetrics.sln
+  tests:
+  - Covered by the solution-wide build gate in STEP-011.
+  trace:
+    requirements:
+    - REQ-P1-T1
+    decisions:
+    - DEC-002
+    - DEC-012
+    - DEC-013
+    research:
+    - R-001
+    - R-002
+- id: STEP-003
+  title: Pin the shared JSON contract and the source's date rendering
+  todo_refs:
+  - P1.T5
+  why: P1.T5 asks for enums as names, unknown fields ignored and the source's date format. R-007 proves the source renders a java.util.Date through StdDateFormat as UTC yyyy-MM-dd'T'HH:mm:ss.SSSZ with a colon-less offset. DEC-009 reproduces that contract once, in Shared, so no service re-derives it.
+  change: Create src/Shared/Json/PiggyMetricsJson.cs holding JacksonDateTimeConverter, which writes a DateTime as UTC yyyy-MM-dd'T'HH:mm:ss.fff followed by the literal +0000 and reads an epoch-millisecond number, an epoch-millisecond string and any ISO-8601 string; and PiggyMetricsJson, whose Configure applies camelCase property naming, case-sensitive property matching, JsonUnmappedMemberHandling.Skip, JsonNumberHandling.AllowReadingFromString, a JsonStringEnumConverter that forbids integer values, and the date converter.
+  exact_files:
+  - src/Shared/Json/PiggyMetricsJson.cs
+  creates_file: true
+  companion_required: false
+  existing_implementation: No JSON configuration exists in TargetRepo. The source's contract is implicit across spring-boot 2.0.3 JacksonAutoConfiguration line 86 (WRITE_DATES_AS_TIMESTAMPS false), spring-framework 5.0.7 Jackson2ObjectMapperBuilder lines 687-694 (FAIL_ON_UNKNOWN_PROPERTIES false), and jackson-databind 2.9.6 StdDateFormat lines 53 and 151 (yyyy-MM-dd'T'HH:mm:ss.SSSZ, offset written without a colon). Enum-by-name governs Currency.java:3-8, TimePeriod.java:3-7 and StatisticMetric.java:3-7.
+  exact_snippet: |
+    ===== FILE: src/Shared/Json/PiggyMetricsJson.cs =====
+    using System.Globalization;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+
+    namespace PiggyMetrics.Shared.Json;
+
+    // Reads and writes exactly as the source stack does: Spring Boot 2.0.3 disables
+    // SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, so Jackson 2.9.6 falls back to StdDateFormat, whose pattern
+    // is yyyy-MM-dd'T'HH:mm:ss.SSSZ rendered in UTC with a colon-less offset (2018-06-01T12:00:00.000+0000).
+    public sealed class JacksonDateTimeConverter : JsonConverter<DateTime>
+    {
+    	public const string WriteFormat = "yyyy-MM-dd'T'HH:mm:ss.fff";
+    	public const string WriteOffset = "+0000";
+
+    	public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    	{
+    		if (reader.TokenType == JsonTokenType.Number)
+    		{
+    			return DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64()).UtcDateTime;
+    		}
+
+    		var text = reader.GetString();
+    		if (string.IsNullOrWhiteSpace(text))
+    		{
+    			throw new JsonException("A date value must not be empty.");
+    		}
+
+    		if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var epochMilliseconds))
+    		{
+    			return DateTimeOffset.FromUnixTimeMilliseconds(epochMilliseconds).UtcDateTime;
+    		}
+
+    		return DateTimeOffset.Parse(
+    			text,
+    			CultureInfo.InvariantCulture,
+    			DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal).UtcDateTime;
+    	}
+
+    	public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    	{
+    		var utc = value.Kind == DateTimeKind.Unspecified
+    			? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+    			: value.ToUniversalTime();
+    		writer.WriteStringValue(utc.ToString(WriteFormat, CultureInfo.InvariantCulture) + WriteOffset);
+    	}
+    }
+
+    // The single JSON contract for every PiggyMetrics .NET service: camelCase names, enum values as their declared
+    // names, unknown incoming members skipped, Jackson's date rendering.
+    public static class PiggyMetricsJson
+    {
+    	public static readonly JsonSerializerOptions Options = CreateOptions();
+
+    	public static JsonSerializerOptions CreateOptions()
+    	{
+    		var options = new JsonSerializerOptions();
+    		Configure(options);
+    		options.MakeReadOnly();
+    		return options;
+    	}
+
+    	public static void Configure(JsonSerializerOptions options)
+    	{
+    		options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    		options.PropertyNameCaseInsensitive = false;
+    		options.UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip;
+    		options.NumberHandling = JsonNumberHandling.AllowReadingFromString;
+    		options.Converters.Add(new JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false));
+    		options.Converters.Add(new JacksonDateTimeConverter());
+    	}
+    }
+  exact_commands:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  machine_verify:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  human_verify:
+  - Serializing a DateTime of 2018-06-01T12:00:00Z through PiggyMetricsJson.Options yields the string 2018-06-01T12:00:00.000+0000.
+  - Serializing an enum value yields its declared name, not its ordinal.
+  invariants:
+  - Every service uses PiggyMetricsJson.Configure; no service builds its own JsonSerializerOptions.
+  - A DateTime is always rendered in UTC with exactly three fractional digits and the literal +0000 offset.
+  - An incoming member the target type does not declare is skipped and never raises an error.
+  - An enum written as an integer in an incoming payload is rejected, because the source's Jackson default rejects it too.
+  edge_cases:
+  - A DateTime whose Kind is Unspecified is treated as UTC rather than shifted by the host time zone.
+  - An incoming date carried as an epoch-millisecond number is accepted, because the source's StdDateFormat accepts a numeric timestamp.
+  - An incoming date string with a colon-bearing offset is accepted and normalised to UTC.
+  acceptance:
+  - src/Shared/Json/PiggyMetricsJson.cs exists with exactly the pinned body and the Shared project compiles.
+  - PiggyMetricsJson.Options is read-only after construction, so no caller mutates the shared contract.
+  do_not:
+  - Do not set PropertyNameCaseInsensitive to true; the source's Jackson matches property names case-sensitively.
+  - Do not register System.Text.Json's default ISO-8601 DateTime handling; it emits a colon in the offset and a variable fractional length.
+  - Do not add Newtonsoft.Json.
+  - Do not add a naming policy to the enum converter; the source writes the declared enum constant name.
+  rollback: git rm -f src/Shared/Json/PiggyMetricsJson.cs
+  tests:
+  - Covered by the solution-wide build gate in STEP-011.
+  trace:
+    requirements:
+    - REQ-P1-T5
+    decisions:
+    - DEC-009
+    research:
+    - R-007
+    - R-008
+- id: STEP-004
+  title: Pin the store conventions, serializers and collection naming
+  todo_refs:
+  - P1.T3
+  why: 'P1.T3 asks for store conventions and serializers against the same databases and collections. The source inherits them from Spring Data MongoDB: @Id becomes _id, property names are written in Java camelCase, nulls are skipped, enums are strings and BigDecimal is a string. The MongoDB .NET driver defaults the other way on all four points (R-010), so DEC-005 and DEC-006 state them explicitly.'
+  change: Create src/Shared/Mongo/MongoConventions.cs with MongoCollectionAttribute, BigDecimalSerializer (writes a decimal as a BSON string, reads String, Double, Int32, Int64 and Decimal128) and MongoConventions.Register, which registers the decimal and nullable-decimal serializers, UTC DateTime serializers, and a convention pack holding CamelCaseElementNameConvention, IgnoreExtraElementsConvention, IgnoreIfNullConvention and EnumRepresentationConvention(BsonType.String); and create src/Shared/Mongo/MongoExtensions.cs with MongoStoreOptions bound to the Spring:Data:MongoDB section, a connection-string builder that authenticates against the same database it reads, AddPiggyMetricsStore and the GetDocuments helper.
+  exact_files:
+  - src/Shared/Mongo/MongoConventions.cs
+  - src/Shared/Mongo/MongoExtensions.cs
+  creates_file: true
+  companion_required: false
+  existing_implementation: No store code exists in TargetRepo. The source declares the contract at account-service Account.java:14-37 (collection accounts, @Id name, BigDecimal and Date members), AccountRepository.java:7-11, auth-service User.java:10-17 (users, @Id username), statistics-service DataPoint.java:15-24 (datapoints, @Id DataPointId), notification-service Recipient.java:11-16 (recipients, @Id accountName), the connection keys in config/src/main/resources/shared/account-service.yml:10-16, auth-service.yml:1-8 and statistics-service.yml:10-16, and mongodb/init.sh:11-13, which creates the login inside the piggymetrics database. mongodb/dump/account-service-dump.js stores amount as a bare number.
+  exact_snippet: |
+    ===== FILE: src/Shared/Mongo/MongoConventions.cs =====
+    using System.Globalization;
+    using System.Reflection;
+    using MongoDB.Bson;
+    using MongoDB.Bson.Serialization;
+    using MongoDB.Bson.Serialization.Conventions;
+    using MongoDB.Bson.Serialization.Serializers;
+
+    namespace PiggyMetrics.Shared.Mongo;
+
+    // Names the collection a document type lives in, so the .NET services keep the collection names the source's
+    // @Document(collection = "...") annotations established.
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    public sealed class MongoCollectionAttribute : Attribute
+    {
+    	public MongoCollectionAttribute(string name)
+    	{
+    		Name = name;
+    	}
+
+    	public string Name { get; }
+    }
+
+    // Stores a decimal the way Spring Data MongoDB's BigDecimalToStringConverter does: as a BSON string. Reads
+    // tolerate the numeric shapes a hand-seeded document carries.
+    public sealed class BigDecimalSerializer : SerializerBase<decimal>
+    {
+    	public override decimal Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+    	{
+    		var reader = context.Reader;
+    		var bsonType = reader.GetCurrentBsonType();
+    		switch (bsonType)
+    		{
+    			case BsonType.String:
+    				return decimal.Parse(reader.ReadString(), NumberStyles.Float, CultureInfo.InvariantCulture);
+    			case BsonType.Double:
+    				return (decimal)reader.ReadDouble();
+    			case BsonType.Int32:
+    				return reader.ReadInt32();
+    			case BsonType.Int64:
+    				return reader.ReadInt64();
+    			case BsonType.Decimal128:
+    				return (decimal)reader.ReadDecimal128();
+    			default:
+    				throw new FormatException($"A decimal cannot be read from BSON type {bsonType}.");
+    		}
+    	}
+
+    	public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, decimal value)
+    	{
+    		context.Writer.WriteString(value.ToString(CultureInfo.InvariantCulture));
+    	}
+    }
+
+    // One registration point for the document conventions every PiggyMetrics store shares.
+    public static class MongoConventions
+    {
+    	public const string ConventionPackName = "piggymetrics";
+
+    	private static int _registered;
+
+    	public static void Register()
+    	{
+    		if (Interlocked.Exchange(ref _registered, 1) == 1)
+    		{
+    			return;
+    		}
+
+    		BsonSerializer.RegisterSerializer(typeof(decimal), new BigDecimalSerializer());
+    		BsonSerializer.RegisterSerializer(typeof(decimal?), new NullableSerializer<decimal>(new BigDecimalSerializer()));
+    		BsonSerializer.RegisterSerializer(typeof(DateTime), new DateTimeSerializer(DateTimeKind.Utc, BsonType.DateTime));
+    		BsonSerializer.RegisterSerializer(
+    			typeof(DateTime?),
+    			new NullableSerializer<DateTime>(new DateTimeSerializer(DateTimeKind.Utc, BsonType.DateTime)));
+
+    		var pack = new ConventionPack
+    		{
+    			new CamelCaseElementNameConvention(),
+    			new IgnoreExtraElementsConvention(true),
+    			new IgnoreIfNullConvention(true),
+    			new EnumRepresentationConvention(BsonType.String),
+    		};
+
+    		ConventionRegistry.Register(ConventionPackName, pack, _ => true);
+    	}
+
+    	public static string CollectionName<TDocument>()
+    	{
+    		var attribute = typeof(TDocument).GetCustomAttribute<MongoCollectionAttribute>();
+    		if (attribute is null)
+    		{
+    			throw new InvalidOperationException(
+    				$"{typeof(TDocument).FullName} must carry [MongoCollection] so its collection name stays pinned.");
+    		}
+
+    		return attribute.Name;
+    	}
+    }
+    ===== FILE: src/Shared/Mongo/MongoExtensions.cs =====
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Options;
+    using MongoDB.Driver;
+
+    namespace PiggyMetrics.Shared.Mongo;
+
+    // The source's spring.data.mongodb.* keys, carried over key for key.
+    public sealed class MongoStoreOptions
+    {
+    	public const string SectionName = "Spring:Data:MongoDB";
+
+    	public string Host { get; set; } = "localhost";
+
+    	public int Port { get; set; } = 27017;
+
+    	public string Database { get; set; } = "piggymetrics";
+
+    	public string Username { get; set; } = string.Empty;
+
+    	public string Password { get; set; } = string.Empty;
+
+    	public string ConnectionString { get; set; } = string.Empty;
+
+    	// The source authenticates against the same database it reads, because mongodb/init.sh creates the user inside
+    	// the piggymetrics database.
+    	public string BuildConnectionString()
+    	{
+    		if (!string.IsNullOrWhiteSpace(ConnectionString))
+    		{
+    			return ConnectionString;
+    		}
+
+    		var database = Uri.EscapeDataString(Database);
+    		if (string.IsNullOrEmpty(Username))
+    		{
+    			return $"mongodb://{Host}:{Port}/{database}";
+    		}
+
+    		var user = Uri.EscapeDataString(Username);
+    		var password = Uri.EscapeDataString(Password);
+    		return $"mongodb://{user}:{password}@{Host}:{Port}/{database}?authSource={database}";
+    	}
+    }
+
+    public static class MongoExtensions
+    {
+    	public static IServiceCollection AddPiggyMetricsStore(
+    		this IServiceCollection services,
+    		IConfiguration configuration)
+    	{
+    		MongoConventions.Register();
+
+    		services.Configure<MongoStoreOptions>(configuration.GetSection(MongoStoreOptions.SectionName));
+
+    		services.AddSingleton<IMongoClient>(provider =>
+    		{
+    			var options = provider.GetRequiredService<IOptions<MongoStoreOptions>>().Value;
+    			return new MongoClient(options.BuildConnectionString());
+    		});
+
+    		services.AddSingleton(provider =>
+    		{
+    			var options = provider.GetRequiredService<IOptions<MongoStoreOptions>>().Value;
+    			return provider.GetRequiredService<IMongoClient>().GetDatabase(options.Database);
+    		});
+
+    		return services;
+    	}
+
+    	public static IMongoCollection<TDocument> GetDocuments<TDocument>(this IMongoDatabase database)
+    	{
+    		return database.GetCollection<TDocument>(MongoConventions.CollectionName<TDocument>());
+    	}
+    }
+  exact_commands:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  machine_verify:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  human_verify:
+  - A document class mapped through these conventions writes its members with a lower-case first letter, matching the stored field names in mongodb/dump/account-service-dump.js.
+  - A decimal member round-trips through a BSON string while a hand-seeded numeric value still reads back.
+  invariants:
+  - MongoConventions.Register runs at most once per process and is safe to call from every service.
+  - Element names are written with a lower-case first letter so existing documents keep matching.
+  - A null member is not written, matching Spring Data MongoDB, so no document grows a null field.
+  - An enum member is stored as its declared name, never as an ordinal.
+  - A decimal member is written as a BSON string, matching BigDecimalToStringConverter.
+  - A DateTime member is stored as a BSON UTC datetime and read back with Kind Utc.
+  - A document type without MongoCollectionAttribute fails fast instead of defaulting to a guessed collection name.
+  edge_cases:
+  - 'A stored document carries an extra field no .NET member declares: IgnoreExtraElementsConvention keeps the read succeeding, matching Spring Data''s default.'
+  - 'A seeded amount is stored as a BSON double rather than a string: BigDecimalSerializer still reads it.'
+  - 'The store options carry no username: the builder emits a credential-free connection string rather than an empty credential pair.'
+  - A composite id such as DataPointId is mapped by the owning service plan; Shared supplies only the element-name and value conventions it needs.
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - MongoStoreOptions.BuildConnectionString produces mongodb://user:secret@auth-mongodb:27017/piggymetrics?authSource=piggymetrics for the source's auth-service keys.
+  do_not:
+  - Do not register a camelCase convention that also lower-cases the _id element name; the id member is mapped by the driver's id convention.
+  - Do not store a decimal as Decimal128; the source stores it as a string.
+  - Do not infer a collection name from the class name.
+  - Do not create document classes, repositories or indexes here; those belong to the per-service plans.
+  rollback: git rm -f src/Shared/Mongo/MongoConventions.cs src/Shared/Mongo/MongoExtensions.cs
+  tests:
+  - Covered by the solution-wide build gate in STEP-011; document round-trips are verified by the repository tests the per-service plans port.
+  trace:
+    requirements:
+    - REQ-P1-T3
+    decisions:
+    - DEC-005
+    - DEC-006
+    research:
+    - R-004
+    - R-009
+    - R-010
+- id: STEP-005
+  title: Pin the bearer handler that resolves a token through the authorization server
+  todo_refs:
+  - P1.T2
+  why: P1.T2 asks for a Shared bearer handler that validates a token the way the resource servers do, calling the user-info endpoint. The source's tokens are opaque values in an InMemoryTokenStore with no published key, so resolving them at that endpoint is the only possible validation (DEC-003). The same call also yields the client id and scopes the controllers gate on.
+  change: Create src/Shared/Security/PiggyMetricsAuth.cs holding the scheme name Bearer, the policy names user and server, the scope and client_id claim types, the ui and server scope values, the ROLE_USER default authority, the unknown principal fallback, the default user-info URI, the configuration key for it, the PRINCIPAL_KEYS probe order and UserInfoAuthenticationOptions; and create src/Shared/Security/UserInfoAuthenticationHandler.cs, an AuthenticationHandler that returns NoResult without a Bearer header, calls the user-info endpoint with the presented token, fails on a non-success status, on a transport error and on a document carrying an error member, and otherwise builds a ClaimsPrincipal carrying the principal name, the client id, one scope claim per granted scope and the extracted authorities.
+  exact_files:
+  - src/Shared/Security/PiggyMetricsAuth.cs
+  - src/Shared/Security/UserInfoAuthenticationHandler.cs
+  creates_file: true
+  companion_required: false
+  existing_implementation: 'No security code exists in TargetRepo. The source behaviour is account-service ResourceServerConfig.java:23-60 (@EnableResourceServer, tokenServices from ResourceServerProperties.getUserInfoUri) and CustomUserInfoTokenServices.java: PRINCIPAL_KEYS at line 36, the error-member rejection at lines 68-73, oauth2Request.clientId and oauth2Request.scope at lines 97-107, and the catch-all that turns any transport failure into an error map at lines 129-137, with FixedAuthoritiesExtractor falling back to ROLE_USER. statistics-service ResourceServerConfig.java:17-24 wires the same services. The address is shared/application.yml:20-23.'
+  exact_snippet: |
+    ===== FILE: src/Shared/Security/PiggyMetricsAuth.cs =====
+    using Microsoft.AspNetCore.Authentication;
+
+    namespace PiggyMetrics.Shared.Security;
+
+    // Names and constants shared by every resource server, taken from the source stack.
+    public static class PiggyMetricsAuth
+    {
+    	public const string Scheme = "Bearer";
+    	public const string HttpClientName = "piggymetrics-userinfo";
+
+    	public const string UserPolicy = "user";
+    	public const string ServerPolicy = "server";
+
+    	public const string ScopeClaimType = "scope";
+    	public const string ClientIdClaimType = "client_id";
+
+    	public const string UiScope = "ui";
+    	public const string ServerScope = "server";
+
+    	public const string DefaultAuthority = "ROLE_USER";
+    	public const string UnknownPrincipal = "unknown";
+    	public const string DefaultUserInfoUri = "http://auth-service:5000/uaa/users/current";
+    	public const string UserInfoUriConfigurationKey = "Security:OAuth2:Resource:UserInfoUri";
+
+    	// CustomUserInfoTokenServices.PRINCIPAL_KEYS, in the source's probe order.
+    	public static readonly string[] PrincipalKeys =
+    	{
+    		"user", "username", "userid", "user_id", "login", "id", "name",
+    	};
+    }
+
+    public sealed class UserInfoAuthenticationOptions : AuthenticationSchemeOptions
+    {
+    	public string UserInfoUri { get; set; } = PiggyMetricsAuth.DefaultUserInfoUri;
+
+    	public string HttpClientName { get; set; } = PiggyMetricsAuth.HttpClientName;
+    }
+    ===== FILE: src/Shared/Security/UserInfoAuthenticationHandler.cs =====
+    using System.Net.Http.Headers;
+    using System.Security.Claims;
+    using System.Text.Encodings.Web;
+    using System.Text.Json;
+    using Microsoft.AspNetCore.Authentication;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+
+    namespace PiggyMetrics.Shared.Security;
+
+    // The .NET counterpart of CustomUserInfoTokenServices: a presented bearer token is accepted only when the
+    // authorization server's user-info endpoint resolves it, and the resolved document supplies the principal
+    // name, the calling client id and the granted scopes.
+    public sealed class UserInfoAuthenticationHandler : AuthenticationHandler<UserInfoAuthenticationOptions>
+    {
+    	private const string BearerPrefix = "Bearer ";
+    	private const string FailureMessage = "Could not fetch user details";
+
+    	private readonly IHttpClientFactory _httpClientFactory;
+
+    	public UserInfoAuthenticationHandler(
+    		IOptionsMonitor<UserInfoAuthenticationOptions> options,
+    		ILoggerFactory logger,
+    		UrlEncoder encoder,
+    		IHttpClientFactory httpClientFactory)
+    		: base(options, logger, encoder)
+    	{
+    		_httpClientFactory = httpClientFactory;
+    	}
+
+    	protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    	{
+    		var header = Request.Headers.Authorization.ToString();
+    		if (!header.StartsWith(BearerPrefix, StringComparison.OrdinalIgnoreCase))
+    		{
+    			return AuthenticateResult.NoResult();
+    		}
+
+    		var token = header[BearerPrefix.Length..].Trim();
+    		if (token.Length == 0)
+    		{
+    			return AuthenticateResult.NoResult();
+    		}
+
+    		JsonElement document;
+    		try
+    		{
+    			var client = _httpClientFactory.CreateClient(Options.HttpClientName);
+    			using var request = new HttpRequestMessage(HttpMethod.Get, Options.UserInfoUri);
+    			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    			using var response = await client.SendAsync(request, Context.RequestAborted);
+    			if (!response.IsSuccessStatusCode)
+    			{
+    				Logger.LogInformation("{Message}: status {Status}", FailureMessage, (int)response.StatusCode);
+    				return AuthenticateResult.Fail(FailureMessage);
+    			}
+
+    			await using var stream = await response.Content.ReadAsStreamAsync(Context.RequestAborted);
+    			using var parsed = await JsonDocument.ParseAsync(stream, cancellationToken: Context.RequestAborted);
+    			document = parsed.RootElement.Clone();
+    		}
+    		catch (Exception exception)
+    		{
+    			Logger.LogInformation("{Message}: {Reason}", FailureMessage, exception.Message);
+    			return AuthenticateResult.Fail(FailureMessage);
+    		}
+
+    		if (document.ValueKind != JsonValueKind.Object || document.TryGetProperty("error", out _))
+    		{
+    			return AuthenticateResult.Fail(FailureMessage);
+    		}
+
+    		var principal = BuildPrincipal(document);
+    		return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
+    	}
+
+    	private static ClaimsPrincipal BuildPrincipal(JsonElement document)
+    	{
+    		var identity = new ClaimsIdentity(PiggyMetricsAuth.Scheme, ClaimTypes.Name, ClaimTypes.Role);
+    		identity.AddClaim(new Claim(ClaimTypes.Name, ReadPrincipalName(document)));
+
+    		if (document.TryGetProperty("oauth2Request", out var request) && request.ValueKind == JsonValueKind.Object)
+    		{
+    			if (request.TryGetProperty("clientId", out var clientId) && clientId.ValueKind == JsonValueKind.String)
+    			{
+    				identity.AddClaim(new Claim(PiggyMetricsAuth.ClientIdClaimType, clientId.GetString()!));
+    			}
+
+    			if (request.TryGetProperty("scope", out var scopes) && scopes.ValueKind == JsonValueKind.Array)
+    			{
+    				foreach (var scope in scopes.EnumerateArray())
+    				{
+    					if (scope.ValueKind == JsonValueKind.String)
+    					{
+    						identity.AddClaim(new Claim(PiggyMetricsAuth.ScopeClaimType, scope.GetString()!));
+    					}
+    				}
+    			}
+    		}
+
+    		foreach (var authority in ReadAuthorities(document))
+    		{
+    			identity.AddClaim(new Claim(ClaimTypes.Role, authority));
+    		}
+
+    		return new ClaimsPrincipal(identity);
+    	}
+
+    	private static string ReadPrincipalName(JsonElement document)
+    	{
+    		foreach (var key in PiggyMetricsAuth.PrincipalKeys)
+    		{
+    			if (!document.TryGetProperty(key, out var value))
+    			{
+    				continue;
+    			}
+
+    			var text = value.ValueKind == JsonValueKind.String ? value.GetString() : value.ToString();
+    			if (!string.IsNullOrEmpty(text))
+    			{
+    				return text;
+    			}
+    		}
+
+    		return PiggyMetricsAuth.UnknownPrincipal;
+    	}
+
+    	private static List<string> ReadAuthorities(JsonElement document)
+    	{
+    		if (!document.TryGetProperty("authorities", out var value))
+    		{
+    			return new List<string> { PiggyMetricsAuth.DefaultAuthority };
+    		}
+
+    		var authorities = new List<string>();
+    		Collect(value, authorities);
+    		return authorities;
+    	}
+
+    	private static void Collect(JsonElement value, List<string> authorities)
+    	{
+    		switch (value.ValueKind)
+    		{
+    			case JsonValueKind.String:
+    				var text = value.GetString() ?? string.Empty;
+    				var parts = text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    				authorities.AddRange(parts);
+    				break;
+    			case JsonValueKind.Array:
+    				foreach (var item in value.EnumerateArray())
+    				{
+    					Collect(item, authorities);
+    				}
+
+    				break;
+    			case JsonValueKind.Object:
+    				if (value.TryGetProperty("authority", out var authority) && authority.ValueKind == JsonValueKind.String)
+    				{
+    					authorities.Add(authority.GetString()!);
+    				}
+
+    				break;
+    		}
+    	}
+    }
+  exact_commands:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  machine_verify:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  human_verify:
+  - A request without an Authorization header reaches the challenge path and the caller sees 401.
+  - A request whose token the user-info endpoint rejects produces 401 and an Information-level log line reading Could not fetch user details.
+  invariants:
+  - A token is never trusted on its own; every authenticated request resolves it against the user-info endpoint.
+  - A non-success user-info status, a transport failure and a document carrying an error member all end as a failed authentication, never as an anonymous success.
+  - The principal name is taken from the first PRINCIPAL_KEYS member present, in that exact order.
+  - One scope claim is added per entry of oauth2Request.scope, so a scope check never has to re-parse a list.
+  - No user-info response is cached; the source caches nothing on the resource-server side.
+  edge_cases:
+  - 'The Authorization header carries a different scheme: the handler returns NoResult so another scheme can answer.'
+  - 'The Authorization header is the word Bearer with an empty token: the handler returns NoResult rather than calling the endpoint.'
+  - 'The user-info document carries no authorities member: the principal gets the ROLE_USER authority, matching FixedAuthoritiesExtractor.'
+  - 'The authorities member is a comma-separated string or a list of objects carrying an authority member: both shapes are flattened to role claims.'
+  - 'The user-info document carries no oauth2Request member: the principal is still authenticated but carries no scope claim, so the server policy denies it.'
+  - 'The first matching principal key holds JSON null or an empty string: the probe continues to the next key, and the fallback is the literal unknown.'
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - The handler's failure message is the source's literal Could not fetch user details.
+  do_not:
+  - Do not add JWT validation, a signing key, an introspection endpoint or Microsoft.AspNetCore.Authentication.JwtBearer; the source's tokens are opaque in-memory tokens.
+  - Do not cache the user-info response.
+  - Do not fall back to an anonymous principal when the user-info call fails.
+  - Do not read the token from a query string or a cookie.
+  - Do not register the scheme here; registration is STEP-006.
+  rollback: git rm -f src/Shared/Security/PiggyMetricsAuth.cs src/Shared/Security/UserInfoAuthenticationHandler.cs
+  tests:
+  - tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs, added in STEP-010.
+  trace:
+    requirements:
+    - REQ-P1-T2
+    - REQ-P1-DONE2
+    decisions:
+    - DEC-003
+    research:
+    - R-003
+    - R-005
+    - R-006
+- id: STEP-006
+  title: Register the bearer scheme and the user and server authorization policies
+  todo_refs:
+  - P1.T2
+  why: P2.T3 and P3.T4 ask for policy user; P2.T4, P3.T5 and P3.T6 ask for policy server. In the source those are anyRequest().authenticated() and @PreAuthorize("#oauth2.hasScope('server')"). DEC-004 puts both in Shared under those exact names so no service plan invents one.
+  change: 'Create src/Shared/Security/SecurityExtensions.cs with AddPiggyMetricsResourceServer, which reads the user-info URI from Security:OAuth2:Resource:UserInfoUri and falls back to the source''s address, registers the named HTTP client the handler resolves, adds the Bearer scheme backed by UserInfoAuthenticationHandler, and adds the two policies: user requires an authenticated caller on the Bearer scheme, server additionally requires a scope claim whose value is server; the default policy requires an authenticated caller.'
+  exact_files:
+  - src/Shared/Security/SecurityExtensions.cs
+  creates_file: true
+  companion_required: false
+  existing_implementation: 'No registration code exists in TargetRepo. The source''s equivalents are account-service ResourceServerConfig.java:55-60 (antMatchers("/", "/demo").permitAll(), anyRequest().authenticated()), auth-service UserController.java:26-31 and statistics-service StatisticsController.java:26-36 (the server-scope annotations). The scope vocabulary is auth-service OAuth2AuthorizationConfig.java:43-64: ui for the browser client, server for the three service clients.'
+  exact_snippet: |
+    ===== FILE: src/Shared/Security/SecurityExtensions.cs =====
+    using Microsoft.AspNetCore.Authentication;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+
+    namespace PiggyMetrics.Shared.Security;
+
+    public static class SecurityExtensions
+    {
+    	// Registers the user-info bearer scheme plus the two authorization policies the source's controllers express:
+    	// user (an authenticated caller) and server (#oauth2.hasScope('server')).
+    	public static IServiceCollection AddPiggyMetricsResourceServer(
+    		this IServiceCollection services,
+    		IConfiguration configuration)
+    	{
+    		var userInfoUri = configuration[PiggyMetricsAuth.UserInfoUriConfigurationKey];
+
+    		services.AddHttpClient(PiggyMetricsAuth.HttpClientName);
+
+    		services
+    			.AddAuthentication(PiggyMetricsAuth.Scheme)
+    			.AddScheme<UserInfoAuthenticationOptions, UserInfoAuthenticationHandler>(
+    				PiggyMetricsAuth.Scheme,
+    				options =>
+    				{
+    					options.UserInfoUri = string.IsNullOrWhiteSpace(userInfoUri)
+    						? PiggyMetricsAuth.DefaultUserInfoUri
+    						: userInfoUri;
+    				});
+
+    		services
+    			.AddAuthorizationBuilder()
+    			.AddPolicy(PiggyMetricsAuth.UserPolicy, policy => policy
+    				.AddAuthenticationSchemes(PiggyMetricsAuth.Scheme)
+    				.RequireAuthenticatedUser())
+    			.AddPolicy(PiggyMetricsAuth.ServerPolicy, policy => policy
+    				.AddAuthenticationSchemes(PiggyMetricsAuth.Scheme)
+    				.RequireAuthenticatedUser()
+    				.RequireClaim(PiggyMetricsAuth.ScopeClaimType, PiggyMetricsAuth.ServerScope))
+    			.SetDefaultPolicy(new AuthorizationPolicyBuilder(PiggyMetricsAuth.Scheme)
+    				.RequireAuthenticatedUser()
+    				.Build());
+
+    		return services;
+    	}
+    }
+  exact_commands:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  machine_verify:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  human_verify:
+  - An endpoint guarded by the server policy answers 403 for a caller whose only scope is ui.
+  - An endpoint guarded by the user policy answers 401 for a caller presenting no token.
+  invariants:
+  - The policy names stay the literals user and server; later plans reference PiggyMetricsAuth.UserPolicy and PiggyMetricsAuth.ServerPolicy.
+  - Both policies bind to the Bearer scheme explicitly, so adding another scheme later cannot silently satisfy them.
+  - An authenticated caller lacking the server scope is forbidden rather than challenged, which is the source's distinction between 401 and 403.
+  edge_cases:
+  - 'Security:OAuth2:Resource:UserInfoUri is absent or blank: the source''s address http://auth-service:5000/uaa/users/current is used.'
+  - 'A service calls AddPiggyMetricsResourceServer after AddPiggyMetricsDefaults: the Bearer scheme becomes the default scheme and the earlier schemeless AddAuthentication call is harmless.'
+  - 'A service needs an anonymous route such as the source''s / and /demo exceptions: that route opts out in its own plan, because the default policy here demands an authenticated caller.'
+  acceptance:
+  - src/Shared/Security/SecurityExtensions.cs exists with exactly the pinned body and the Shared project compiles.
+  - AddPiggyMetricsResourceServer registers the user policy, the server policy and the Bearer scheme in one call.
+  do_not:
+  - Do not name the policies anything other than user and server.
+  - Do not grant the server policy to a caller whose scope claim is ui.
+  - Do not register the authorization policies in a service project; they live in Shared.
+  - Do not add role-based requirements; the source gates on scope, not on authority.
+  rollback: git rm -f src/Shared/Security/SecurityExtensions.cs
+  tests:
+  - tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs, added in STEP-010.
+  trace:
+    requirements:
+    - REQ-P1-T2
+    - REQ-P1-DONE2
+    decisions:
+    - DEC-003
+    - DEC-004
+    research:
+    - R-003
+    - R-005
+    - R-012
+- id: STEP-007
+  title: Pin the typed-client base, the source's timeout and the client-credentials token cache
+  todo_refs:
+  - P1.T4
+  why: P1.T4 asks for a typed-client base with the source's timeout, a client-credentials token cache and one HTTP client per edge. The source wraps each Feign edge in a Hystrix command whose default execution timeout is 10000 ms and caches the token in an OAuth2ClientContext until it expires. DEC-014 keeps two registration methods because statistics-service declares no OAuth2FeignRequestInterceptor.
+  change: Create src/Shared/Http/ServiceClients.cs holding ServiceClientOptions bound to Security:OAuth2:Client with the source's accessTokenUri, grant type, scope and the 10000 ms timeout constant; IClientCredentialsTokenProvider and ClientCredentialsTokenProvider, which posts the client-credentials grant with HTTP Basic client authentication, caches the issued token under a semaphore and renews it once the reported lifetime has elapsed; and ClientCredentialsHandler, a DelegatingHandler that attaches the cached token. Create src/Shared/Http/HttpClientExtensions.cs with AddPiggyMetricsClientCredentials, AddPiggyMetricsServiceClient for a token-carrying edge and AddPiggyMetricsEdgeClient for an edge the source calls without a token.
+  exact_files:
+  - src/Shared/Http/ServiceClients.cs
+  - src/Shared/Http/HttpClientExtensions.cs
+  creates_file: true
+  companion_required: false
+  existing_implementation: No HTTP client code exists in TargetRepo. The source's behaviour is account-service ResourceServerConfig.java:33-50 (ClientCredentialsResourceDetails bound to security.oauth2.client, OAuth2FeignRequestInterceptor, OAuth2RestTemplate), shared/account-service.yml:1-8 and statistics-service.yml:1-8 (clientId, clientSecret, accessTokenUri http://auth-service:5000/uaa/oauth/token, grant-type client_credentials, scope server), shared/application.yml:7-13 (Hystrix default execution timeout 10000 ms) and statistics-service ExchangeRatesClient.java:10-16, whose url comes from rates.url with no interceptor bean in that service.
+  exact_snippet: |
+    ===== FILE: src/Shared/Http/ServiceClients.cs =====
+    using System.Net.Http.Headers;
+    using System.Text;
+    using System.Text.Json;
+    using Microsoft.Extensions.Options;
+
+    namespace PiggyMetrics.Shared.Http;
+
+    // The source's security.oauth2.client.* block, plus the call timeout the source enforces through
+    // hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds.
+    public sealed class ServiceClientOptions
+    {
+    	public const string SectionName = "Security:OAuth2:Client";
+    	public const int SourceTimeoutMilliseconds = 10000;
+
+    	public string ClientId { get; set; } = string.Empty;
+
+    	public string ClientSecret { get; set; } = string.Empty;
+
+    	public string AccessTokenUri { get; set; } = "http://auth-service:5000/uaa/oauth/token";
+
+    	public string GrantType { get; set; } = "client_credentials";
+
+    	public string Scope { get; set; } = "server";
+
+    	public TimeSpan Timeout { get; set; } = TimeSpan.FromMilliseconds(SourceTimeoutMilliseconds);
+    }
+
+    public interface IClientCredentialsTokenProvider
+    {
+    	Task<string> GetTokenAsync(CancellationToken cancellationToken);
+    }
+
+    // Caches one client-credentials access token per process and renews it once the lifetime the authorization
+    // server reported has elapsed, which is what DefaultOAuth2ClientContext plus
+    // DefaultOAuth2AccessToken.isExpired() do in the source.
+    public sealed class ClientCredentialsTokenProvider : IClientCredentialsTokenProvider
+    {
+    	public const string TokenHttpClientName = "piggymetrics-token";
+
+    	private readonly IHttpClientFactory _httpClientFactory;
+    	private readonly ServiceClientOptions _options;
+    	private readonly SemaphoreSlim _gate = new(1, 1);
+
+    	private string _token = string.Empty;
+    	private DateTimeOffset _expiresAt = DateTimeOffset.MinValue;
+
+    	public ClientCredentialsTokenProvider(IHttpClientFactory httpClientFactory, IOptions<ServiceClientOptions> options)
+    	{
+    		_httpClientFactory = httpClientFactory;
+    		_options = options.Value;
+    	}
+
+    	public async Task<string> GetTokenAsync(CancellationToken cancellationToken)
+    	{
+    		if (IsCachedTokenUsable())
+    		{
+    			return _token;
+    		}
+
+    		await _gate.WaitAsync(cancellationToken);
+    		try
+    		{
+    			if (IsCachedTokenUsable())
+    			{
+    				return _token;
+    			}
+
+    			var issued = await RequestTokenAsync(cancellationToken);
+    			_token = issued.AccessToken;
+    			_expiresAt = issued.ExpiresAt;
+    			return _token;
+    		}
+    		finally
+    		{
+    			_gate.Release();
+    		}
+    	}
+
+    	private bool IsCachedTokenUsable()
+    	{
+    		return _token.Length > 0 && DateTimeOffset.UtcNow < _expiresAt;
+    	}
+
+    	private async Task<(string AccessToken, DateTimeOffset ExpiresAt)> RequestTokenAsync(CancellationToken cancellationToken)
+    	{
+    		var client = _httpClientFactory.CreateClient(TokenHttpClientName);
+    		using var request = new HttpRequestMessage(HttpMethod.Post, _options.AccessTokenUri);
+
+    		var credentials = Convert.ToBase64String(
+    			Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+    		request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+    		request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+    		{
+    			["grant_type"] = _options.GrantType,
+    			["scope"] = _options.Scope,
+    		});
+
+    		using var response = await client.SendAsync(request, cancellationToken);
+    		response.EnsureSuccessStatusCode();
+
+    		await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+    		using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+    		var accessToken = document.RootElement.GetProperty("access_token").GetString() ?? string.Empty;
+    		var lifetime = document.RootElement.TryGetProperty("expires_in", out var expiresIn)
+    			&& expiresIn.ValueKind == JsonValueKind.Number
+    				? TimeSpan.FromSeconds(expiresIn.GetInt64())
+    				: TimeSpan.Zero;
+
+    		return (accessToken, DateTimeOffset.UtcNow.Add(lifetime));
+    	}
+    }
+
+    // Attaches the cached client-credentials token to every outgoing call, the way OAuth2FeignRequestInterceptor
+    // does for the source's service-to-service edges.
+    public sealed class ClientCredentialsHandler : DelegatingHandler
+    {
+    	private readonly IClientCredentialsTokenProvider _tokenProvider;
+
+    	public ClientCredentialsHandler(IClientCredentialsTokenProvider tokenProvider)
+    	{
+    		_tokenProvider = tokenProvider;
+    	}
+
+    	protected override async Task<HttpResponseMessage> SendAsync(
+    		HttpRequestMessage request,
+    		CancellationToken cancellationToken)
+    	{
+    		var token = await _tokenProvider.GetTokenAsync(cancellationToken);
+    		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    		return await base.SendAsync(request, cancellationToken);
+    	}
+    }
+    ===== FILE: src/Shared/Http/HttpClientExtensions.cs =====
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+
+    namespace PiggyMetrics.Shared.Http;
+
+    public static class HttpClientExtensions
+    {
+    	public static IServiceCollection AddPiggyMetricsClientCredentials(
+    		this IServiceCollection services,
+    		IConfiguration configuration)
+    	{
+    		services.Configure<ServiceClientOptions>(configuration.GetSection(ServiceClientOptions.SectionName));
+    		services.AddHttpClient(ClientCredentialsTokenProvider.TokenHttpClientName, client =>
+    		{
+    			client.Timeout = TimeSpan.FromMilliseconds(ServiceClientOptions.SourceTimeoutMilliseconds);
+    		});
+    		services.AddSingleton<IClientCredentialsTokenProvider, ClientCredentialsTokenProvider>();
+    		services.AddTransient<ClientCredentialsHandler>();
+    		return services;
+    	}
+
+    	// One HTTP client per service-to-service edge, carrying the client-credentials token.
+    	public static IHttpClientBuilder AddPiggyMetricsServiceClient<TClient>(
+    		this IServiceCollection services,
+    		string name,
+    		Uri baseAddress)
+    		where TClient : class
+    	{
+    		return services
+    			.AddPiggyMetricsEdgeClient<TClient>(name, baseAddress)
+    			.AddHttpMessageHandler<ClientCredentialsHandler>();
+    	}
+
+    	// One HTTP client per edge that the source calls without a token.
+    	public static IHttpClientBuilder AddPiggyMetricsEdgeClient<TClient>(
+    		this IServiceCollection services,
+    		string name,
+    		Uri baseAddress)
+    		where TClient : class
+    	{
+    		return services.AddHttpClient<TClient>(name, client =>
+    		{
+    			client.BaseAddress = baseAddress;
+    			client.Timeout = TimeSpan.FromMilliseconds(ServiceClientOptions.SourceTimeoutMilliseconds);
+    		});
+    	}
+    }
+  exact_commands:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  machine_verify:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  human_verify:
+  - A client registered through AddPiggyMetricsServiceClient sends an Authorization header carrying the issued bearer token.
+  - A client registered through AddPiggyMetricsEdgeClient sends no Authorization header.
+  - Both clients give up on a call after 10 seconds.
+  invariants:
+  - Every outbound edge uses a 10000 ms timeout, the source's Hystrix default execution timeout.
+  - One token is fetched per process and reused until the reported lifetime has elapsed; concurrent callers wait on one fetch rather than issuing several.
+  - The token request authenticates the client with HTTP Basic, which is the scheme Spring's client-credentials provider uses by default.
+  - A token response carrying no expires_in is treated as already expired, so the next call fetches a fresh token.
+  - A failed token request surfaces as an exception on the caller's edge rather than an unauthenticated outbound call.
+  edge_cases:
+  - 'Two requests race on an empty cache: the semaphore admits one fetch and the second caller reuses the result.'
+  - 'The authorization server answers the token request with a non-success status: EnsureSuccessStatusCode throws and the edge fails, matching the source, which also fails the call.'
+  - 'The reported lifetime elapses mid-flight: the next call refreshes, because expiry is checked without a safety margin, matching DefaultOAuth2AccessToken.isExpired.'
+  - The gateway's longer 20000 ms timeout is out of scope here; it belongs to the gateway's own plan.
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - ServiceClientOptions.SourceTimeoutMilliseconds is 10000 and is the only timeout literal in Shared.
+  do_not:
+  - Do not use 20000 ms here; that value is the gateway's Zuul and Ribbon timeout, not the service edge timeout.
+  - Do not add Polly, a circuit breaker or a retry policy; the source's fallback behaviour belongs to the per-service plans.
+  - Do not cache the token in a static field shared across services or persist it.
+  - Do not add a refresh-token flow; the service clients use the client-credentials grant.
+  - Do not create a concrete edge client here; each edge is registered by the plan that owns it.
+  rollback: git rm -f src/Shared/Http/ServiceClients.cs src/Shared/Http/HttpClientExtensions.cs
+  tests:
+  - Covered by the solution-wide build gate in STEP-011; per-edge behaviour is verified by the client tests the per-service plans port.
+  trace:
+    requirements:
+    - REQ-P1-T4
+    decisions:
+    - DEC-007
+    - DEC-008
+    - DEC-014
+    research:
+    - R-005
+    - R-006
+    - R-012
+- id: STEP-008
+  title: Pin the actuator health endpoint and the service default composition
+  todo_refs:
+  - P1.T5
+  why: P1.T5 asks for health checks. config/Dockerfile:7 probes /actuator/health, which fixes the path and the healthy status code, and Boot 2.0 hides health detail, which fixes the body. DEC-010 reproduces both. The same step composes the defaults every service shares so the five entry points stay three lines long.
+  change: Create src/Shared/Health/HealthExtensions.cs exposing AddPiggyMetricsHealthChecks and MapPiggyMetricsHealthChecks, which maps /actuator/health anonymously, answers 200 with {"status":"UP"} for a healthy and a degraded report and 503 with {"status":"DOWN"} for an unhealthy one; and create src/Shared/ServiceDefaults.cs with ServiceIdentity, AddPiggyMetricsDefaults (controllers plus the shared JSON contract on both the MVC and the minimal-API pipelines, authentication and authorization services, health checks) and UsePiggyMetricsDefaults (path base from Server:Servlet:ContextPath, routing, authentication, authorization, the health endpoint, controller endpoints).
+  exact_files:
+  - src/Shared/Health/HealthExtensions.cs
+  - src/Shared/ServiceDefaults.cs
+  creates_file: true
+  companion_required: false
+  existing_implementation: 'No health or bootstrap code exists in TargetRepo. The source''s equivalents are the actuator starter at account-service/pom.xml:48-51, the probe at config/Dockerfile:7, the per-service ports and context paths in config/src/main/resources/shared/auth-service.yml:9-12, account-service.yml:18-21, statistics-service.yml:18-21, notification-service.yml:9-12 and gateway.yml:43-44, and docker-compose.yml, where every service waits on condition: service_healthy.'
+  exact_snippet: |
+    ===== FILE: src/Shared/Health/HealthExtensions.cs =====
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Routing;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Diagnostics.HealthChecks;
+
+    namespace PiggyMetrics.Shared.Health;
+
+    // Reproduces the source's actuator health contract: GET /actuator/health answers {"status":"UP"} with 200, and
+    // {"status":"DOWN"} with 503, with no detail body.
+    public static class HealthExtensions
+    {
+    	public const string HealthPath = "/actuator/health";
+    	public const string UpBody = "{\"status\":\"UP\"}";
+    	public const string DownBody = "{\"status\":\"DOWN\"}";
+
+    	public static IServiceCollection AddPiggyMetricsHealthChecks(this IServiceCollection services)
+    	{
+    		services.AddHealthChecks();
+    		return services;
+    	}
+
+    	public static IEndpointRouteBuilder MapPiggyMetricsHealthChecks(this IEndpointRouteBuilder endpoints)
+    	{
+    		var options = new HealthCheckOptions
+    		{
+    			ResponseWriter = WriteStatusAsync,
+    		};
+    		options.ResultStatusCodes[HealthStatus.Healthy] = StatusCodes.Status200OK;
+    		options.ResultStatusCodes[HealthStatus.Degraded] = StatusCodes.Status200OK;
+    		options.ResultStatusCodes[HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable;
+
+    		endpoints.MapHealthChecks(HealthPath, options).AllowAnonymous();
+    		return endpoints;
+    	}
+
+    	private static Task WriteStatusAsync(HttpContext context, HealthReport report)
+    	{
+    		context.Response.ContentType = "application/json";
+    		var body = report.Status == HealthStatus.Unhealthy ? DownBody : UpBody;
+    		return context.Response.WriteAsync(body);
+    	}
+    }
+    ===== FILE: src/Shared/ServiceDefaults.cs =====
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.Extensions.DependencyInjection;
+    using PiggyMetrics.Shared.Health;
+    using PiggyMetrics.Shared.Json;
+
+    namespace PiggyMetrics.Shared;
+
+    public sealed record ServiceIdentity(string Name);
+
+    // The composition every PiggyMetrics .NET service starts from: the shared JSON contract, the actuator health
+    // endpoint, and the authentication and authorization middleware slots.
+    public static class ServiceDefaults
+    {
+    	public const string ContextPathConfigurationKey = "Server:Servlet:ContextPath";
+
+    	public static WebApplicationBuilder AddPiggyMetricsDefaults(
+    		this WebApplicationBuilder builder,
+    		string applicationName)
+    	{
+    		ArgumentException.ThrowIfNullOrWhiteSpace(applicationName);
+
+    		builder.Services.AddSingleton(new ServiceIdentity(applicationName));
+    		builder.Services
+    			.AddControllers()
+    			.AddJsonOptions(options => PiggyMetricsJson.Configure(options.JsonSerializerOptions));
+    		builder.Services.ConfigureHttpJsonOptions(options => PiggyMetricsJson.Configure(options.SerializerOptions));
+    		builder.Services.AddAuthentication();
+    		builder.Services.AddAuthorization();
+    		builder.Services.AddPiggyMetricsHealthChecks();
+
+    		return builder;
+    	}
+
+    	public static WebApplication UsePiggyMetricsDefaults(this WebApplication app)
+    	{
+    		var contextPath = app.Configuration[ContextPathConfigurationKey];
+    		if (!string.IsNullOrWhiteSpace(contextPath))
+    		{
+    			app.UsePathBase(contextPath);
+    		}
+
+    		app.UseRouting();
+    		app.UseAuthentication();
+    		app.UseAuthorization();
+    		app.MapPiggyMetricsHealthChecks();
+    		app.MapControllers();
+
+    		return app;
+    	}
+    }
+  exact_commands:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  machine_verify:
+  - dotnet build src/Shared/Shared.csproj -c Debug
+  human_verify:
+  - GET /uaa/actuator/health against a running AuthService answers 200 with the body {"status":"UP"} and no further members.
+  - The health endpoint answers without an Authorization header.
+  invariants:
+  - The health path is /actuator/health under the service's own path base, matching the source's actuator path under its servlet context path.
+  - The health body carries the single member status whose value is UP or DOWN; no detail is exposed, matching Boot 2.0's default.
+  - The health endpoint is always anonymous, so an orchestrator probe never needs a token.
+  - UsePiggyMetricsDefaults applies the path base before routing, so every route lands under the source's context path.
+  - AddPiggyMetricsDefaults registers authentication and authorization services unconditionally, so UsePiggyMetricsDefaults is valid in a service that adds no scheme of its own.
+  edge_cases:
+  - 'Server:Servlet:ContextPath is absent, which is the gateway''s shape: no path base is applied and routes stay at the root.'
+  - 'A health report comes back degraded: the answer stays 200 with UP, because the source''s actuator has no degraded status.'
+  - 'A service adds its own health check later: it appears in the aggregate status without changing the body shape.'
+  acceptance:
+  - Both files exist with exactly the pinned bodies and the Shared project compiles.
+  - ServiceDefaults wires PiggyMetricsJson into both AddControllers().AddJsonOptions and ConfigureHttpJsonOptions.
+  do_not:
+  - Do not expose /actuator/info, /actuator/env, /actuator/metrics or any other actuator endpoint; Boot 2.0 exposes health and info over the web and only health is probed.
+  - Do not include check names, durations or exception detail in the health body.
+  - Do not require authentication on the health endpoint.
+  - Do not register MVC controllers in the gateway project; it maps only the health endpoint in P1.
+  rollback: git rm -f src/Shared/Health/HealthExtensions.cs src/Shared/ServiceDefaults.cs
+  tests:
+  - Covered by the solution-wide build gate in STEP-011.
+  trace:
+    requirements:
+    - REQ-P1-T5
+    decisions:
+    - DEC-010
+    research:
+    - R-002
+    - R-011
+- id: STEP-009
+  title: Create the five runtime service projects on the shared defaults
+  todo_refs:
+  - P1.T1
+  why: P1.T1 names one project per runtime service. Each must exist and build before its own plan adds endpoints, documents and settings. DEC-002 fixes the project, assembly and namespace names so the later plans address them unambiguously.
+  change: 'Create fifteen files: a Microsoft.NET.Sdk.Web csproj, a Program.cs and an appsettings.json for each of the five services. Gateway maps only the health endpoint and listens on 4000 with no path base. AuthService builds on AddPiggyMetricsDefaults and UsePiggyMetricsDefaults with context path /uaa on 5000 and registers no resource server, because it issues the tokens. AccountService, StatisticsService and NotificationService additionally call AddPiggyMetricsResourceServer and carry context paths /accounts on 6000, /statistics on 7000 and /notifications on 8000. Add all five projects to the solution.'
+  exact_files:
+  - src/Gateway/Gateway.csproj
+  - src/Gateway/Program.cs
+  - src/Gateway/appsettings.json
+  - src/AuthService/AuthService.csproj
+  - src/AuthService/Program.cs
+  - src/AuthService/appsettings.json
+  - src/AccountService/AccountService.csproj
+  - src/AccountService/Program.cs
+  - src/AccountService/appsettings.json
+  - src/StatisticsService/StatisticsService.csproj
+  - src/StatisticsService/Program.cs
+  - src/StatisticsService/appsettings.json
+  - src/NotificationService/NotificationService.csproj
+  - src/NotificationService/Program.cs
+  - src/NotificationService/appsettings.json
+  creates_file: true
+  companion_required: false
+  existing_implementation: 'No service project exists in TargetRepo. The source entry points are gateway GatewayApplication.java:7-15 (@EnableZuulProxy) and the four @SpringBootApplication classes, each configured from config/src/main/resources/shared/<service>.yml for its port and servlet context path: gateway 4000 with no context path, auth-service 5000 /uaa, account-service 6000 /accounts, statistics-service 7000 /statistics, notification-service 8000 /notifications. AuthService skips the resource-server registration because auth-service WebSecurityConfig.java:18-36 authenticates against its own MongoUserDetailsService.'
+  exact_snippet: |
+    ===== FILE: src/Gateway/Gateway.csproj =====
+    <Project Sdk="Microsoft.NET.Sdk.Web">
+    	<PropertyGroup>
+    		<RootNamespace>PiggyMetrics.Gateway</RootNamespace>
+    		<AssemblyName>Gateway</AssemblyName>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<ProjectReference Include="../Shared/Shared.csproj" />
+    	</ItemGroup>
+    </Project>
+    ===== FILE: src/Gateway/Program.cs =====
+    using PiggyMetrics.Shared.Health;
+
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddPiggyMetricsHealthChecks();
+
+    var app = builder.Build();
+    app.UseRouting();
+    app.MapPiggyMetricsHealthChecks();
+    app.Run();
+    ===== FILE: src/Gateway/appsettings.json =====
+    {
+    	"Kestrel": {
+    		"Endpoints": {
+    			"Http": {
+    				"Url": "http://0.0.0.0:4000"
+    			}
+    		}
+    	}
+    }
+    ===== FILE: src/AuthService/AuthService.csproj =====
+    <Project Sdk="Microsoft.NET.Sdk.Web">
+    	<PropertyGroup>
+    		<RootNamespace>PiggyMetrics.AuthService</RootNamespace>
+    		<AssemblyName>AuthService</AssemblyName>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<ProjectReference Include="../Shared/Shared.csproj" />
+    	</ItemGroup>
+    </Project>
+    ===== FILE: src/AuthService/Program.cs =====
+    using PiggyMetrics.Shared;
+
+    var builder = WebApplication.CreateBuilder(args);
+    builder.AddPiggyMetricsDefaults("auth-service");
+
+    var app = builder.Build();
+    app.UsePiggyMetricsDefaults();
+    app.Run();
+    ===== FILE: src/AuthService/appsettings.json =====
+    {
+    	"Server": {
+    		"Servlet": {
+    			"ContextPath": "/uaa"
+    		}
+    	},
+    	"Kestrel": {
+    		"Endpoints": {
+    			"Http": {
+    				"Url": "http://0.0.0.0:5000"
+    			}
+    		}
+    	}
+    }
+    ===== FILE: src/AccountService/AccountService.csproj =====
+    <Project Sdk="Microsoft.NET.Sdk.Web">
+    	<PropertyGroup>
+    		<RootNamespace>PiggyMetrics.AccountService</RootNamespace>
+    		<AssemblyName>AccountService</AssemblyName>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<ProjectReference Include="../Shared/Shared.csproj" />
+    	</ItemGroup>
+    </Project>
+    ===== FILE: src/AccountService/Program.cs =====
+    using PiggyMetrics.Shared;
+    using PiggyMetrics.Shared.Security;
+
+    var builder = WebApplication.CreateBuilder(args);
+    builder.AddPiggyMetricsDefaults("account-service");
+    builder.Services.AddPiggyMetricsResourceServer(builder.Configuration);
+
+    var app = builder.Build();
+    app.UsePiggyMetricsDefaults();
+    app.Run();
+    ===== FILE: src/AccountService/appsettings.json =====
+    {
+    	"Server": {
+    		"Servlet": {
+    			"ContextPath": "/accounts"
+    		}
+    	},
+    	"Kestrel": {
+    		"Endpoints": {
+    			"Http": {
+    				"Url": "http://0.0.0.0:6000"
+    			}
+    		}
+    	}
+    }
+    ===== FILE: src/StatisticsService/StatisticsService.csproj =====
+    <Project Sdk="Microsoft.NET.Sdk.Web">
+    	<PropertyGroup>
+    		<RootNamespace>PiggyMetrics.StatisticsService</RootNamespace>
+    		<AssemblyName>StatisticsService</AssemblyName>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<ProjectReference Include="../Shared/Shared.csproj" />
+    	</ItemGroup>
+    </Project>
+    ===== FILE: src/StatisticsService/Program.cs =====
+    using PiggyMetrics.Shared;
+    using PiggyMetrics.Shared.Security;
+
+    var builder = WebApplication.CreateBuilder(args);
+    builder.AddPiggyMetricsDefaults("statistics-service");
+    builder.Services.AddPiggyMetricsResourceServer(builder.Configuration);
+
+    var app = builder.Build();
+    app.UsePiggyMetricsDefaults();
+    app.Run();
+    ===== FILE: src/StatisticsService/appsettings.json =====
+    {
+    	"Server": {
+    		"Servlet": {
+    			"ContextPath": "/statistics"
+    		}
+    	},
+    	"Kestrel": {
+    		"Endpoints": {
+    			"Http": {
+    				"Url": "http://0.0.0.0:7000"
+    			}
+    		}
+    	}
+    }
+    ===== FILE: src/NotificationService/NotificationService.csproj =====
+    <Project Sdk="Microsoft.NET.Sdk.Web">
+    	<PropertyGroup>
+    		<RootNamespace>PiggyMetrics.NotificationService</RootNamespace>
+    		<AssemblyName>NotificationService</AssemblyName>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<ProjectReference Include="../Shared/Shared.csproj" />
+    	</ItemGroup>
+    </Project>
+    ===== FILE: src/NotificationService/Program.cs =====
+    using PiggyMetrics.Shared;
+    using PiggyMetrics.Shared.Security;
+
+    var builder = WebApplication.CreateBuilder(args);
+    builder.AddPiggyMetricsDefaults("notification-service");
+    builder.Services.AddPiggyMetricsResourceServer(builder.Configuration);
+
+    var app = builder.Build();
+    app.UsePiggyMetricsDefaults();
+    app.Run();
+    ===== FILE: src/NotificationService/appsettings.json =====
+    {
+    	"Server": {
+    		"Servlet": {
+    			"ContextPath": "/notifications"
+    		}
+    	},
+    	"Kestrel": {
+    		"Endpoints": {
+    			"Http": {
+    				"Url": "http://0.0.0.0:8000"
+    			}
+    		}
+    	}
+    }
+  exact_commands:
+  - mkdir -p src/Gateway src/AuthService src/AccountService src/StatisticsService src/NotificationService
+  - dotnet sln PiggyMetrics.sln add src/Gateway/Gateway.csproj src/AuthService/AuthService.csproj src/AccountService/AccountService.csproj src/StatisticsService/StatisticsService.csproj src/NotificationService/NotificationService.csproj
+  - dotnet build PiggyMetrics.sln -c Debug
+  machine_verify:
+  - dotnet sln PiggyMetrics.sln list
+  - dotnet build PiggyMetrics.sln -c Debug
+  human_verify:
+  - dotnet sln list prints all six projects.
+  - Starting AuthService and requesting /uaa/actuator/health answers 200 with {"status":"UP"}.
+  - Starting Gateway and requesting /actuator/health on port 4000 answers 200 with {"status":"UP"}.
+  invariants:
+  - Each service project's assembly name equals its project name, and its root namespace is PiggyMetrics plus that name.
+  - 'Each service''s listening port and context path match the source: 4000 with no path, 5000 with /uaa, 6000 with /accounts, 7000 with /statistics, 8000 with /notifications.'
+  - AuthService does not register the user-info resource server, because it is the service that issues the tokens.
+  - Every service project references Shared and no service project references another service project.
+  - appsettings.json carries only the Kestrel listener and the context path in P1; store keys, client credentials, rates addresses and scheduling keys arrive with the per-service settings todos.
+  edge_cases:
+  - 'A host already occupies one of the five ports: the Kestrel endpoint URL is the single place to adjust, and the context path stays untouched.'
+  - The gateway's routing table is not created here; the gateway plan owns it.
+  acceptance:
+  - All fifteen files exist with exactly the pinned bodies.
+  - dotnet build PiggyMetrics.sln succeeds for all six projects.
+  do_not:
+  - Do not add controllers, documents, repositories, store registration or client registration in this step.
+  - Do not add Eureka, Spring Cloud Config, Hystrix, Turbine or RabbitMQ client equivalents.
+  - Do not add a resource-server registration to Gateway or AuthService.
+  - Do not add Swagger, CORS or HTTPS redirection; the source has none of them.
+  - Do not move the ports or context paths into code; they stay in appsettings.json.
+  rollback: dotnet sln PiggyMetrics.sln remove src/Gateway/Gateway.csproj src/AuthService/AuthService.csproj src/AccountService/AccountService.csproj src/StatisticsService/StatisticsService.csproj src/NotificationService/NotificationService.csproj && rm -rf src/Gateway src/AuthService src/AccountService src/StatisticsService src/NotificationService
+  tests:
+  - Covered by the solution-wide build gate in STEP-011.
+  trace:
+    requirements:
+    - REQ-P1-T1
+    - REQ-P1-DONE1
+    decisions:
+    - DEC-002
+    - DEC-010
+    - DEC-013
+    research:
+    - R-002
+    - R-011
+    - R-012
+- id: STEP-010
+  title: Add the Shared test project and prove the bearer handler accepts and refuses
+  todo_refs:
+  - P1.T2
+  why: The P1 done-when clause is that Shared's bearer handler accepts a token the source's authorization server issued and refuses one it did not. DEC-011 makes that machine-checkable here, because no later plan owns Shared. The stub answers the user-info endpoint the way the source's authorization server does, so the assertions bind to the real contract.
+  change: 'Create tests/Shared.Tests/Shared.Tests.csproj referencing Shared, Microsoft.AspNetCore.TestHost, Microsoft.NET.Test.Sdk, xunit and xunit.runner.visualstudio, and tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs, which stands up a TestServer whose user-info HTTP client is backed by an AuthorizationServerStub returning the serialized OAuth2Authentication for two issued tokens and 401 for anything else, then asserts five outcomes: an issued user token reaches the user policy with 200 and the principal name demo; an unissued token is refused with 401; a request with no token is refused with 401; an issued server-scope token reaches the server policy with 200; an issued ui-scope token is forbidden on the server policy with 403. Add the project to the solution.'
+  exact_files:
+  - tests/Shared.Tests/Shared.Tests.csproj
+  - tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs
+  creates_file: true
+  companion_required: false
+  existing_implementation: No test project exists in TargetRepo. The source carries no unit test for CustomUserInfoTokenServices, so the assertions derive from its behaviour at lines 68-107 and from the scope vocabulary at auth-service OAuth2AuthorizationConfig.java:43-64. The stub's document follows the Jackson rendering of the OAuth2Authentication that /uaa/users/current returns, of which the handler reads name, oauth2Request.clientId, oauth2Request.scope and authorities.
+  exact_snippet: |
+    ===== FILE: tests/Shared.Tests/Shared.Tests.csproj =====
+    <Project Sdk="Microsoft.NET.Sdk">
+    	<PropertyGroup>
+    		<RootNamespace>PiggyMetrics.Shared.Tests</RootNamespace>
+    		<AssemblyName>Shared.Tests</AssemblyName>
+    		<IsPackable>false</IsPackable>
+    		<IsTestProject>true</IsTestProject>
+    	</PropertyGroup>
+    	<ItemGroup>
+    		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+    	</ItemGroup>
+    	<ItemGroup>
+    		<PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+    		<PackageReference Include="xunit" />
+    		<PackageReference Include="xunit.runner.visualstudio" />
+    	</ItemGroup>
+    	<ItemGroup>
+    		<ProjectReference Include="../../src/Shared/Shared.csproj" />
+    	</ItemGroup>
+    </Project>
+    ===== FILE: tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs =====
+    using System.Net;
+    using System.Net.Http.Headers;
+    using System.Text;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.TestHost;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    using PiggyMetrics.Shared.Security;
+    using Xunit;
+
+    namespace PiggyMetrics.Shared.Tests.Security;
+
+    public sealed class UserInfoAuthenticationHandlerTests
+    {
+    	private const string UserInfoUri = "http://auth-service:5000/uaa/users/current";
+
+    	private const string IssuedUserToken = "issued-user-token";
+    	private const string IssuedServerToken = "issued-server-token";
+    	private const string ForeignToken = "foreign-token";
+
+    	private const string UserPrincipalJson =
+    		"{\"authorities\":[],\"authenticated\":true,\"principal\":\"demo\",\"credentials\":\"\"," +
+    		"\"oauth2Request\":{\"clientId\":\"browser\",\"scope\":[\"ui\"]},\"clientOnly\":false,\"name\":\"demo\"}";
+
+    	private const string ServerPrincipalJson =
+    		"{\"authorities\":[],\"authenticated\":true,\"principal\":\"account-service\",\"credentials\":\"\"," +
+    		"\"oauth2Request\":{\"clientId\":\"account-service\",\"scope\":[\"server\"]},\"clientOnly\":true," +
+    		"\"name\":\"account-service\"}";
+
+    	[Fact]
+    	public async Task ShouldAcceptTokenIssuedByAuthorizationServer()
+    	{
+    		var result = await CallAsync("/user", IssuedUserToken);
+
+    		Assert.Equal(HttpStatusCode.OK, result.Status);
+    		Assert.Equal("demo", result.Body);
+    	}
+
+    	[Fact]
+    	public async Task ShouldRefuseTokenTheAuthorizationServerDidNotIssue()
+    	{
+    		var result = await CallAsync("/user", ForeignToken);
+
+    		Assert.Equal(HttpStatusCode.Unauthorized, result.Status);
+    	}
+
+    	[Fact]
+    	public async Task ShouldRefuseRequestWithoutToken()
+    	{
+    		var result = await CallAsync("/user", token: null);
+
+    		Assert.Equal(HttpStatusCode.Unauthorized, result.Status);
+    	}
+
+    	[Fact]
+    	public async Task ShouldAllowServerPolicyForServerScope()
+    	{
+    		var result = await CallAsync("/server", IssuedServerToken);
+
+    		Assert.Equal(HttpStatusCode.OK, result.Status);
+    		Assert.Equal("account-service", result.Body);
+    	}
+
+    	[Fact]
+    	public async Task ShouldRejectServerPolicyForUiScope()
+    	{
+    		var result = await CallAsync("/server", IssuedUserToken);
+
+    		Assert.Equal(HttpStatusCode.Forbidden, result.Status);
+    	}
+
+    	private static async Task<(HttpStatusCode Status, string Body)> CallAsync(string path, string? token)
+    	{
+    		using var host = await CreateHostAsync();
+    		var client = host.GetTestClient();
+
+    		using var request = new HttpRequestMessage(HttpMethod.Get, path);
+    		if (token is not null)
+    		{
+    			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    		}
+
+    		using var response = await client.SendAsync(request);
+    		var body = await response.Content.ReadAsStringAsync();
+    		return (response.StatusCode, body);
+    	}
+
+    	private static async Task<IHost> CreateHostAsync()
+    	{
+    		var host = new HostBuilder()
+    			.ConfigureWebHost(webHost =>
+    			{
+    				webHost.UseTestServer();
+    				webHost.ConfigureServices(services =>
+    				{
+    					var configuration = new ConfigurationBuilder()
+    						.AddInMemoryCollection(new Dictionary<string, string?>
+    						{
+    							[PiggyMetricsAuth.UserInfoUriConfigurationKey] = UserInfoUri,
+    						})
+    						.Build();
+
+    					services.AddLogging();
+    					services.AddRouting();
+    					services.AddPiggyMetricsResourceServer(configuration);
+    					services
+    						.AddHttpClient(PiggyMetricsAuth.HttpClientName)
+    						.ConfigurePrimaryHttpMessageHandler(() => new AuthorizationServerStub());
+    				});
+    				webHost.Configure(app =>
+    				{
+    					app.UseRouting();
+    					app.UseAuthentication();
+    					app.UseAuthorization();
+    					app.UseEndpoints(endpoints =>
+    					{
+    						endpoints
+    							.MapGet("/user", (HttpContext context) => context.User.Identity!.Name)
+    							.RequireAuthorization(PiggyMetricsAuth.UserPolicy);
+    						endpoints
+    							.MapGet("/server", (HttpContext context) => context.User.Identity!.Name)
+    							.RequireAuthorization(PiggyMetricsAuth.ServerPolicy);
+    					});
+    				});
+    			})
+    			.Build();
+
+    		await host.StartAsync();
+    		return host;
+    	}
+
+    	// Answers the way the source's authorization server answers GET /uaa/users/current: the serialized
+    	// OAuth2Authentication for a token it issued, 401 for anything else.
+    	private sealed class AuthorizationServerStub : HttpMessageHandler
+    	{
+    		protected override Task<HttpResponseMessage> SendAsync(
+    			HttpRequestMessage request,
+    			CancellationToken cancellationToken)
+    		{
+    			var token = request.Headers.Authorization?.Parameter ?? string.Empty;
+    			var body = token switch
+    			{
+    				IssuedUserToken => UserPrincipalJson,
+    				IssuedServerToken => ServerPrincipalJson,
+    				_ => string.Empty,
+    			};
+
+    			if (body.Length == 0)
+    			{
+    				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+    			}
+
+    			return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+    			{
+    				Content = new StringContent(body, Encoding.UTF8, "application/json"),
+    			});
+    		}
+    	}
+    }
+  exact_commands:
+  - mkdir -p tests/Shared.Tests/Security
+  - dotnet sln PiggyMetrics.sln add tests/Shared.Tests/Shared.Tests.csproj
+  - dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
+  machine_verify:
+  - dotnet test tests/Shared.Tests/Shared.Tests.csproj -c Debug
+  human_verify:
+  - All five tests pass and their names read ShouldAcceptTokenIssuedByAuthorizationServer, ShouldRefuseTokenTheAuthorizationServerDidNotIssue, ShouldRefuseRequestWithoutToken, ShouldAllowServerPolicyForServerScope and ShouldRejectServerPolicyForUiScope.
+  invariants:
+  - The tests exercise the real handler through the real policy pipeline; the handler itself is never mocked.
+  - The stub answers only the two issued tokens, so a passing accept test cannot come from a permissive stub.
+  - The refusal assertions distinguish 401 for an unresolvable token from 403 for a resolved token lacking the server scope.
+  - The test project runs with no MongoDB, no network and no authorization server present.
+  edge_cases:
+  - 'The stub receives a request carrying no Authorization header: the handler short-circuits before the call, and the request still ends as 401.'
+  - 'A later plan adds its own test project: it adds its own package references and does not reuse this project.'
+  acceptance:
+  - Both files exist with exactly the pinned bodies.
+  - dotnet test reports five passed tests and zero failures.
+  - The P1 done-when clause about accepting an issued token and refusing an unissued one is satisfied by named, repeatable tests.
+  do_not:
+  - Do not reach the network; the stub is the only transport.
+  - Do not assert on log output instead of on status codes.
+  - Do not weaken the stub to answer 200 for an unknown token.
+  - Do not add a mocking package; the stub is a plain HttpMessageHandler.
+  rollback: dotnet sln PiggyMetrics.sln remove tests/Shared.Tests/Shared.Tests.csproj && rm -rf tests/Shared.Tests
+  tests:
+  - tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs, five facts.
+  trace:
+    requirements:
+    - REQ-P1-T2
+    - REQ-P1-DONE2
+    decisions:
+    - DEC-003
+    - DEC-004
+    - DEC-011
+    research:
+    - R-003
+    - R-005
+    - R-012
+- id: STEP-011
+  title: Gate P1 on a clean solution build and a green test run
+  todo_refs:
+  - P1.T1
+  - P1.T2
+  - P1.T3
+  - P1.T4
+  - P1.T5
+  why: 'The P1 done-when clause has two halves: every project builds, and the bearer handler accepts and refuses correctly. This is the single gate that proves both before P2 and P3 start, and the commit boundary that names the five P1 todo ids.'
+  change: Run the solution-wide restore, build and test from the repository root, confirm the solution lists exactly the six source projects plus the one test project, and commit the P1 work in one commit whose message names P1.T1, P1.T2, P1.T3, P1.T4 and P1.T5.
+  exact_files:
+  - PiggyMetrics.sln
+  creates_file: false
+  companion_required: false
+  existing_implementation: After STEP-001 through STEP-010 the solution holds src/Shared, the five service projects and tests/Shared.Tests. The source's equivalent gate is the Maven reactor build over the module list at pom.xml:38-48.
+  exact_commands:
+  - dotnet restore PiggyMetrics.sln
+  - dotnet build PiggyMetrics.sln -c Debug --no-restore
+  - dotnet test PiggyMetrics.sln -c Debug --no-build
+  - dotnet sln PiggyMetrics.sln list
+  - git add -A
+  - 'git commit -m "P1.T1 P1.T2 P1.T3 P1.T4 P1.T5: solution skeleton and Shared"'
+  machine_verify:
+  - dotnet build PiggyMetrics.sln -c Debug --no-restore
+  - dotnet test PiggyMetrics.sln -c Debug --no-build
+  human_verify:
+  - The build prints zero errors across all seven projects.
+  - The test run reports five passed and zero failed.
+  - git status is clean after the commit.
+  invariants:
+  - The build runs from the repository root over PiggyMetrics.sln, not project by project.
+  - No warning about a missing package version appears, which proves central package management stayed intact.
+  - The commit message names every P1 todo id it completes.
+  edge_cases:
+  - 'The SDK resolves forward to a major newer than 10: global.json rollForward latestMajor keeps the build working and no file changes.'
+  - 'A restore cannot reach nuget.org: the gate fails loudly on restore rather than producing a partial build.'
+  acceptance:
+  - dotnet build PiggyMetrics.sln succeeds.
+  - dotnet test PiggyMetrics.sln reports five passed tests and zero failures.
+  - dotnet sln list prints exactly the six source projects and tests/Shared.Tests.
+  - 'P1 is done: every project builds, and the bearer handler accepts an issued token and refuses one that was not issued.'
+  do_not:
+  - Do not mark P1 complete while any project fails to build or any test fails.
+  - Do not add a project to the solution that P1.T1 does not name.
+  - Do not start P2 or P3 work in this commit.
+  - Do not push or open a pull request from this step; the runtime owns that.
+  rollback: git reset --hard HEAD~1
+  tests:
+  - tests/Shared.Tests/Security/UserInfoAuthenticationHandlerTests.cs, five facts.
+  trace:
+    requirements:
+    - REQ-P1-T1
+    - REQ-P1-T2
+    - REQ-P1-T3
+    - REQ-P1-T4
+    - REQ-P1-T5
+    - REQ-P1-DONE1
+    - REQ-P1-DONE2
+    decisions:
+    - DEC-001
+    - DEC-011
+    research:
+    - R-001
+    - R-002

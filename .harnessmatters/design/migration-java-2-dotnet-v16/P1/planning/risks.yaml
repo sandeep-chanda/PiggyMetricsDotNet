@@ -1,0 +1,32 @@
+task_id: mig-java-dotnet-v16-p1
+risks:
+- id: RISK-001
+  risk: The implementing environment has an SDK older than 10.0.100 and the build cannot start.
+  likelihood: low
+  impact: high
+  mitigation: global.json rolls forward to any newer major; an older SDK fails with an explicit SDK-resolution message rather than a confusing compile error.
+  owner: STEP-001
+- id: RISK-002
+  risk: A later plan writes documents the Java services cannot read because it bypasses the convention pack.
+  likelihood: medium
+  impact: high
+  mitigation: MongoConventions.Register is called from AddPiggyMetricsStore, CollectionName throws without the attribute, and STEP-004 invariants name all six representation rules.
+  owner: STEP-004
+- id: RISK-003
+  risk: The user-info call becomes a per-request latency multiplier under load.
+  likelihood: medium
+  impact: medium
+  mitigation: 'Accepted deliberately: the source caches nothing on the resource-server side, and caching here would diverge from the behaviour P1.T2 asks to reproduce. Recorded in STEP-005 invariants.'
+  owner: STEP-005
+- id: RISK-004
+  risk: The exact date rendering drifts once a service introduces DateTimeOffset or a java.time counterpart.
+  likelihood: low
+  impact: medium
+  mitigation: JacksonDateTimeConverter covers DateTime only; a plan introducing another temporal type must extend PiggyMetricsJson rather than configure its own options, which STEP-003 invariants require.
+  owner: STEP-003
+- id: RISK-005
+  risk: P3 expects a fallback on the rates edge, but the source's statistics-service never enables feign.hystrix, so the fallback is dormant there.
+  likelihood: medium
+  impact: medium
+  mitigation: 'Recorded here for P3 rather than guessed in P1: Shared ships no circuit breaker, and STEP-007 do_not keeps retry and fallback policy with the plan that owns the edge.'
+  owner: P3.T7

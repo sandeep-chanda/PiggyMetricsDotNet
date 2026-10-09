@@ -1,0 +1,8 @@
+id: R-004
+question: How are documents named, keyed and valued in the stores?
+dimension: cross-repo
+evidence: Account.java:14-37 (@Document(collection="accounts"), @Id name, BigDecimal and Date members); User.java:10-17 (users, @Id username); DataPoint.java:15-24 (datapoints, @Id DataPointId); Recipient.java:11-16 (recipients, @Id accountName). Spring Data MongoDB 2.x writes BigDecimal through BigDecimalToStringConverter and skips null properties. mongodb/dump/account-service-dump.js stores amount as a bare number.
+finding: Four collections with lower-camel field names, the @Id member mapped to _id, enums stored as strings, decimals stored as strings on write while hand-seeded numbers must still read, dates as UTC BSON datetimes, and null members omitted.
+confidence: high
+affects:
+- STEP-004

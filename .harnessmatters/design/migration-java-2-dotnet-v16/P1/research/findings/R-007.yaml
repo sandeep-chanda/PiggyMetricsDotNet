@@ -1,0 +1,8 @@
+id: R-007
+question: What is the source's JSON date format?
+dimension: external
+evidence: spring-boot v2.0.3.RELEASE JacksonAutoConfiguration line 86 puts SerializationFeature.WRITE_DATES_AS_TIMESTAMPS false into the feature defaults. spring-framework v5.0.7.RELEASE Jackson2ObjectMapperBuilder.customizeDefaultFeatures lines 687-694 turns FAIL_ON_UNKNOWN_PROPERTIES off and leaves date handling alone. spring-boot-dependencies pins jackson.version 2.9.6; jackson-databind 2.9.6 StdDateFormat line 53 declares yyyy-MM-dd'T'HH:mm:ss.SSSZ and line 151 defaults _tzSerializedWithColon to false. Jackson's default time zone is UTC.
+finding: 'A java.util.Date is written as an ISO-8601 string in UTC with three fractional digits and a colon-less offset: 2018-06-01T12:00:00.000+0000. System.Text.Json''s default rendering differs, so a converter is required.'
+confidence: high
+affects:
+- STEP-003

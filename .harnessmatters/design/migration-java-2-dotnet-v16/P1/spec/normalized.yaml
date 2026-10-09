@@ -1,0 +1,68 @@
+spec_id: migration-java-2-dotnet-v16
+spec_title: Migration Java 2 .NET v16
+plan_key: P1
+plan_title: Solution skeleton and Shared
+target_repo: sandeep-chanda/PiggyMetricsDotNet
+source_system: sqshq/piggymetrics (Spring Boot 2.0.3 / Spring Cloud Finchley Maven reactor)
+goal: Stand up the .NET solution and the Shared library every later service plan builds on.
+in_scope_todos:
+- id: P1.T1
+  text: Solution and one project per runtime service (Gateway, AuthService, AccountService, StatisticsService, NotificationService) plus Shared, derived from account-service/pom.xml.
+  steps:
+  - STEP-001
+  - STEP-002
+  - STEP-009
+  - STEP-011
+- id: P1.T2
+  text: Shared bearer handler that validates a token the way the resource servers do, calling http://auth-service:5000/uaa/users/current.
+  steps:
+  - STEP-005
+  - STEP-006
+  - STEP-010
+- id: P1.T3
+  text: Shared store conventions and serializers for the documents' field names and ids, against the same databases and collections.
+  steps:
+  - STEP-004
+- id: P1.T4
+  text: Shared typed-client base with the source's timeout and a client-credentials token cache, one HTTP client per edge.
+  steps:
+  - STEP-007
+- id: P1.T5
+  text: 'Shared health checks and JSON options: enums as names, unknown fields ignored, the source''s date format.'
+  steps:
+  - STEP-003
+  - STEP-008
+requirements:
+- id: REQ-P1-T1
+  todo: P1.T1
+  statement: A .NET solution exists holding one project per runtime service plus Shared.
+  acceptance: dotnet sln list prints Gateway, AuthService, AccountService, StatisticsService, NotificationService and Shared.
+- id: REQ-P1-T2
+  todo: P1.T2
+  statement: Shared validates a presented bearer token by resolving it at the source's user-info endpoint and exposes the resulting principal, client id and scopes.
+  acceptance: An issued token authenticates; an unissued token is refused with 401.
+- id: REQ-P1-T3
+  todo: P1.T3
+  statement: Shared fixes the document field names, id mapping, value representations and store connection shape so the .NET services read and write the source's databases and collections.
+  acceptance: Element names, enum strings, string decimals, UTC dates and the piggymetrics auth source are all pinned in one place.
+- id: REQ-P1-T4
+  todo: P1.T4
+  statement: Shared provides one HTTP client per edge with the source's 10000 ms timeout and a cached client-credentials token.
+  acceptance: A registered service client attaches a cached bearer token and times out after 10 seconds.
+- id: REQ-P1-T5
+  todo: P1.T5
+  statement: 'Shared provides the actuator health endpoint and the JSON contract: enums as names, unknown members skipped, Jackson''s date rendering.'
+  acceptance: GET /actuator/health answers 200 with {"status":"UP"}; a DateTime renders as 2018-06-01T12:00:00.000+0000.
+- id: REQ-P1-DONE1
+  todo: P1
+  statement: Every project builds.
+  acceptance: dotnet build PiggyMetrics.sln succeeds.
+- id: REQ-P1-DONE2
+  todo: P1
+  statement: Shared's bearer handler accepts a token the source's authorization server issued and refuses one it did not.
+  acceptance: dotnet test reports the five Shared.Tests facts green.
+out_of_scope:
+- Endpoints, documents, repositories and per-service settings for AuthService (P2), StatisticsService (P3) and the remaining service plans.
+- Eureka service registry, Spring Cloud Config server, Hystrix dashboard, Turbine stream and RabbitMQ bus; no .NET counterpart is named by P1.T1.
+- The gateway routing table and its 20000 ms Zuul and Ribbon timeouts.
+- Mongo document classes, indexes and seeding.

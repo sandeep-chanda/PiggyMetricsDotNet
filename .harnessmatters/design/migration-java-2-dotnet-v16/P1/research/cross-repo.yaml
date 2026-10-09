@@ -1,0 +1,45 @@
+provider: github
+source_repo: https://github.com/sqshq/piggymetrics.git
+access: cloned read-only into the planning sandbox during this run
+files_read:
+- pom.xml
+- account-service/pom.xml
+- docker-compose.yml
+- config/Dockerfile
+- mongodb/init.sh
+- mongodb/dump/account-service-dump.js
+- config/src/main/resources/shared/application.yml
+- config/src/main/resources/shared/gateway.yml
+- config/src/main/resources/shared/auth-service.yml
+- config/src/main/resources/shared/account-service.yml
+- config/src/main/resources/shared/statistics-service.yml
+- config/src/main/resources/shared/notification-service.yml
+- account-service/src/main/java/com/piggymetrics/account/config/ResourceServerConfig.java
+- account-service/src/main/java/com/piggymetrics/account/service/security/CustomUserInfoTokenServices.java
+- account-service/src/main/java/com/piggymetrics/account/repository/AccountRepository.java
+- account-service/src/main/java/com/piggymetrics/account/domain/Account.java
+- account-service/src/main/java/com/piggymetrics/account/domain/Item.java
+- account-service/src/main/java/com/piggymetrics/account/domain/Saving.java
+- account-service/src/main/java/com/piggymetrics/account/domain/Currency.java
+- account-service/src/main/java/com/piggymetrics/account/domain/TimePeriod.java
+- account-service/src/main/java/com/piggymetrics/account/controller/AccountController.java
+- auth-service/src/main/java/com/piggymetrics/auth/config/OAuth2AuthorizationConfig.java
+- auth-service/src/main/java/com/piggymetrics/auth/config/WebSecurityConfig.java
+- auth-service/src/main/java/com/piggymetrics/auth/controller/UserController.java
+- auth-service/src/main/java/com/piggymetrics/auth/domain/User.java
+- statistics-service/src/main/java/com/piggymetrics/statistics/config/ResourceServerConfig.java
+- statistics-service/src/main/java/com/piggymetrics/statistics/controller/StatisticsController.java
+- statistics-service/src/main/java/com/piggymetrics/statistics/client/ExchangeRatesClient.java
+- statistics-service/src/main/java/com/piggymetrics/statistics/client/ExchangeRatesClientFallback.java
+- statistics-service/src/main/java/com/piggymetrics/statistics/domain/timeseries/DataPoint.java
+- statistics-service/src/main/java/com/piggymetrics/statistics/domain/timeseries/DataPointId.java
+- notification-service/src/main/java/com/piggymetrics/notification/domain/Recipient.java
+- gateway/src/main/java/com/piggymetrics/gateway/GatewayApplication.java
+findings:
+- R-002
+- R-003
+- R-004
+- R-005
+- R-006
+- R-009
+- R-012

@@ -1,0 +1,13 @@
+assumptions:
+- id: A-001
+  assumption: The implementing environment can restore from nuget.org.
+  impact: STEP-002 onward
+  validation: dotnet restore PiggyMetrics.sln in STEP-011 fails loudly otherwise.
+- id: A-002
+  assumption: The source repository sqshq/piggymetrics at master is the system of record for the migration, as every todo cites paths from it.
+  impact: All evidence citations
+  validation: Every cited path was read during this planning run; see research/repository.yaml.
+- id: A-003
+  assumption: The .NET services keep the source's container-internal host names (auth-service, account-mongodb, statistics-mongodb) as configuration defaults.
+  impact: DEC-003, DEC-005
+  validation: Defaults are overridable through configuration keys; no host name is compiled into behaviour other than as a fallback.
