@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using PiggyMetrics.AuthService.Domain;
@@ -7,14 +6,10 @@ using PiggyMetrics.AuthService.Service;
 
 namespace PiggyMetrics.AuthService.Controller;
 
+[ApiController]
 [Route("users")]
 public class UserController : ControllerBase
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip
-    };
-
     private readonly UserService _userService;
 
     public UserController(UserService userService)
@@ -44,30 +39,9 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateUser()
+    public IActionResult CreateUser([FromBody] User? user)
     {
-        string body;
-        using (var reader = new StreamReader(Request.Body))
-        {
-            body = await reader.ReadToEndAsync();
-        }
-
-        if (string.IsNullOrWhiteSpace(body))
-        {
-            return BadRequest();
-        }
-
-        User? user;
-        try
-        {
-            user = JsonSerializer.Deserialize<User>(body, JsonOptions);
-        }
-        catch (JsonException)
-        {
-            return BadRequest();
-        }
-
-        if (user is null || string.IsNullOrWhiteSpace(user.Username) || string.IsNullOrEmpty(user.Password))
+        if (user is null || !ModelState.IsValid)
         {
             return BadRequest();
         }
