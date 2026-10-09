@@ -25,10 +25,6 @@ public sealed class MongoUserRepository : UserRepository
         var username = document.Contains("_id") && document["_id"].IsString
             ? document["_id"].AsString
             : id;
-        if (document.Contains("username") && document["username"].IsString)
-        {
-            username = document["username"].AsString;
-        }
 
         string? password = null;
         if (document.Contains("password") && document["password"].IsString)
@@ -49,7 +45,6 @@ public sealed class MongoUserRepository : UserRepository
         var document = new BsonDocument
         {
             ["_id"] = username,
-            ["username"] = username,
             ["password"] = user.Password is null ? BsonNull.Value : user.Password
         };
         _documents.ReplaceOne(

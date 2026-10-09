@@ -46,7 +46,7 @@ public class UserRepositoryTest : IAsyncLifetime
             .Find(new BsonDocument("_id", user.Username))
             .First();
         Assert.Equal("name", stored["_id"].AsString);
-        Assert.Equal("name", stored["username"].AsString);
+        Assert.False(stored.Contains("username"));
         Assert.Equal("password", stored["password"].AsString);
     }
 }
