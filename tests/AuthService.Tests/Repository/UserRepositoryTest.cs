@@ -1,24 +1,30 @@
-using Mongo2Go;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using PiggyMetrics.AuthService.Domain;
 using PiggyMetrics.AuthService.Repository;
+using Testcontainers.MongoDb;
 using Xunit;
 
 namespace PiggyMetrics.AuthService.Tests.Repository;
 
-public class UserRepositoryTest : IDisposable
+public class UserRepositoryTest : IAsyncLifetime
 {
-    private readonly MongoDbRunner _runner;
-    private readonly IMongoDatabase _database;
-    private readonly MongoUserRepository _repository;
+    private readonly MongoDbContainer _container = new MongoDbBuilder("mongo:7.0").Build();
 
-    public UserRepositoryTest()
+    private IMongoDatabase _database = null!;
+    private MongoUserRepository _repository = null!;
+
+    public async Task InitializeAsync()
     {
-        _runner = MongoDbRunner.Start();
-        var client = new MongoClient(_runner.ConnectionString);
+        await _container.StartAsync();
+        var client = new MongoClient(_container.GetConnectionString());
         _database = client.GetDatabase("piggymetrics");
         _repository = new MongoUserRepository(_database);
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _container.DisposeAsync();
     }
 
     [Fact]
@@ -42,10 +48,5 @@ public class UserRepositoryTest : IDisposable
         Assert.Equal("name", stored["_id"].AsString);
         Assert.Equal("name", stored["username"].AsString);
         Assert.Equal("password", stored["password"].AsString);
-    }
-
-    public void Dispose()
-    {
-        _runner.Dispose();
     }
 }
