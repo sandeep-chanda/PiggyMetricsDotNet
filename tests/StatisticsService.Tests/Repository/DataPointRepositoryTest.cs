@@ -1,29 +1,30 @@
-using EphemeralMongo;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using PiggyMetrics.StatisticsService.Domain.Timeseries;
 using PiggyMetrics.StatisticsService.Repository;
+using Testcontainers.MongoDb;
 using Xunit;
 
 namespace PiggyMetrics.StatisticsService.Tests.Repository;
 
-public class DataPointRepositoryTest : IDisposable
+public class DataPointRepositoryTest : IAsyncLifetime
 {
-    private readonly IMongoRunner _runner;
-    private readonly IMongoDatabase _database;
-    private readonly MongoDataPointRepository _repository;
+    private readonly MongoDbContainer _container = new MongoDbBuilder("mongo:7.0").Build();
 
-    public DataPointRepositoryTest()
+    private IMongoDatabase _database = null!;
+    private MongoDataPointRepository _repository = null!;
+
+    public async Task InitializeAsync()
     {
-        _runner = MongoRunner.Run();
-        var client = new MongoClient(_runner.ConnectionString);
+        await _container.StartAsync();
+        var client = new MongoClient(_container.GetConnectionString());
         _database = client.GetDatabase("piggymetrics");
         _repository = new MongoDataPointRepository(_database);
     }
 
-    public void Dispose()
+    public async Task DisposeAsync()
     {
-        _runner.Dispose();
+        await _container.DisposeAsync();
     }
 
     [Fact]
