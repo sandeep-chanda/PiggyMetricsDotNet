@@ -1,10 +1,12 @@
 using System.Reflection;
+using PiggyMetrics.Gateway.Cutover;
 using PiggyMetrics.Gateway.Proxy;
 using PiggyMetrics.Shared.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddPiggyMetricsSharedDefaults();
 builder.Services.AddSingleton<ZuulRouteTable>();
+builder.Services.AddSingleton<SourceGatewayCutover>();
 builder.Services.AddHttpClient("zuul")
     .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
     {
