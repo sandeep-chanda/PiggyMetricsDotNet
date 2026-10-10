@@ -1,0 +1,467 @@
+{
+  "plan": "P7",
+  "routes": [
+    {
+      "route": "GET /uaa/users/current",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C1",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C1",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C1",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "POST /uaa/users",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C2",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C2",
+          "auth": "user",
+          "policyStatus": 403,
+          "sourceStatus": 403,
+          "destinationStatus": 403,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C2",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "POST /uaa/oauth/token",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C3",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C3",
+          "auth": "user",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C3",
+          "auth": "server",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "GET /accounts/alice",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C4",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C4",
+          "auth": "user",
+          "policyStatus": 403,
+          "sourceStatus": 403,
+          "destinationStatus": 403,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C4",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "GET /accounts/demo",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C4",
+          "auth": "none",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C4",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C4",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "GET /accounts/current",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C5",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C5",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C5",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "PUT /accounts/current",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C6",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C6",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C6",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "POST /accounts",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C7",
+          "auth": "none",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C7",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C7",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "GET /statistics/current",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C8",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C8",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C8",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "GET /statistics/alice",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C9",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C9",
+          "auth": "user",
+          "policyStatus": 403,
+          "sourceStatus": 403,
+          "destinationStatus": 403,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C9",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "GET /statistics/demo",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C9",
+          "auth": "none",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C9",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C9",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "PUT /statistics/alice",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C10",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C10",
+          "auth": "user",
+          "policyStatus": 403,
+          "sourceStatus": 403,
+          "destinationStatus": 403,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C10",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "GET /notifications/recipients/current",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C11",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C11",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C11",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    },
+    {
+      "route": "PUT /notifications/recipients/current",
+      "parity": true,
+      "rows": [
+        {
+          "contract": "C12",
+          "auth": "none",
+          "policyStatus": 401,
+          "sourceStatus": 401,
+          "destinationStatus": 401,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C12",
+          "auth": "user",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        },
+        {
+          "contract": "C12",
+          "auth": "server",
+          "policyStatus": 200,
+          "sourceStatus": 200,
+          "destinationStatus": 200,
+          "parity": true,
+          "detail": "match"
+        }
+      ]
+    }
+  ]
+}

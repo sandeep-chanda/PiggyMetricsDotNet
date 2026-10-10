@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>PiggyMetrics.Parity.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.11" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\src\AuthService\AuthService.csproj">
+      <Aliases>AuthApp</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\AccountService\AccountService.csproj">
+      <Aliases>AccountApp</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\StatisticsService\StatisticsService.csproj">
+      <Aliases>StatisticsApp</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\NotificationService\NotificationService.csproj">
+      <Aliases>NotificationApp</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Gateway\Gateway.csproj">
+      <Aliases>GatewayApp</Aliases>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
