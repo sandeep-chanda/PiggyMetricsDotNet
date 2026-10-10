@@ -110,14 +110,17 @@ public class GatewayApplicationTests
         var env = factory.Services.GetRequiredService<IWebHostEnvironment>();
         var client = factory.CreateClient();
 
-        await AssertSameFile(client, env, "/index.html", "index.html");
         var root = await client.GetAsync("/");
         Assert.Equal(HttpStatusCode.OK, root.StatusCode);
         Assert.Equal(await File.ReadAllBytesAsync(Path.Combine(env.WebRootPath, "index.html")), await root.Content.ReadAsByteArrayAsync());
-        await AssertSameFile(client, env, "/css/launch.css", Path.Combine("css", "launch.css"));
-        await AssertSameFile(client, env, "/js/launch.js", Path.Combine("js", "launch.js"));
-        await AssertSameFile(client, env, "/images/logo.gif", Path.Combine("images", "logo.gif"));
-        await AssertSameFile(client, env, "/attribution.html", "attribution.html");
+
+        var files = Directory.EnumerateFiles(env.WebRootPath, "*", SearchOption.AllDirectories).ToArray();
+        Assert.NotEmpty(files);
+        foreach (var file in files)
+        {
+            var relative = Path.GetRelativePath(env.WebRootPath, file).Replace('\\', '/');
+            await AssertSameFile(client, env, "/" + relative, relative);
+        }
     }
 
     private static async Task AssertSameFile(HttpClient client, IWebHostEnvironment env, string url, string relativePath)
