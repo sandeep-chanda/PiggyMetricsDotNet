@@ -1,6 +1,8 @@
+using MongoDB.Bson;
 using MongoDB.Driver;
 using PiggyMetrics.NotificationService.Domain;
 using PiggyMetrics.NotificationService.Repository;
+using PiggyMetrics.Shared.Store;
 using Testcontainers.MongoDb;
 using Xunit;
 
@@ -54,6 +56,20 @@ public class RecipientRepositoryTest : IAsyncLifetime
         };
 
         _repository.Save(recipient);
+
+        Assert.Equal(MongoCollectionNames.Recipients, "recipients");
+        Assert.Contains("recipients", _database.ListCollectionNames().ToList());
+        var stored = _database.GetCollection<BsonDocument>("recipients")
+            .Find(new BsonDocument("_id", recipient.AccountName))
+            .First();
+        Assert.Equal(recipient.AccountName, stored["_id"].AsString);
+        Assert.Equal(recipient.Email, stored["email"].AsString);
+        Assert.False(stored["scheduledNotifications"]["BACKUP"]["active"].AsBoolean);
+        Assert.Equal((int)Frequency.MONTHLY, stored["scheduledNotifications"]["BACKUP"]["frequency"].AsInt32);
+        Assert.True(stored["scheduledNotifications"]["BACKUP"]["lastNotified"].IsValidDateTime);
+        Assert.True(stored["scheduledNotifications"]["REMIND"]["active"].AsBoolean);
+        Assert.Equal((int)Frequency.WEEKLY, stored["scheduledNotifications"]["REMIND"]["frequency"].AsInt32);
+        Assert.Equal(DateTime.UnixEpoch, stored["scheduledNotifications"]["REMIND"]["lastNotified"].ToUniversalTime());
 
         var found = _repository.FindByAccountName(recipient.AccountName!);
         Assert.Equal(recipient.AccountName, found!.AccountName);
