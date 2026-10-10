@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccountService.Tests", "tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Tests", "tests\NotificationService.Tests\NotificationService.Tests.csproj", "{B2222222-2222-2222-2222-222222222222}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway.Tests", "tests\Gateway.Tests\Gateway.Tests.csproj", "{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,5 +76,9 @@ Global
 		{B2222222-2222-2222-2222-222222222222}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2222222-2222-2222-2222-222222222222}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2222222-2222-2222-2222-222222222222}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
