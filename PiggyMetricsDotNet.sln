@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -25,6 +25,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Tests", "tests\NotificationService.Tests\NotificationService.Tests.csproj", "{B2222222-2222-2222-2222-222222222222}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway.Tests", "tests\Gateway.Tests\Gateway.Tests.csproj", "{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{00CC37B0-C4A0-47FE-9AE4-1410153C6B24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parity.Tests", "tests\Parity.Tests\Parity.Tests.csproj", "{1BC92C6C-2A17-48FF-967D-7A49A0BB871E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -80,5 +84,12 @@ Global
 		{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A85D3D98-169F-4FC9-B712-E0B5DCB14DD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BC92C6C-2A17-48FF-967D-7A49A0BB871E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BC92C6C-2A17-48FF-967D-7A49A0BB871E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BC92C6C-2A17-48FF-967D-7A49A0BB871E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BC92C6C-2A17-48FF-967D-7A49A0BB871E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1BC92C6C-2A17-48FF-967D-7A49A0BB871E} = {00CC37B0-C4A0-47FE-9AE4-1410153C6B24}
 	EndGlobalSection
 EndGlobal
