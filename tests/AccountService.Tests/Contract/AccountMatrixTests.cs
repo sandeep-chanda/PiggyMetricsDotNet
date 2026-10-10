@@ -58,6 +58,8 @@ public class AccountMatrixTests
         Assert.Equal(42000m, account.GetProperty("incomes")[0].GetProperty("amount").GetDecimal());
         Assert.Equal("Rent", account.GetProperty("expenses")[0].GetProperty("title").GetString());
         Assert.Equal(1300m, account.GetProperty("expenses")[0].GetProperty("amount").GetDecimal());
+
+        Assert.Equal(HttpStatusCode.OK, (await host.GetAsync("/accounts/current", ServerToken)).StatusCode);
     }
 
     [Fact]
@@ -79,6 +81,10 @@ public class AccountMatrixTests
         var response = await host.PutAsync("/accounts/current", body, UserToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(string.Empty, await response.Content.ReadAsStringAsync());
+
+        var server = await host.PutAsync("/accounts/current", body, ServerToken);
+        Assert.Equal(HttpStatusCode.OK, server.StatusCode);
+        Assert.Equal(string.Empty, await server.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -100,6 +106,22 @@ public class AccountMatrixTests
         Assert.False(account.GetProperty("saving").GetProperty("deposit").GetBoolean());
         Assert.False(account.GetProperty("saving").GetProperty("capitalization").GetBoolean());
         Assert.False(string.IsNullOrEmpty(account.GetProperty("lastSeen").GetString()));
+
+        var asUser = await host.PostAsync(
+            "/accounts",
+            """{"username":"fromuser","password":"password"}""",
+            UserToken);
+        Assert.Equal(HttpStatusCode.OK, asUser.StatusCode);
+        using var userDocument = JsonDocument.Parse(await asUser.Content.ReadAsStringAsync());
+        Assert.Equal("fromuser", userDocument.RootElement.GetProperty("name").GetString());
+
+        var asServer = await host.PostAsync(
+            "/accounts",
+            """{"username":"fromserver","password":"password"}""",
+            ServerToken);
+        Assert.Equal(HttpStatusCode.OK, asServer.StatusCode);
+        using var serverDocument = JsonDocument.Parse(await asServer.Content.ReadAsStringAsync());
+        Assert.Equal("fromserver", serverDocument.RootElement.GetProperty("name").GetString());
     }
 
     private sealed class AccountDestination : IAsyncDisposable
@@ -118,6 +140,7 @@ public class AccountMatrixTests
             var repository = new InMemoryAccountRepository();
             repository.Save(DemoAccount());
             repository.Save(new Account { Name = "alice", Note = "alice", Saving = EmptySaving() });
+            repository.Save(new Account { Name = "account-service", Note = "service", Saving = EmptySaving() });
 
             var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
             {

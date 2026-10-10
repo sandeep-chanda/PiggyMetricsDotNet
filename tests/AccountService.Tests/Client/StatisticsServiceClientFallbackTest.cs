@@ -1,9 +1,12 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using PiggyMetrics.AccountService.Client;
 using PiggyMetrics.AccountService.Domain;
+using PiggyMetrics.Shared.Http;
 using Xunit;
 
 namespace PiggyMetrics.AccountService.Tests.Client;
@@ -36,6 +39,76 @@ public class StatisticsServiceClientFallbackTest
         statisticsServiceClient.UpdateStatistics("test", new Account());
 
         Assert.Contains(_logs.Messages, message => message.Contains("Error during update statistics for account: test"));
+    }
+
+    [Fact]
+    public void updateStatistics_puts_statistics_path_and_falls_back_on_failure()
+    {
+        var statistics = new RecordingHandler { Status = HttpStatusCode.InternalServerError };
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.AddSingleton<ILoggerProvider>(_logs);
+                services.PostConfigure<HttpClientFactoryOptions>("token", options =>
+                {
+                    options.HttpMessageHandlerBuilderActions.Add(handlerBuilder =>
+                    {
+                        handlerBuilder.PrimaryHandler = new RecordingHandler
+                        {
+                            Status = HttpStatusCode.OK,
+                            Body = "{\"access_token\":\"issued\",\"expires_in\":3600}"
+                        };
+                    });
+                });
+                services.PostConfigure<HttpClientFactoryOptions>("statistics-service", options =>
+                {
+                    options.HttpMessageHandlerBuilderActions.Add(handlerBuilder =>
+                    {
+                        handlerBuilder.PrimaryHandler = statistics;
+                    });
+                });
+            });
+        });
+
+        var http = factory.Services.GetRequiredService<IHttpClientFactory>().CreateClient("statistics-service");
+        Assert.Equal(TimeSpan.FromMilliseconds(10000), http.Timeout);
+        Assert.Equal(EdgeHttpDefaults.Timeout, http.Timeout);
+        Assert.Equal(new Uri("http://statistics-service:7000/"), http.BaseAddress);
+
+        _logs.Messages.Clear();
+        var statisticsServiceClient = factory.Services.GetRequiredService<StatisticsServiceClient>();
+        statisticsServiceClient.UpdateStatistics("test", new Account());
+
+        Assert.Equal(HttpMethod.Put, statistics.Method);
+        Assert.Equal("/statistics/test", statistics.Path);
+        Assert.Contains(_logs.Messages, message => message.Contains("Error during update statistics for account: test"));
+    }
+
+    private sealed class RecordingHandler : HttpMessageHandler
+    {
+        public HttpStatusCode Status { get; init; }
+
+        public string Body { get; init; } = string.Empty;
+
+        public HttpMethod? Method { get; private set; }
+
+        public string? Path { get; private set; }
+
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Method = request.Method;
+            Path = request.RequestUri?.AbsolutePath;
+            return new HttpResponseMessage(Status)
+            {
+                Content = new StringContent(Body, System.Text.Encoding.UTF8, "application/json")
+            };
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Send(request, cancellationToken));
+        }
     }
 
     private sealed class CaptureLoggerProvider : ILoggerProvider
