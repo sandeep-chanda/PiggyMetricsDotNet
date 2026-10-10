@@ -38,6 +38,8 @@ public class StatisticsMatrixTests
         Assert.Equal(2m, point.GetProperty("expenses")[0].GetProperty("amount").GetDecimal());
         Assert.Equal(3m, point.GetProperty("statistics").GetProperty("SAVING_AMOUNT").GetDecimal());
         Assert.Equal(1m, point.GetProperty("rates").GetProperty("USD").GetDecimal());
+
+        Assert.Equal(HttpStatusCode.OK, (await host.GetAsync("/statistics/current", ServerToken)).StatusCode);
     }
 
     [Fact]
@@ -45,9 +47,13 @@ public class StatisticsMatrixTests
     {
         await using var host = await StatisticsDestination.StartAsync();
 
-        Assert.Equal(HttpStatusCode.OK, (await host.GetAsync("/statistics/alice", ServerToken)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await host.GetAsync("/statistics/alice", null)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await host.GetAsync("/statistics/alice", UserToken)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.GetAsync("/statistics/alice", ServerToken)).StatusCode);
+
         Assert.Equal(HttpStatusCode.OK, (await host.GetAsync("/statistics/demo", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.GetAsync("/statistics/demo", UserToken)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.GetAsync("/statistics/demo", ServerToken)).StatusCode);
     }
 
     [Fact]
@@ -62,8 +68,9 @@ public class StatisticsMatrixTests
             }
             """;
 
-        Assert.Equal(HttpStatusCode.OK, (await host.PutAsync("/statistics/alice", body, ServerToken)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await host.PutAsync("/statistics/alice", body, null)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await host.PutAsync("/statistics/alice", body, UserToken)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.PutAsync("/statistics/alice", body, ServerToken)).StatusCode);
     }
 
     private sealed class StatisticsDestination : IAsyncDisposable
