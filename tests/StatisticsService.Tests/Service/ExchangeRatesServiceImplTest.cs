@@ -58,6 +58,26 @@ public class ExchangeRatesServiceImplTest
     }
 
     [Fact]
+    public void shouldRequestRatesAgainWhenContainerDateIsNotToday()
+    {
+        var container = new ExchangeRatesContainer
+        {
+            Date = new DateOnly(2016, 1, 1),
+            Rates = new Dictionary<string, decimal>
+            {
+                [Currency.EUR.ToString()] = 0.8m,
+                [Currency.RUB.ToString()] = 80m
+            }
+        };
+        _client.Setup(client => client.GetRates(CurrencyCodes.GetBase())).Returns(container);
+
+        _ratesService.GetCurrentRates();
+        _ratesService.GetCurrentRates();
+
+        _client.Verify(client => client.GetRates(CurrencyCodes.GetBase()), Times.Exactly(2));
+    }
+
+    [Fact]
     public void shouldConvertCurrency()
     {
         var container = new ExchangeRatesContainer

@@ -30,7 +30,7 @@ public class ExchangeRatesClientTest : IClassFixture<ExchangeRatesClientTest.Rat
         var client = factory.Services.GetRequiredService<ExchangeRatesClient>();
         var container = client.GetRates(CurrencyCodes.GetBase());
 
-        Assert.Equal(DateOnly.FromDateTime(DateTime.Now), container.Date);
+        Assert.Equal(new DateOnly(2016, 1, 1), container.Date);
         Assert.Equal(CurrencyCodes.GetBase(), container.Base);
         Assert.NotNull(container.Rates);
         Assert.True(container.Rates.ContainsKey(Currency.USD.ToString()));
@@ -47,7 +47,7 @@ public class ExchangeRatesClientTest : IClassFixture<ExchangeRatesClientTest.Rat
 
         var container = client.GetRates(CurrencyCodes.GetBase());
 
-        Assert.Equal(DateOnly.FromDateTime(DateTime.Now), container.Date);
+        Assert.Equal(new DateOnly(2016, 1, 1), container.Date);
         Assert.Equal(CurrencyCodes.GetBase(), container.Base);
         Assert.NotNull(container.Rates);
         Assert.True(container.Rates.ContainsKey(requestedCurrency.ToString()));

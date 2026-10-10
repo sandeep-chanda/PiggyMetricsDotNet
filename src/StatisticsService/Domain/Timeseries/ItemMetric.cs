@@ -32,11 +32,13 @@ public sealed class ItemMetric
             return false;
         }
 
+        // Java ItemMetric.equals compares title with equalsIgnoreCase, while hashCode uses title.hashCode().
         return string.Equals(Title, that.Title, StringComparison.OrdinalIgnoreCase);
     }
 
     public override int GetHashCode()
     {
+        // Deliberately the Java hash: case-sensitive, so it does not match Equals.
         return Title?.GetHashCode() ?? 0;
     }
 }

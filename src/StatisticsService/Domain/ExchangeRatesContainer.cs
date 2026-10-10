@@ -4,7 +4,7 @@ namespace PiggyMetrics.StatisticsService.Domain;
 
 public sealed class ExchangeRatesContainer
 {
-    [JsonIgnore]
+    [JsonPropertyName("date")]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
 
     [JsonPropertyName("base")]
