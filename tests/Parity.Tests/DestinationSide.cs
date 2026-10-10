@@ -30,25 +30,33 @@ public sealed class DestinationSide : IAsyncDisposable
     private readonly WebApplicationFactory<AccountApp::Program>? _account;
     private readonly WebApplicationFactory<StatisticsApp::Program>? _statistics;
     private readonly WebApplicationFactory<NotificationApp::Program>? _notification;
+    private readonly GatewayFront _gateway;
+    private readonly HttpClient _direct;
+    private readonly CatalogHandler? _rates;
 
     private DestinationSide(
         ServiceKind service,
-        HttpClient client,
+        GatewayFront gateway,
+        HttpClient direct,
         WebApplicationFactory<AuthApp::Program>? auth,
         WebApplicationFactory<AccountApp::Program>? account,
         WebApplicationFactory<StatisticsApp::Program>? statistics,
         WebApplicationFactory<NotificationApp::Program>? notification,
         string? serverAccess,
-        string? userAccess)
+        string? userAccess,
+        CatalogHandler? rates)
     {
         Service = service;
-        Client = client;
+        _gateway = gateway;
+        _direct = direct;
+        Client = gateway.Client;
         _auth = auth;
         _account = account;
         _statistics = statistics;
         _notification = notification;
         ServerAccess = serverAccess;
         UserAccess = userAccess;
+        _rates = rates;
     }
 
     public ServiceKind Service { get; }
@@ -58,6 +66,10 @@ public sealed class DestinationSide : IAsyncDisposable
     public string? ServerAccess { get; }
 
     public string? UserAccess { get; }
+
+    public IReadOnlyList<string> Forwarded => _gateway.Forwarded;
+
+    public IReadOnlyList<string> RatesCalls => _rates?.Calls ?? [];
 
     public static async Task<DestinationSide> StartAsync(ServiceKind service)
     {
@@ -73,7 +85,8 @@ public sealed class DestinationSide : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        Client.Dispose();
+        await _gateway.DisposeAsync();
+        _direct.Dispose();
         if (_auth is not null)
         {
             await _auth.DisposeAsync();
@@ -115,7 +128,9 @@ public sealed class DestinationSide : IAsyncDisposable
             });
         });
 
-        var client = factory.CreateClient();
+        var direct = factory.CreateClient();
+        var gateway = GatewayFront.Start(direct);
+        var client = gateway.Client;
         var server = await IssueAsync(client, "account-service", "account-secret", new Dictionary<string, string>
         {
             ["grant_type"] = "client_credentials",
@@ -142,7 +157,7 @@ public sealed class DestinationSide : IAsyncDisposable
             ["password"] = "secret",
             ["scope"] = "ui"
         });
-        return new DestinationSide(ServiceKind.Auth, client, factory, null, null, null, server, user);
+        return new DestinationSide(ServiceKind.Auth, gateway, direct, factory, null, null, null, server, user, null);
     }
 
     private static DestinationSide StartAccount()
@@ -167,7 +182,9 @@ public sealed class DestinationSide : IAsyncDisposable
                 services.AddSingleton<AccountRepository>(repository);
             });
         });
-        return new DestinationSide(ServiceKind.Account, factory.CreateClient(), null, factory, null, null, null, null);
+        var direct = factory.CreateClient();
+        var gateway = GatewayFront.Start(direct);
+        return new DestinationSide(ServiceKind.Account, gateway, direct, null, factory, null, null, null, null, null);
     }
 
     private static DestinationSide StartStatistics()
@@ -186,7 +203,9 @@ public sealed class DestinationSide : IAsyncDisposable
                 services.AddSingleton<DataPointRepository>(repository);
             });
         });
-        return new DestinationSide(ServiceKind.Statistics, factory.CreateClient(), null, null, factory, null, null, null);
+        var direct = factory.CreateClient();
+        var gateway = GatewayFront.Start(direct);
+        return new DestinationSide(ServiceKind.Statistics, gateway, direct, null, null, factory, null, null, null, rates);
     }
 
     private static DestinationSide StartNotification()
@@ -207,7 +226,9 @@ public sealed class DestinationSide : IAsyncDisposable
                 services.AddSingleton<RecipientRepository>(repository);
             });
         });
-        return new DestinationSide(ServiceKind.Notification, factory.CreateClient(), null, null, null, factory, null, null);
+        var direct = factory.CreateClient();
+        var gateway = GatewayFront.Start(direct);
+        return new DestinationSide(ServiceKind.Notification, gateway, direct, null, null, null, factory, null, null, null);
     }
 
     private static void Stub(IServiceCollection services, string name, HttpMessageHandler handler)

@@ -29,5 +29,8 @@
     <ProjectReference Include="..\..\src\NotificationService\NotificationService.csproj">
       <Aliases>NotificationApp</Aliases>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\Gateway\Gateway.csproj">
+      <Aliases>GatewayApp</Aliases>
+    </ProjectReference>
   </ItemGroup>
 </Project>

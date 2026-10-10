@@ -8,9 +8,22 @@ public sealed class ParityReportFixture : IAsyncLifetime
 {
     public ParityReport Report { get; private set; } = new([]);
 
+    public IReadOnlyList<string> SourceForwarded { get; private set; } = [];
+
+    public IReadOnlyList<string> DestinationForwarded { get; private set; } = [];
+
+    public IReadOnlyList<string> SourceRates { get; private set; } = [];
+
+    public IReadOnlyList<string> DestinationRates { get; private set; } = [];
+
     public async Task InitializeAsync()
     {
-        Report = await ParityRunner.RunAsync();
+        var run = await ParityRunner.RunAsync();
+        Report = run.Report;
+        SourceForwarded = run.SourceForwarded;
+        DestinationForwarded = run.DestinationForwarded;
+        SourceRates = run.SourceRates;
+        DestinationRates = run.DestinationRates;
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -37,11 +50,25 @@ public class ReplayC1ToC12Tests
         Assert.Equal(["C1", "C10", "C11", "C12", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"], contracts);
         var failures = rows.Where(row => !row.StatusMatch || !row.FieldMatch).Select(row => row.ToString()).ToArray();
         Assert.True(failures.Length == 0, string.Join("\n", failures));
+        foreach (var contract in ContractCatalog.All)
+        {
+            var forwarded = contract.Method + " " + contract.Path;
+            Assert.Contains(forwarded, _fixture.SourceForwarded);
+            Assert.Contains(forwarded, _fixture.DestinationForwarded);
+        }
     }
 }
 
+[Collection("p7-parity")]
 public class IdenticalExternalStubTests
 {
+    private readonly ParityReportFixture _fixture;
+
+    public IdenticalExternalStubTests(ParityReportFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task External_clients_return_the_same_status_and_body_on_both_sides()
     {
@@ -96,6 +123,13 @@ public class IdenticalExternalStubTests
         Assert.Equal(sourceResponse.StatusCode, destinationResponse.StatusCode);
         Assert.Equal(HttpStatusCode.OK, sourceResponse.StatusCode);
         Assert.Equal(await sourceResponse.Content.ReadAsStringAsync(), await destinationResponse.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public void Rates_stub_is_the_same_call_on_both_sides()
+    {
+        Assert.Contains(ParityRunner.RatesCall, _fixture.SourceRates);
+        Assert.Contains(ParityRunner.RatesCall, _fixture.DestinationRates);
     }
 }
 

@@ -66,15 +66,34 @@ public sealed class ParityReport
     }
 }
 
+public sealed class ParityRun
+{
+    public required ParityReport Report { get; init; }
+
+    public required IReadOnlyList<string> SourceForwarded { get; init; }
+
+    public required IReadOnlyList<string> DestinationForwarded { get; init; }
+
+    public required IReadOnlyList<string> SourceRates { get; init; }
+
+    public required IReadOnlyList<string> DestinationRates { get; init; }
+}
+
 public static class ParityRunner
 {
+    public const string RatesCall = "GET https://api.exchangeratesapi.io/latest?base=USD";
+
+    private static readonly TimeSpan InstantSkew = TimeSpan.FromSeconds(10);
+
     private static readonly Regex Timestamp = new(
         @"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2})$",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-    public static async Task<ParityReport> RunAsync()
+    public static async Task<ParityRun> RunAsync()
     {
         var rows = new List<ParityRow>();
+        var destinationForwarded = new List<string>();
+        var destinationRates = new List<string>();
         await using var source = await SourceSide.StartAsync();
         foreach (var group in ContractCatalog.All.GroupBy(item => item.Id + "|" + item.Service))
         {
@@ -93,9 +112,19 @@ public static class ParityRunner
                     rows.Add(await ReplayAsync(source, destination, contract, auth));
                 }
             }
+
+            destinationForwarded.AddRange(destination.Forwarded);
+            destinationRates.AddRange(destination.RatesCalls);
         }
 
-        return new ParityReport(rows);
+        return new ParityRun
+        {
+            Report = new ParityReport(rows),
+            SourceForwarded = source.Gateway.Forwarded.ToArray(),
+            DestinationForwarded = destinationForwarded,
+            SourceRates = source.RatesHandler.Calls.ToArray(),
+            DestinationRates = destinationRates
+        };
     }
 
     public static string ReportPath()
@@ -267,9 +296,14 @@ public static class ParityRunner
             {
                 var sourceText = sourceValue.GetString();
                 var destinationText = destinationValue.GetString();
-                if (sourceText is null || !Timestamp.IsMatch(sourceText) || destinationText is null || !Timestamp.IsMatch(destinationText))
+                if (!TryInstant(sourceText, out var sourceInstant) || !TryInstant(destinationText, out var destinationInstant))
                 {
                     return field.Path + " timestamp source=" + sourceText + " dest=" + destinationText;
+                }
+
+                if ((sourceInstant - destinationInstant).Duration() > InstantSkew)
+                {
+                    return field.Path + " instant source=" + sourceInstant.ToString("o") + " dest=" + destinationInstant.ToString("o");
                 }
 
                 return null;
@@ -333,10 +367,31 @@ public static class ParityRunner
 
         return left.ValueKind switch
         {
-            JsonValueKind.String => left.GetString() == right.GetString(),
+            JsonValueKind.String => SameInstant(left.GetString(), right.GetString()),
             JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null => true,
             _ => left.GetRawText() == right.GetRawText()
         };
+    }
+
+    private static bool SameInstant(string? left, string? right)
+    {
+        if (left == right)
+        {
+            return true;
+        }
+
+        return TryInstant(left, out var leftInstant) && TryInstant(right, out var rightInstant) && leftInstant == rightInstant;
+    }
+
+    private static bool TryInstant(string? text, out DateTimeOffset instant)
+    {
+        instant = default;
+        if (text is null || !Timestamp.IsMatch(text))
+        {
+            return false;
+        }
+
+        return DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out instant);
     }
 
     private static HashSet<string> Strings(JsonElement value) =>

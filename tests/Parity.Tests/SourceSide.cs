@@ -30,16 +30,28 @@ public sealed class SourceSide : IAsyncDisposable
     private readonly Dictionary<string, string> _users = new(StringComparer.Ordinal);
     private readonly Dictionary<string, AuthSession> _tokens = new(StringComparer.Ordinal);
 
-    private SourceSide(HttpClient tokenClient, HttpClient authClient, HttpClient statisticsClient, HttpClient ratesClient)
+    private HttpClient? _direct;
+
+    private SourceSide(
+        HttpClient tokenClient,
+        HttpClient authClient,
+        HttpClient statisticsClient,
+        HttpClient ratesClient,
+        CatalogHandler ratesHandler)
     {
         _tokenClient = tokenClient;
         _authClient = authClient;
         _statisticsClient = statisticsClient;
         _ratesClient = ratesClient;
+        RatesHandler = ratesHandler;
         ResetSeed();
     }
 
     public HttpClient Client { get; private set; } = null!;
+
+    public GatewayFront Gateway { get; private set; } = null!;
+
+    public CatalogHandler RatesHandler { get; }
 
     public string? ServerAccess { get; private set; }
 
@@ -55,7 +67,8 @@ public sealed class SourceSide : IAsyncDisposable
             new HttpClient(token, disposeHandler: false),
             new HttpClient(auth, disposeHandler: false),
             new HttpClient(statistics, disposeHandler: false),
-            new HttpClient(rates, disposeHandler: false));
+            new HttpClient(rates, disposeHandler: false),
+            rates);
 
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -63,7 +76,9 @@ public sealed class SourceSide : IAsyncDisposable
         side.Map(app);
         await app.StartAsync();
         side._app = app;
-        side.Client = app.GetTestClient();
+        side._direct = app.GetTestClient();
+        side.Gateway = GatewayFront.Start(side._direct);
+        side.Client = side.Gateway.Client;
         return side;
     }
 
@@ -105,7 +120,12 @@ public sealed class SourceSide : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        Client.Dispose();
+        if (Gateway is not null)
+        {
+            await Gateway.DisposeAsync();
+        }
+
+        _direct?.Dispose();
         _tokenClient.Dispose();
         _authClient.Dispose();
         _statisticsClient.Dispose();
