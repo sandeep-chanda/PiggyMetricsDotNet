@@ -1,0 +1,85 @@
+questions:
+- id: Q-001
+  question: What build manifests exist in the target tree?
+  dimension: repository
+  status: closed
+  finding_refs:
+  - R-001
+- id: Q-002
+  question: Which .NET release is the active LTS on 2026-10-17?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-002
+- id: Q-003
+  question: How does Spring Boot 2.0.3 write dates and health?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-003
+- id: Q-004
+  question: How do resource servers check tokens?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-004
+- id: Q-005
+  question: How are user and datapoint documents stored?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-005
+- id: Q-006
+  question: What timeout does the statistics rates client use?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-006
+- id: Q-007
+  question: Which ports and path bases do the shell hosts use?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-007
+- id: Q-008
+  question: What does auth user creation persist?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-008
+- id: Q-009
+  question: Which OAuth clients exist?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-009
+- id: Q-010
+  question: What do the auth controller tests assert?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-010
+- id: Q-011
+  question: Which five auth test classes exist?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-011
+- id: Q-012
+  question: What does statistics save compute?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-012
+- id: Q-013
+  question: How does the rates fallback behave?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-013
+- id: Q-014
+  question: Which six statistics test classes exist?
+  dimension: external
+  status: closed
+  finding_refs:
+  - R-014

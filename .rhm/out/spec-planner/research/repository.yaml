@@ -1,0 +1,6 @@
+root: /agent/PiggyMetricsDotNet
+product_files:
+- README.md
+- AGENTS.md
+conclusion: No production source exists. Precedents to copy are absent. New files
+  are creates.

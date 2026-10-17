@@ -1,0 +1,7 @@
+{
+  "source_plan": "/home/ubuntu/.cursor/plans/migration_java_dotnet_v18.plan.md",
+  "dest": "/agent/PiggyMetricsDotNet/.rhm/out/spec-planner/final/PLAYBOOK.md",
+  "imported_at_unix": 1792210298.7457516,
+  "bytes": 99346,
+  "importer": "scripts/import-cursor-plan.py"
+}

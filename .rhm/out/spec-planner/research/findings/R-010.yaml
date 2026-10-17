@@ -1,0 +1,13 @@
+id: R-010
+question: What do the auth controller tests assert?
+conclusion: shouldReturnCurrentUser expects JSON name. shouldFailWhenUserIsNotValid
+  expects 400 for an empty POST. shouldCreateNewUser expects 200.
+evidence:
+- repository: external
+  file: UserControllerTest.java
+  location: methods
+  note: shouldReturnCurrentUser expects JSON name. shouldFailWhenUserIsNotValid expects
+    400 for an empty POST. shouldCreateNewUser expects 200.
+confidence: high
+implication: shouldReturnCurrentUser expects JSON name. shouldFailWhenUserIsNotValid
+  expects 400 for an empty POST. shouldCreateNewUser expects 200.

@@ -1,0 +1,1386 @@
+task_id: task-migration-java-dotnet-v18-p1
+summary: Plan the PiggyMetrics Java to .NET migration for P1 Shared, P2 AuthService, and P3 StatisticsService on the empty
+  PiggyMetricsDotNet tree.
+steps:
+- id: STEP-001
+  title: Create the net10.0 solution and shared project skeleton
+  depends_on: []
+  requirement_refs:
+  - REQ-001
+  decision_refs:
+  - D-001
+  - D-002
+  evidence_refs:
+  - R-001
+  - R-002
+  files: &id001
+  - PiggyMetrics.sln
+  - global.json
+  - Directory.Build.props
+  - src/Shared/Shared.csproj
+  exact_files: *id001
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Create PiggyMetrics.sln at the repository root with Shared, Gateway, AuthService, AccountService, StatisticsService,
+    NotificationService, Shared.Tests, AuthService.Tests, and StatisticsService.Tests. Pin net10.0 in Directory.Build.props
+    and the SDK floor in global.json. Shared is a class library with FrameworkReference Microsoft.AspNetCore.App and MongoDB.Driver
+    2.30.0.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - dotnet build PiggyMetrics.sln --nologo exits 0 after later steps add the project files
+  acceptance: &id002
+  - PiggyMetrics.sln lists nine projects.
+  - Directory.Build.props sets TargetFramework net10.0.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: PiggyMetrics.sln lists nine projects.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: PiggyMetrics.sln\nMicrosoft Visual Studio Solution File, Format Version 12.00\n# Visual Studio\
+    \ Version 17\nProject(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"Shared\", \"src\\Shared\\Shared.csproj\", \"{A1B2C3D4-E5F6-4711-8111-111111111111}\"\
+    \nEndProject\nProject(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"Gateway\", \"src\\Gateway\\Gateway.csproj\", \"\
+    {A1B2C3D4-E5F6-4711-8111-222222222222}\"\nEndProject\nProject(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"AuthService\"\
+    , \"src\\AuthService\\AuthService.csproj\", \"{A1B2C3D4-E5F6-4711-8111-333333333333}\"\nEndProject\nProject(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\"\
+    ) = \"AccountService\", \"src\\AccountService\\AccountService.csproj\", \"{A1B2C3D4-E5F6-4711-8111-444444444444}\"\nEndProject\n\
+    Project(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"StatisticsService\", \"src\\StatisticsService\\StatisticsService.csproj\"\
+    , \"{A1B2C3D4-E5F6-4711-8111-555555555555}\"\nEndProject\nProject(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"NotificationService\"\
+    , \"src\\NotificationService\\NotificationService.csproj\", \"{A1B2C3D4-E5F6-4711-8111-666666666666}\"\nEndProject\nProject(\"\
+    {FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"Shared.Tests\", \"tests\\Shared.Tests\\Shared.Tests.csproj\", \"{A1B2C3D4-E5F6-4711-8111-777777777777}\"\
+    \nEndProject\nProject(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"AuthService.Tests\", \"tests\\AuthService.Tests\\\
+    AuthService.Tests.csproj\", \"{A1B2C3D4-E5F6-4711-8111-888888888888}\"\nEndProject\nProject(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\"\
+    ) = \"StatisticsService.Tests\", \"tests\\StatisticsService.Tests\\StatisticsService.Tests.csproj\", \"{A1B2C3D4-E5F6-4711-8111-999999999999}\"\
+    \nEndProject\nGlobal\n  GlobalSection(SolutionConfigurationPlatforms) = preSolution\n    Debug|Any CPU = Debug|Any CPU\n\
+    \    Release|Any CPU = Release|Any CPU\n  EndGlobalSection\n  GlobalSection(ProjectConfigurationPlatforms) = postSolution\n\
+    \    {A1B2C3D4-E5F6-4711-8111-111111111111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-111111111111}.Debug|Any\
+    \ CPU.Build.0 = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-111111111111}.Release|Any CPU.ActiveCfg = Release|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-111111111111}.Release|Any CPU.Build.0 = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-222222222222}.Debug|Any\
+    \ CPU.ActiveCfg = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-222222222222}.Debug|Any CPU.Build.0 = Debug|Any CPU\n  \
+    \  {A1B2C3D4-E5F6-4711-8111-222222222222}.Release|Any CPU.ActiveCfg = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-222222222222}.Release|Any\
+    \ CPU.Build.0 = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-333333333333}.Debug|Any CPU.ActiveCfg = Debug|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-333333333333}.Debug|Any CPU.Build.0 = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-333333333333}.Release|Any\
+    \ CPU.ActiveCfg = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-333333333333}.Release|Any CPU.Build.0 = Release|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-444444444444}.Debug|Any CPU.ActiveCfg = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-444444444444}.Debug|Any\
+    \ CPU.Build.0 = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-444444444444}.Release|Any CPU.ActiveCfg = Release|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-444444444444}.Release|Any CPU.Build.0 = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-555555555555}.Debug|Any\
+    \ CPU.ActiveCfg = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-555555555555}.Debug|Any CPU.Build.0 = Debug|Any CPU\n  \
+    \  {A1B2C3D4-E5F6-4711-8111-555555555555}.Release|Any CPU.ActiveCfg = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-555555555555}.Release|Any\
+    \ CPU.Build.0 = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-666666666666}.Debug|Any CPU.ActiveCfg = Debug|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-666666666666}.Debug|Any CPU.Build.0 = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-666666666666}.Release|Any\
+    \ CPU.ActiveCfg = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-666666666666}.Release|Any CPU.Build.0 = Release|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-777777777777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-777777777777}.Debug|Any\
+    \ CPU.Build.0 = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-777777777777}.Release|Any CPU.ActiveCfg = Release|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-777777777777}.Release|Any CPU.Build.0 = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-888888888888}.Debug|Any\
+    \ CPU.ActiveCfg = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-888888888888}.Debug|Any CPU.Build.0 = Debug|Any CPU\n  \
+    \  {A1B2C3D4-E5F6-4711-8111-888888888888}.Release|Any CPU.ActiveCfg = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-888888888888}.Release|Any\
+    \ CPU.Build.0 = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-999999999999}.Debug|Any CPU.ActiveCfg = Debug|Any CPU\n\
+    \    {A1B2C3D4-E5F6-4711-8111-999999999999}.Debug|Any CPU.Build.0 = Debug|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-999999999999}.Release|Any\
+    \ CPU.ActiveCfg = Release|Any CPU\n    {A1B2C3D4-E5F6-4711-8111-999999999999}.Release|Any CPU.Build.0 = Release|Any CPU\n\
+    \  EndGlobalSection\nEndGlobal\n\n// FILE: global.json\n{\n  \"sdk\": {\n    \"version\": \"10.0.100\",\n    \"rollForward\"\
+    : \"latestMajor\",\n    \"allowPrerelease\": false\n  }\n}\n\n// FILE: Directory.Build.props\n<Project>\n  <PropertyGroup>\n\
+    \    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n\
+    \    <LangVersion>latest</LangVersion>\n  </PropertyGroup>\n</Project>\n\n// FILE: src/Shared/Shared.csproj\n<Project\
+    \ Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n    <RootNamespace>PiggyMetrics.Shared</RootNamespace>\n    <AssemblyName>PiggyMetrics.Shared</AssemblyName>\n\
+    \    <Description>Shared bearer handler, store conventions, typed clients, health, and JSON options.</Description>\n \
+    \ </PropertyGroup>\n  <ItemGroup>\n    <FrameworkReference Include=\"Microsoft.AspNetCore.App\" />\n    <PackageReference\
+    \ Include=\"MongoDB.Driver\" Version=\"2.30.0\" />\n  </ItemGroup>\n</Project>\n"
+  companion_required: false
+  invariants:
+  - Solution project names are Gateway, AuthService, AccountService, StatisticsService, NotificationService, and Shared.
+  edge_cases:
+  - A missing project file fails the build until its later step lands.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id002
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-002
+  title: Add shared JSON options and actuator health
+  depends_on:
+  - STEP-001
+  requirement_refs:
+  - REQ-002
+  decision_refs:
+  - D-003
+  evidence_refs:
+  - R-003
+  files: &id003
+  - src/Shared/Json/PiggyJson.cs
+  - src/Shared/Health/PiggyHealthExtensions.cs
+  exact_files: *id003
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Add PiggyJson with camelCase names, string enums, skipped unknown members, and Jackson 2.9 date text yyyy-MM-ddTHH:mm:ss.fff
+    plus a numeric zone without a colon. Map GET /actuator/health to the body {"status":"UP"}.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - BearerHandlerTests
+  acceptance: &id004
+  - GET /actuator/health returns 200 and the body {"status":"UP"}.
+  - Enum values serialize as their names.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: GET /actuator/health returns 200 and the body {"status":"UP"}.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/Shared/Json/PiggyJson.cs\nusing System.Globalization;\nusing System.Text.Json;\nusing System.Text.Json.Serialization;\n\
+    \nnamespace PiggyMetrics.Shared.Json;\n\npublic static class PiggyJson\n{\n  public static JsonSerializerOptions Options\
+    \ { get; } = Create();\n\n  public static JsonSerializerOptions Create()\n  {\n    var options = new JsonSerializerOptions\n\
+    \    {\n      PropertyNamingPolicy = JsonNamingPolicy.CamelCase,\n      PropertyNameCaseInsensitive = true,\n      DefaultIgnoreCondition\
+    \ = JsonIgnoreCondition.Never,\n      UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,\n      NumberHandling\
+    \ = JsonNumberHandling.AllowReadingFromString\n    };\n    options.Converters.Add(new JsonStringEnumConverter(null, allowIntegerValues:\
+    \ false));\n    options.Converters.Add(new JacksonDateTimeConverter());\n    options.Converters.Add(new JacksonDateOnlyConverter());\n\
+    \    return options;\n  }\n\n  public static string FormatJacksonDate(DateTimeOffset value)\n  {\n    var utc = value.ToUniversalTime();\n\
+    \    var stamp = utc.ToString(\"yyyy-MM-dd'T'HH:mm:ss.fff\", CultureInfo.InvariantCulture);\n    var zone = utc.ToString(\"\
+    zzz\", CultureInfo.InvariantCulture).Replace(\":\", \"\");\n    return stamp + zone;\n  }\n}\n\npublic sealed class JacksonDateTimeConverter\
+    \ : JsonConverter<DateTime>\n{\n  public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions\
+    \ options)\n  {\n    var text = reader.GetString() ?? throw new JsonException(\"date is missing\");\n    if (text.Length\
+    \ > 5 && (text[^5] == '+' || text[^5] == '-') && text[^3] != ':')\n    {\n      text = text[..^2] + \":\" + text[^2..];\n\
+    \    }\n    return DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);\n  }\n\n  public\
+    \ override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)\n  {\n    var offset = value.Kind\
+    \ == DateTimeKind.Unspecified\n      ? new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Local))\n      : new\
+    \ DateTimeOffset(value);\n    writer.WriteStringValue(PiggyJson.FormatJacksonDate(offset));\n  }\n}\n\npublic sealed class\
+    \ JacksonDateOnlyConverter : JsonConverter<DateOnly>\n{\n  public override DateOnly Read(ref Utf8JsonReader reader, Type\
+    \ typeToConvert, JsonSerializerOptions options)\n  {\n    var text = reader.GetString() ?? throw new JsonException(\"\
+    date is missing\");\n    return DateOnly.Parse(text, CultureInfo.InvariantCulture);\n  }\n\n  public override void Write(Utf8JsonWriter\
+    \ writer, DateOnly value, JsonSerializerOptions options)\n  {\n    writer.WriteStringValue(value.ToString(\"yyyy-MM-dd\"\
+    , CultureInfo.InvariantCulture));\n  }\n}\n\n// FILE: src/Shared/Health/PiggyHealthExtensions.cs\nusing Microsoft.AspNetCore.Builder;\n\
+    using Microsoft.AspNetCore.Http;\nusing Microsoft.Extensions.DependencyInjection;\n\nnamespace PiggyMetrics.Shared.Health;\n\
+    \npublic static class PiggyHealthExtensions\n{\n  public const string Path = \"/actuator/health\";\n  public const string\
+    \ Body = \"{\\\"status\\\":\\\"UP\\\"}\";\n\n  public static IServiceCollection AddPiggyHealth(this IServiceCollection\
+    \ services)\n  {\n    services.AddHealthChecks();\n    return services;\n  }\n\n  public static WebApplication MapPiggyHealth(this\
+    \ WebApplication app)\n  {\n    app.MapGet(Path, () => Results.Text(Body, \"application/json\"));\n    return app;\n \
+    \ }\n}\n"
+  companion_required: false
+  invariants:
+  - Unknown JSON members do not fail deserialization.
+  - Date text uses the Jackson zone form.
+  edge_cases:
+  - A date with a colon in the zone is accepted on read.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id004
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-003
+  title: Add the shared bearer handler that calls auth-service
+  depends_on:
+  - STEP-002
+  requirement_refs:
+  - REQ-003
+  decision_refs:
+  - D-004
+  evidence_refs:
+  - R-004
+  files: &id005
+  - src/Shared/Auth/AuthServiceBearerHandler.cs
+  - tests/Shared.Tests/Shared.Tests.csproj
+  - tests/Shared.Tests/BearerHandlerTests.cs
+  exact_files: *id005
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Add AuthServiceBearerHandler. It forwards the inbound Authorization header to Piggy:Auth:UserInfoUrl, default http://auth-service:5000/uaa/users/current.
+    HTTP 200 with a name claim succeeds. Any other status refuses the token. Register policies user and server.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - accepts_a_token_the_authorization_server_issued
+  - refuses_a_token_the_authorization_server_did_not_issue
+  acceptance: &id006
+  - accepts_a_token_the_authorization_server_issued passes.
+  - refuses_a_token_the_authorization_server_did_not_issue passes.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: accepts_a_token_the_authorization_server_issued passes.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/Shared/Auth/AuthServiceBearerHandler.cs\nusing System.Security.Claims;\nusing System.Text.Encodings.Web;\n\
+    using System.Text.Json;\nusing Microsoft.AspNetCore.Authentication;\nusing Microsoft.Extensions.Configuration;\nusing\
+    \ Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.Logging;\nusing Microsoft.Extensions.Options;\n\
+    \nnamespace PiggyMetrics.Shared.Auth;\n\npublic sealed class AuthServiceBearerHandler : AuthenticationHandler<AuthenticationSchemeOptions>\n\
+    {\n  public const string SchemeName = \"PiggyBearer\";\n  private readonly IHttpClientFactory _clients;\n\n  public AuthServiceBearerHandler(\n\
+    \    IOptionsMonitor<AuthenticationSchemeOptions> options,\n    ILoggerFactory logger,\n    UrlEncoder encoder,\n    IHttpClientFactory\
+    \ clients)\n    : base(options, logger, encoder)\n  {\n    _clients = clients;\n  }\n\n  protected override async Task<AuthenticateResult>\
+    \ HandleAuthenticateAsync()\n  {\n    var header = Request.Headers.Authorization.ToString();\n    if (string.IsNullOrEmpty(header)\
+    \ || !header.StartsWith(\"Bearer \", StringComparison.Ordinal))\n    {\n      return AuthenticateResult.NoResult();\n\
+    \    }\n\n    var userInfoUrl = Context.RequestServices\n      .GetRequiredService<IOptions<PiggyAuthOptions>>().Value.UserInfoUrl;\n\
+    \    var client = _clients.CreateClient(\"auth-userinfo\");\n    var request = new HttpRequestMessage(HttpMethod.Get,\
+    \ userInfoUrl);\n    request.Headers.TryAddWithoutValidation(\"Authorization\", header);\n    HttpResponseMessage response;\n\
+    \    try\n    {\n      response = await client.SendAsync(request, Context.RequestAborted);\n    }\n    catch (HttpRequestException\
+    \ ex)\n    {\n      return AuthenticateResult.Fail(ex.Message);\n    }\n\n    if (!response.IsSuccessStatusCode)\n   \
+    \ {\n      return AuthenticateResult.Fail(\"token refused\");\n    }\n\n    await using var stream = await response.Content.ReadAsStreamAsync(Context.RequestAborted);\n\
+    \    using var document = await JsonDocument.ParseAsync(stream, cancellationToken: Context.RequestAborted);\n    if (!document.RootElement.TryGetProperty(\"\
+    name\", out var nameNode))\n    {\n      return AuthenticateResult.Fail(\"token refused\");\n    }\n    var name = nameNode.GetString();\n\
+    \    if (string.IsNullOrEmpty(name))\n    {\n      return AuthenticateResult.Fail(\"token refused\");\n    }\n    var\
+    \ scope = document.RootElement.TryGetProperty(\"scope\", out var scopeNode)\n      ? scopeNode.GetString() ?? \"\"\n \
+    \     : \"\";\n    var claims = new List<Claim>\n    {\n      new(ClaimTypes.Name, name),\n      new(\"scope\", scope)\n\
+    \    };\n    var identity = new ClaimsIdentity(claims, SchemeName);\n    var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity),\
+    \ SchemeName);\n    return AuthenticateResult.Success(ticket);\n  }\n}\n\npublic sealed class PiggyAuthOptions\n{\n  public\
+    \ string UserInfoUrl { get; set; } = \"http://auth-service:5000/uaa/users/current\";\n  public string TokenUrl { get;\
+    \ set; } = \"http://auth-service:5000/uaa/oauth/token\";\n}\n\npublic static class PiggyAuthenticationExtensions\n{\n\
+    \  public static IServiceCollection AddPiggyBearer(this IServiceCollection services, IConfiguration configuration)\n \
+    \ {\n    services.Configure<PiggyAuthOptions>(configuration.GetSection(\"Piggy:Auth\"));\n    services.AddHttpClient(\"\
+    auth-userinfo\");\n    services.AddAuthentication(AuthServiceBearerHandler.SchemeName)\n      .AddScheme<AuthenticationSchemeOptions,\
+    \ AuthServiceBearerHandler>(AuthServiceBearerHandler.SchemeName, null);\n    services.AddAuthorization(options =>\n  \
+    \  {\n      options.AddPolicy(\"user\", policy => policy.RequireAuthenticatedUser());\n      options.AddPolicy(\"server\"\
+    , policy => policy.RequireAssertion(context =>\n      {\n        var scope = context.User.FindFirst(\"scope\")?.Value\
+    \ ?? \"\";\n        return scope.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(\"server\");\n      }));\n\
+    \    });\n    return services;\n  }\n}\n\n// FILE: tests/Shared.Tests/Shared.Tests.csproj\n<Project Sdk=\"Microsoft.NET.Sdk\"\
+    >\n  <PropertyGroup>\n    <RootNamespace>PiggyMetrics.Shared.Tests</RootNamespace>\n    <AssemblyName>PiggyMetrics.Shared.Tests</AssemblyName>\n\
+    \    <IsPackable>false</IsPackable>\n  </PropertyGroup>\n  <ItemGroup>\n    <FrameworkReference Include=\"Microsoft.AspNetCore.App\"\
+    \ />\n    <PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"18.11.0\" />\n    <PackageReference Include=\"\
+    xunit\" Version=\"2.9.3\" />\n    <PackageReference Include=\"xunit.runner.visualstudio\" Version=\"2.8.2\" />\n    <PackageReference\
+    \ Include=\"Microsoft.AspNetCore.Mvc.Testing\" Version=\"10.0.13\" />\n    <PackageReference Include=\"Mongo2Go\" Version=\"\
+    3.1.3\" />\n  </ItemGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"..\\..\\src\\Shared\\Shared.csproj\" />\n \
+    \ </ItemGroup>\n</Project>\n\n// FILE: tests/Shared.Tests/BearerHandlerTests.cs\nusing System.Net;\nusing System.Text;\n\
+    using Microsoft.AspNetCore.Builder;\nusing Microsoft.AspNetCore.Hosting;\nusing Microsoft.AspNetCore.Hosting.Server;\n\
+    using Microsoft.AspNetCore.Hosting.Server.Features;\nusing Microsoft.AspNetCore.Http;\nusing Microsoft.Extensions.DependencyInjection;\n\
+    using PiggyMetrics.Shared.Auth;\n\nnamespace PiggyMetrics.Shared.Tests;\n\npublic class BearerHandlerTests\n{\n  [Fact]\n\
+    \  public async Task accepts_a_token_the_authorization_server_issued()\n  {\n    await using var auth = await AuthStub.Start(HttpStatusCode.OK,\
+    \ \"{\\\"name\\\":\\\"demo\\\",\\\"scope\\\":\\\"ui\\\"}\");\n    await using var app = await ResourceStub.Start(auth.Url);\n\
+    \    using var client = new HttpClient();\n    var request = new HttpRequestMessage(HttpMethod.Get, app.Url + \"/probe\"\
+    );\n    request.Headers.TryAddWithoutValidation(\"Authorization\", \"Bearer issued-token\");\n    var response = await\
+    \ client.SendAsync(request);\n    Assert.Equal(HttpStatusCode.OK, response.StatusCode);\n    Assert.Equal(\"demo\", await\
+    \ response.Content.ReadAsStringAsync());\n  }\n\n  [Fact]\n  public async Task refuses_a_token_the_authorization_server_did_not_issue()\n\
+    \  {\n    await using var auth = await AuthStub.Start(HttpStatusCode.Unauthorized, \"{\\\"error\\\":\\\"invalid_token\\\
+    \"}\");\n    await using var app = await ResourceStub.Start(auth.Url);\n    using var client = new HttpClient();\n   \
+    \ var request = new HttpRequestMessage(HttpMethod.Get, app.Url + \"/probe\");\n    request.Headers.TryAddWithoutValidation(\"\
+    Authorization\", \"Bearer foreign-token\");\n    var response = await client.SendAsync(request);\n    Assert.Equal(HttpStatusCode.Unauthorized,\
+    \ response.StatusCode);\n  }\n\n  private sealed class AuthStub : IAsyncDisposable\n  {\n    private readonly WebApplication\
+    \ _app;\n    public string Url { get; }\n\n    private AuthStub(WebApplication app, string url)\n    {\n      _app = app;\n\
+    \      Url = url;\n    }\n\n    public static async Task<AuthStub> Start(HttpStatusCode status, string body)\n    {\n\
+    \      var builder = WebApplication.CreateBuilder();\n      builder.WebHost.UseUrls(\"http://127.0.0.1:0\");\n      var\
+    \ app = builder.Build();\n      app.MapGet(\"/uaa/users/current\", () => Results.Text(body, \"application/json\", Encoding.UTF8,\
+    \ (int)status));\n      await app.StartAsync();\n      var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.First();\n\
+    \      return new AuthStub(app, address);\n    }\n\n    public async ValueTask DisposeAsync() => await _app.StopAsync();\n\
+    \  }\n\n  private sealed class ResourceStub : IAsyncDisposable\n  {\n    private readonly WebApplication _app;\n    public\
+    \ string Url { get; }\n\n    private ResourceStub(WebApplication app, string url)\n    {\n      _app = app;\n      Url\
+    \ = url;\n    }\n\n    public static async Task<ResourceStub> Start(string authUrl)\n    {\n      var builder = WebApplication.CreateBuilder();\n\
+    \      builder.WebHost.UseUrls(\"http://127.0.0.1:0\");\n      builder.Configuration[\"Piggy:Auth:UserInfoUrl\"] = authUrl\
+    \ + \"/uaa/users/current\";\n      builder.Services.AddPiggyBearer(builder.Configuration);\n      var app = builder.Build();\n\
+    \      app.UseAuthentication();\n      app.UseAuthorization();\n      app.MapGet(\"/probe\", (HttpContext context) =>\
+    \ Results.Text(context.User.Identity!.Name!)).RequireAuthorization(\"user\");\n      await app.StartAsync();\n      var\
+    \ address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.First();\n \
+    \     return new ResourceStub(app, address);\n    }\n\n    public async ValueTask DisposeAsync() => await _app.StopAsync();\n\
+    \  }\n}\n"
+  companion_required: false
+  invariants:
+  - The handler does not parse the access token locally.
+  - Scope server is a space-separated scope claim.
+  edge_cases:
+  - A missing Authorization header yields no authentication result.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id006
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-004
+  title: Add shared Mongo conventions for document ids and field names
+  depends_on:
+  - STEP-001
+  requirement_refs:
+  - REQ-004
+  decision_refs:
+  - D-005
+  evidence_refs:
+  - R-005
+  files: &id007
+  - src/Shared/Mongo/PiggyMongo.cs
+  exact_files: *id007
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Register a convention pack that stores enums as strings and ignores extra elements. Build the Mongo client from
+    host, port, username, and password with authSource=admin. Callers still place _id and field names on each document type.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - shouldSaveAndFindUserByName
+  acceptance: &id008
+  - PiggyMongo.RegisterConventions runs once.
+  - The client URL contains authSource=admin.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: PiggyMongo.RegisterConventions runs once.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/Shared/Mongo/PiggyMongo.cs\nusing MongoDB.Bson;\nusing MongoDB.Bson.Serialization.Conventions;\n\
+    using MongoDB.Driver;\n\nnamespace PiggyMetrics.Shared.Mongo;\n\npublic static class PiggyMongo\n{\n  private static int\
+    \ _registered;\n\n  public static void RegisterConventions()\n  {\n    if (Interlocked.Exchange(ref _registered, 1) ==\
+    \ 1)\n    {\n      return;\n    }\n    var pack = new ConventionPack\n    {\n      new EnumRepresentationConvention(BsonType.String),\n\
+    \      new IgnoreExtraElementsConvention(true)\n    };\n    ConventionRegistry.Register(\"piggymetrics-store\", pack,\
+    \ _ => true);\n  }\n\n  public static MongoClient CreateClient(string host, int port, string username, string password)\n\
+    \  {\n    RegisterConventions();\n    var identity = Uri.EscapeDataString(username);\n    var secret = Uri.EscapeDataString(password);\n\
+    \    var url = $\"mongodb://{identity}:{secret}@{host}:{port}/?authSource=admin\";\n    return new MongoClient(url);\n\
+    \  }\n\n  public static IMongoDatabase Database(MongoClient client, string name)\n  {\n    return client.GetDatabase(name);\n\
+    \  }\n}\n"
+  companion_required: false
+  invariants:
+  - Enum values are BSON strings.
+  - Extra elements do not throw.
+  edge_cases:
+  - A second RegisterConventions call does not add another pack.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id008
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-005
+  title: Add the typed client base and client-credentials token cache
+  depends_on:
+  - STEP-002
+  requirement_refs:
+  - REQ-005
+  decision_refs:
+  - D-006
+  evidence_refs:
+  - R-006
+  files: &id009
+  - src/Shared/Http/TypedClientBase.cs
+  exact_files: *id009
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Add TypedClientBase.AddEdgeClient with connect timeout 10000 ms and read timeout 60000 ms, matching Feign Request.Options
+    defaults because statistics-service.yml sets no ribbon timeout. ClientCredentialsTokenCache posts grant_type=client_credentials
+    to the token URL and reuses access_token until expires_in elapses.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - shouldReturnFallbackWhenCalleeIsDown
+  acceptance: &id010
+  - Named client rates-client uses a 60000 ms timeout.
+  - A second GetAsync before expiry does not post again.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: Named client rates-client uses a 60000 ms timeout.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/Shared/Http/TypedClientBase.cs\nusing System.Net.Http.Headers;\nusing System.Text.Json;\nusing\
+    \ System.Text.Json.Serialization;\nusing Microsoft.Extensions.DependencyInjection;\nusing PiggyMetrics.Shared.Json;\n\n\
+    namespace PiggyMetrics.Shared.Http;\n\npublic sealed class ClientCredentialsTokenCache\n{\n  private readonly IHttpClientFactory\
+    \ _clients;\n  private readonly SemaphoreSlim _gate = new(1, 1);\n  private string? _accessToken;\n  private DateTimeOffset\
+    \ _expiresAt;\n\n  public ClientCredentialsTokenCache(IHttpClientFactory clients)\n  {\n    _clients = clients;\n  }\n\
+    \n  public async Task<string> GetAsync(ClientCredentialsRequest request, CancellationToken cancellationToken)\n  {\n \
+    \   if (_accessToken != null && DateTimeOffset.UtcNow < _expiresAt)\n    {\n      return _accessToken;\n    }\n    await\
+    \ _gate.WaitAsync(cancellationToken);\n    try\n    {\n      if (_accessToken != null && DateTimeOffset.UtcNow < _expiresAt)\n\
+    \      {\n        return _accessToken;\n      }\n      var client = _clients.CreateClient(request.HttpClientName);\n \
+    \     using var message = new HttpRequestMessage(HttpMethod.Post, request.TokenUrl);\n      message.Content = new FormUrlEncodedContent(new\
+    \ Dictionary<string, string>\n      {\n        [\"grant_type\"] = \"client_credentials\",\n        [\"scope\"] = request.Scope\n\
+    \      });\n      var raw = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(request.ClientId + \":\" + request.ClientSecret));\n\
+    \      message.Headers.Authorization = new AuthenticationHeaderValue(\"Basic\", raw);\n      using var response = await\
+    \ client.SendAsync(message, cancellationToken);\n      response.EnsureSuccessStatusCode();\n      await using var stream\
+    \ = await response.Content.ReadAsStreamAsync(cancellationToken);\n      var payload = await JsonSerializer.DeserializeAsync<TokenPayload>(stream,\
+    \ PiggyJson.Options, cancellationToken)\n        ?? throw new InvalidOperationException(\"token response was empty\");\n\
+    \      _accessToken = payload.AccessToken;\n      _expiresAt = DateTimeOffset.UtcNow.AddSeconds(payload.ExpiresIn);\n\
+    \      return _accessToken;\n    }\n    finally\n    {\n      _gate.Release();\n    }\n  }\n}\n\npublic sealed class ClientCredentialsRequest\n\
+    {\n  public string HttpClientName { get; init; } = \"auth-token\";\n  public string TokenUrl { get; init; } = \"http://auth-service:5000/uaa/oauth/token\"\
+    ;\n  public string ClientId { get; init; } = \"\";\n  public string ClientSecret { get; init; } = \"\";\n  public string\
+    \ Scope { get; init; } = \"server\";\n}\n\npublic sealed class TokenPayload\n{\n  [JsonPropertyName(\"access_token\")]\n\
+    \  public string AccessToken { get; set; } = \"\";\n\n  [JsonPropertyName(\"token_type\")]\n  public string TokenType\
+    \ { get; set; } = \"\";\n\n  [JsonPropertyName(\"expires_in\")]\n  public int ExpiresIn { get; set; }\n\n  [JsonPropertyName(\"\
+    refresh_token\")]\n  public string? RefreshToken { get; set; }\n\n  [JsonPropertyName(\"scope\")]\n  public string Scope\
+    \ { get; set; } = \"\";\n}\n\npublic static class TypedClientBase\n{\n  public const int SourceConnectTimeoutMilliseconds\
+    \ = 10000;\n  public const int SourceReadTimeoutMilliseconds = 60000;\n\n  public static IHttpClientBuilder AddEdgeClient(IServiceCollection\
+    \ services, string name)\n  {\n    return services.AddHttpClient(name, client =>\n    {\n      client.Timeout = TimeSpan.FromMilliseconds(SourceReadTimeoutMilliseconds);\n\
+    \    })\n    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler\n    {\n      ConnectTimeout = TimeSpan.FromMilliseconds(SourceConnectTimeoutMilliseconds)\n\
+    \    });\n  }\n}\n"
+  companion_required: false
+  invariants:
+  - Connect timeout is 10000 ms.
+  - Read timeout is 60000 ms.
+  - Token JSON fields are access_token, token_type, expires_in, refresh_token, and scope.
+  edge_cases:
+  - Concurrent GetAsync calls share one in-flight token request.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id010
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-006
+  title: Add buildable Gateway, AccountService, and NotificationService hosts
+  depends_on:
+  - STEP-002
+  requirement_refs:
+  - REQ-001
+  decision_refs:
+  - D-007
+  evidence_refs:
+  - R-007
+  files: &id011
+  - src/Gateway/Gateway.csproj
+  - src/Gateway/Program.cs
+  - src/Gateway/appsettings.json
+  - src/AccountService/AccountService.csproj
+  - src/AccountService/Program.cs
+  - src/AccountService/appsettings.json
+  - src/NotificationService/NotificationService.csproj
+  - src/NotificationService/Program.cs
+  - src/NotificationService/appsettings.json
+  exact_files: *id011
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: 'Add three web projects that reference Shared, map /actuator/health, and listen on the source ports: Gateway 4000
+    with an empty path base, AccountService 6000 with path base /accounts, NotificationService 8000 with path base /notifications.
+    Do not add their business routes.'
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - dotnet build src/Gateway/Gateway.csproj --nologo
+  acceptance: &id012
+  - Gateway listens on port 4000.
+  - AccountService path base is /accounts.
+  - NotificationService path base is /notifications.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: Gateway listens on port 4000.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/Gateway/Gateway.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n    <RootNamespace>Gateway</RootNamespace>\n\
+    \    <AssemblyName>Gateway</AssemblyName>\n  </PropertyGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"..\\Shared\\\
+    Shared.csproj\" />\n\n  </ItemGroup>\n</Project>\n\n// FILE: src/Gateway/Program.cs\nusing PiggyMetrics.Shared.Health;\n\
+    \nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddPiggyHealth();\nvar app = builder.Build();\n\
+    var pathBase = builder.Configuration[\"Piggy:PathBase\"];\nif (!string.IsNullOrEmpty(pathBase))\n{\n  app.UsePathBase(pathBase);\n\
+    }\napp.MapPiggyHealth();\napp.Run();\n\n// FILE: src/Gateway/appsettings.json\n{\n  \"Kestrel\": {\n    \"Endpoints\"\
+    : {\n      \"Http\": {\n        \"Url\": \"http://0.0.0.0:4000\"\n      }\n    }\n  },\n  \"Piggy\": {\n    \"PathBase\"\
+    : \"\",\n    \"ApplicationName\": \"gateway\"\n  }\n}\n\n// FILE: src/AccountService/AccountService.csproj\n<Project Sdk=\"\
+    Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n    <RootNamespace>AccountService</RootNamespace>\n    <AssemblyName>AccountService</AssemblyName>\n\
+    \  </PropertyGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n\n  </ItemGroup>\n\
+    </Project>\n\n// FILE: src/AccountService/Program.cs\nusing PiggyMetrics.Shared.Health;\n\nvar builder = WebApplication.CreateBuilder(args);\n\
+    builder.Services.AddPiggyHealth();\nvar app = builder.Build();\nvar pathBase = builder.Configuration[\"Piggy:PathBase\"\
+    ];\nif (!string.IsNullOrEmpty(pathBase))\n{\n  app.UsePathBase(pathBase);\n}\napp.MapPiggyHealth();\napp.Run();\n\n//\
+    \ FILE: src/AccountService/appsettings.json\n{\n  \"Kestrel\": {\n    \"Endpoints\": {\n      \"Http\": {\n        \"\
+    Url\": \"http://0.0.0.0:6000\"\n      }\n    }\n  },\n  \"Piggy\": {\n    \"PathBase\": \"/accounts\",\n    \"ApplicationName\"\
+    : \"account-service\",\n    \"Mongo\": {\n      \"Host\": \"account-mongodb\",\n      \"Port\": 27017,\n      \"Username\"\
+    : \"user\",\n      \"Database\": \"piggymetrics\"\n    }\n  }\n}\n\n// FILE: src/NotificationService/NotificationService.csproj\n\
+    <Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n    <RootNamespace>NotificationService</RootNamespace>\n \
+    \   <AssemblyName>NotificationService</AssemblyName>\n  </PropertyGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"\
+    ..\\Shared\\Shared.csproj\" />\n\n  </ItemGroup>\n</Project>\n\n// FILE: src/NotificationService/Program.cs\nusing PiggyMetrics.Shared.Health;\n\
+    \nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddPiggyHealth();\nvar app = builder.Build();\n\
+    var pathBase = builder.Configuration[\"Piggy:PathBase\"];\nif (!string.IsNullOrEmpty(pathBase))\n{\n  app.UsePathBase(pathBase);\n\
+    }\napp.MapPiggyHealth();\napp.Run();\n\n// FILE: src/NotificationService/appsettings.json\n{\n  \"Kestrel\": {\n    \"\
+    Endpoints\": {\n      \"Http\": {\n        \"Url\": \"http://0.0.0.0:8000\"\n      }\n    }\n  },\n  \"Piggy\": {\n  \
+    \  \"PathBase\": \"/notifications\",\n    \"ApplicationName\": \"notification-service\",\n    \"Mongo\": {\n      \"Host\"\
+    : \"notification-mongodb\",\n      \"Port\": 27017,\n      \"Username\": \"user\",\n      \"Database\": \"piggymetrics\"\
+    \n    }\n  }\n}\n"
+  companion_required: false
+  invariants:
+  - These hosts expose health only.
+  edge_cases:
+  - An empty path base leaves Gateway routes at the site root.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id012
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-007
+  title: Add AuthService user document, repository, and user services
+  depends_on:
+  - STEP-004
+  requirement_refs:
+  - REQ-006
+  - REQ-007
+  decision_refs:
+  - D-005
+  - D-008
+  evidence_refs:
+  - R-008
+  files: &id013
+  - src/AuthService/AuthService.csproj
+  - src/AuthService/Domain/User.cs
+  - src/AuthService/Data/UserRepository.cs
+  - src/AuthService/Security/MongoUserDetailsService.cs
+  - src/AuthService/Services/UserService.cs
+  exact_files: *id013
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Add the users collection document with _id equal to username and a password field. UserRepository saves and finds
+    by that id on database piggymetrics. UserService rejects an existing username with ArgumentException user already exists
+    and stores a BCrypt work-factor 10 hash. MongoUserDetailsService throws UsernameNotFoundException when the id is absent.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - shouldSaveAndFindUserByName
+  - shouldCreateUser
+  - shouldFailWhenUserAlreadyExists
+  - shouldLoadByUsernameWhenUserExists
+  - shouldFailToLoadByUsernameWhenUserNotExists
+  acceptance: &id014
+  - shouldSaveAndFindUserByName reads the same username and password.
+  - 'shouldFailWhenUserAlreadyExists throws ArgumentException with message user already exists: name.'
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: shouldSaveAndFindUserByName reads the same username and password.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/AuthService/AuthService.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n\
+    \    <RootNamespace>AuthService</RootNamespace>\n    <AssemblyName>AuthService</AssemblyName>\n  </PropertyGroup>\n  <ItemGroup>\n\
+    \    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n    <PackageReference Include=\"BCrypt.Net-Next\" Version=\"\
+    4.2.1\" />\n\n  </ItemGroup>\n</Project>\n\n// FILE: src/AuthService/Domain/User.cs\nusing MongoDB.Bson.Serialization.Attributes;\n\
+    \nnamespace AuthService.Domain;\n\npublic sealed class User\n{\n  [BsonId]\n  [BsonElement(\"_id\")]\n  public string\
+    \ Username { get; set; } = \"\";\n\n  [BsonElement(\"password\")]\n  public string Password { get; set; } = \"\";\n}\n\
+    \n// FILE: src/AuthService/Data/UserRepository.cs\nusing AuthService.Domain;\nusing MongoDB.Driver;\nusing PiggyMetrics.Shared.Mongo;\n\
+    \nnamespace AuthService.Data;\n\npublic interface IUserRepository\n{\n  User? FindById(string username);\n  void Save(User\
+    \ user);\n}\n\npublic sealed class UserRepository : IUserRepository\n{\n  public const string CollectionName = \"users\"\
+    ;\n  private readonly IMongoCollection<User> _users;\n\n  public UserRepository(IMongoDatabase database)\n  {\n    PiggyMongo.RegisterConventions();\n\
+    \    _users = database.GetCollection<User>(CollectionName);\n  }\n\n  public User? FindById(string username)\n  {\n  \
+    \  return _users.Find(user => user.Username == username).FirstOrDefault();\n  }\n\n  public void Save(User user)\n  {\n\
+    \    _users.ReplaceOne(\n      existing => existing.Username == user.Username,\n      user,\n      new ReplaceOptions\
+    \ { IsUpsert = true });\n  }\n}\n\n// FILE: src/AuthService/Security/MongoUserDetailsService.cs\nusing AuthService.Data;\n\
+    using AuthService.Domain;\n\nnamespace AuthService.Security;\n\npublic sealed class UsernameNotFoundException : Exception\n\
+    {\n  public UsernameNotFoundException(string username) : base(username)\n  {\n  }\n}\n\npublic sealed class MongoUserDetailsService\n\
+    {\n  private readonly IUserRepository _repository;\n\n  public MongoUserDetailsService(IUserRepository repository)\n \
+    \ {\n    _repository = repository;\n  }\n\n  public User LoadUserByUsername(string username)\n  {\n    return _repository.FindById(username)\
+    \ ?? throw new UsernameNotFoundException(username);\n  }\n}\n\n// FILE: src/AuthService/Services/UserService.cs\nusing\
+    \ AuthService.Data;\nusing AuthService.Domain;\n\nnamespace AuthService.Services;\n\npublic interface IUserService\n{\n\
+    \  void Create(User user);\n}\n\npublic sealed class UserService : IUserService\n{\n  private readonly IUserRepository\
+    \ _repository;\n\n  public UserService(IUserRepository repository)\n  {\n    _repository = repository;\n  }\n\n  public\
+    \ void Create(User user)\n  {\n    var existing = _repository.FindById(user.Username);\n    if (existing != null)\n  \
+    \  {\n      throw new ArgumentException(\"user already exists: \" + existing.Username);\n    }\n    user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password,\
+    \ workFactor: 10);\n    _repository.Save(user);\n  }\n}\n"
+  companion_required: false
+  invariants:
+  - Collection name is users.
+  - BCrypt work factor is 10.
+  edge_cases:
+  - A second create for the same username does not overwrite the stored hash.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id014
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-008
+  title: Add AuthService settings, token endpoint, and user routes
+  depends_on:
+  - STEP-007
+  - STEP-003
+  requirement_refs:
+  - REQ-008
+  - REQ-009
+  - REQ-010
+  - REQ-011
+  decision_refs:
+  - D-004
+  - D-008
+  - D-009
+  evidence_refs:
+  - R-009
+  - R-010
+  files: &id015
+  - src/AuthService/Program.cs
+  - src/AuthService/appsettings.json
+  - src/AuthService/Controllers/UserController.cs
+  - src/AuthService/OAuth/AuthorizationServer.cs
+  exact_files: *id015
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: 'Host AuthService on port 5000 with path base /uaa. Persist users in auth-mongodb database piggymetrics. Register
+    four clients: browser with grants refresh_token and password and scope ui; account-service, statistics-service, and notification-service
+    with grants client_credentials and refresh_token, scope server, and secrets from ACCOUNT_SERVICE_PASSWORD, STATISTICS_SERVICE_PASSWORD,
+    and NOTIFICATION_SERVICE_PASSWORD. POST /oauth/token issues an opaque bearer token stored in memory for 43200 seconds.
+    GET /users/current requires policy user and returns name plus scope. POST /users requires policy server.'
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - C1_without_token_is_401_and_with_user_token_returns_name
+  - C2_server_token_is_200_and_user_token_is_403
+  - C3_each_grant_issues_a_token_the_resource_check_accepts
+  - shouldCreateNewUser
+  - shouldFailWhenUserIsNotValid
+  - shouldReturnCurrentUser
+  acceptance: &id016
+  - C1 without a token returns 401 and with a user token returns name.
+  - C2 with a server token returns 200 and with a user token returns 403.
+  - C3 client_credentials, password, and refresh_token each yield a token accepted by GET /uaa/users/current.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: C1 without a token returns 401 and with a user token returns name.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/AuthService/Program.cs\nusing AuthService.Data;\nusing AuthService.OAuth;\nusing AuthService.Security;\n\
+    using AuthService.Services;\nusing MongoDB.Driver;\nusing PiggyMetrics.Shared.Health;\nusing PiggyMetrics.Shared.Json;\n\
+    using PiggyMetrics.Shared.Mongo;\n\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.ConfigureHttpJsonOptions(options\
+    \ =>\n{\n  options.SerializerOptions.PropertyNamingPolicy = PiggyJson.Options.PropertyNamingPolicy;\n  options.SerializerOptions.PropertyNameCaseInsensitive\
+    \ = true;\n  options.SerializerOptions.DefaultIgnoreCondition = PiggyJson.Options.DefaultIgnoreCondition;\n  options.SerializerOptions.UnmappedMemberHandling\
+    \ = PiggyJson.Options.UnmappedMemberHandling;\n  options.SerializerOptions.NumberHandling = PiggyJson.Options.NumberHandling;\n\
+    \  foreach (var converter in PiggyJson.Options.Converters)\n  {\n    options.SerializerOptions.Converters.Add(converter);\n\
+    \  }\n});\nbuilder.Services.AddControllers().AddJsonOptions(options =>\n{\n  options.JsonSerializerOptions.PropertyNamingPolicy\
+    \ = PiggyJson.Options.PropertyNamingPolicy;\n  options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;\n  options.JsonSerializerOptions.DefaultIgnoreCondition\
+    \ = PiggyJson.Options.DefaultIgnoreCondition;\n  options.JsonSerializerOptions.UnmappedMemberHandling = PiggyJson.Options.UnmappedMemberHandling;\n\
+    \  foreach (var converter in PiggyJson.Options.Converters)\n  {\n    options.JsonSerializerOptions.Converters.Add(converter);\n\
+    \  }\n});\nbuilder.Services.AddPiggyHealth();\nbuilder.Services.AddSingleton<InMemoryTokenStore>();\nbuilder.Services.AddSingleton(sp\
+    \ =>\n{\n  var configuration = sp.GetRequiredService<IConfiguration>();\n  var connectionString = configuration[\"Piggy:Mongo:ConnectionString\"\
+    ];\n  if (!string.IsNullOrEmpty(connectionString))\n  {\n    PiggyMongo.RegisterConventions();\n    return new MongoClient(connectionString);\n\
+    \  }\n  return PiggyMongo.CreateClient(\n    configuration[\"Piggy:Mongo:Host\"] ?? \"auth-mongodb\",\n    int.Parse(configuration[\"\
+    Piggy:Mongo:Port\"] ?? \"27017\"),\n    configuration[\"Piggy:Mongo:Username\"] ?? \"user\",\n    configuration[\"MONGODB_PASSWORD\"\
+    ] ?? configuration[\"Piggy:Mongo:Password\"] ?? \"\");\n});\nbuilder.Services.AddSingleton(sp =>\n{\n  var configuration\
+    \ = sp.GetRequiredService<IConfiguration>();\n  return PiggyMongo.Database(sp.GetRequiredService<MongoClient>(), configuration[\"\
+    Piggy:Mongo:Database\"] ?? \"piggymetrics\");\n});\nbuilder.Services.AddSingleton<IUserRepository, UserRepository>();\n\
+    builder.Services.AddSingleton<MongoUserDetailsService>();\nbuilder.Services.AddSingleton<IUserService, UserService>();\n\
+    builder.Services.AddAuthentication(LocalTokenHandler.SchemeName)\n  .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions,\
+    \ LocalTokenHandler>(LocalTokenHandler.SchemeName, null);\nbuilder.Services.AddAuthorization(options =>\n{\n  options.AddPolicy(\"\
+    user\", policy => policy.RequireAuthenticatedUser());\n  options.AddPolicy(\"server\", policy => policy.RequireAssertion(context\
+    \ =>\n  {\n    var scope = context.User.FindFirst(\"scope\")?.Value ?? \"\";\n    return scope.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(\"\
+    server\");\n  }));\n});\n\nvar app = builder.Build();\napp.UsePathBase(\"/uaa\");\napp.UseAuthentication();\napp.UseAuthorization();\n\
+    app.MapPiggyHealth();\napp.MapControllers();\nvar clients = AuthorizationServer.ClientsFrom(app.Configuration);\nAuthorizationServer.Map(\n\
+    \  app,\n  clients,\n  app.Services.GetRequiredService<InMemoryTokenStore>(),\n  app.Services.GetRequiredService<MongoUserDetailsService>());\n\
+    app.Run();\n\npublic partial class Program { }\n\n// FILE: src/AuthService/appsettings.json\n{\n  \"Kestrel\": {\n   \
+    \ \"Endpoints\": {\n      \"Http\": {\n        \"Url\": \"http://0.0.0.0:5000\"\n      }\n    }\n  },\n  \"Piggy\": {\n\
+    \    \"PathBase\": \"/uaa\",\n    \"ApplicationName\": \"auth-service\",\n    \"Config\": {\n      \"Uri\": \"http://config:8888\"\
+    ,\n      \"FailFast\": true,\n      \"Username\": \"user\"\n    },\n    \"Mongo\": {\n      \"Host\": \"auth-mongodb\"\
+    ,\n      \"Port\": 27017,\n      \"Username\": \"user\",\n      \"Database\": \"piggymetrics\",\n      \"Collection\"\
+    : \"users\"\n    }\n  }\n}\n\n// FILE: src/AuthService/Controllers/UserController.cs\nusing AuthService.Domain;\nusing\
+    \ AuthService.Services;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\n\nnamespace AuthService.Controllers;\n\
+    \n[ApiController]\n[Route(\"users\")]\npublic sealed class UserController : ControllerBase\n{\n  private readonly IUserService\
+    \ _users;\n\n  public UserController(IUserService users)\n  {\n    _users = users;\n  }\n\n  [Authorize(Policy = \"user\"\
+    )]\n  [HttpGet(\"current\")]\n  public IActionResult GetUser()\n  {\n    var name = User.Identity?.Name ?? \"\";\n   \
+    \ var scope = User.FindFirst(\"scope\")?.Value ?? \"\";\n    return Ok(new CurrentPrincipal(name, scope));\n  }\n\n  [Authorize(Policy\
+    \ = \"server\")]\n  [HttpPost]\n  public IActionResult CreateUser([FromBody] User? user)\n  {\n    if (user == null)\n\
+    \    {\n      return BadRequest();\n    }\n    _users.Create(user);\n    return Ok();\n  }\n}\n\npublic sealed record\
+    \ CurrentPrincipal(string Name, string Scope);\n\n// FILE: src/AuthService/OAuth/AuthorizationServer.cs\nusing System.Security.Claims;\n\
+    using System.Text;\nusing System.Text.Encodings.Web;\nusing System.Text.Json.Serialization;\nusing AuthService.Domain;\n\
+    using AuthService.Security;\nusing Microsoft.AspNetCore.Authentication;\nusing Microsoft.Extensions.Options;\n\nnamespace\
+    \ AuthService.OAuth;\n\npublic sealed class OAuthClient\n{\n  public string Id { get; init; } = \"\";\n  public string\
+    \ Secret { get; init; } = \"\";\n  public string[] Grants { get; init; } = Array.Empty<string>();\n  public string[] Scopes\
+    \ { get; init; } = Array.Empty<string>();\n}\n\npublic sealed class IssuedToken\n{\n  public string AccessToken { get;\
+    \ init; } = \"\";\n  public string RefreshToken { get; init; } = \"\";\n  public string TokenType { get; init; } = \"\
+    bearer\";\n  public int ExpiresIn { get; init; } = 43200;\n  public string Scope { get; init; } = \"\";\n  public string\
+    \ ClientId { get; init; } = \"\";\n  public string Name { get; init; } = \"\";\n  public DateTimeOffset ExpiresAt { get;\
+    \ init; }\n}\n\npublic sealed class InMemoryTokenStore\n{\n  private readonly Dictionary<string, IssuedToken> _byAccess\
+    \ = new();\n  private readonly Dictionary<string, IssuedToken> _byRefresh = new();\n\n  public IssuedToken Issue(string\
+    \ clientId, string name, string scope, string? refreshToken = null)\n  {\n    var issued = new IssuedToken\n    {\n  \
+    \    AccessToken = Guid.NewGuid().ToString(\"N\"),\n      RefreshToken = refreshToken ?? Guid.NewGuid().ToString(\"N\"\
+    ),\n      TokenType = \"bearer\",\n      ExpiresIn = 43200,\n      Scope = scope,\n      ClientId = clientId,\n      Name\
+    \ = name,\n      ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(43200)\n    };\n    lock (_byAccess)\n    {\n      _byAccess[issued.AccessToken]\
+    \ = issued;\n      _byRefresh[issued.RefreshToken] = issued;\n    }\n    return issued;\n  }\n\n  public IssuedToken?\
+    \ FindByAccess(string accessToken)\n  {\n    lock (_byAccess)\n    {\n      return _byAccess.TryGetValue(accessToken,\
+    \ out var issued) ? issued : null;\n    }\n  }\n\n  public IssuedToken? FindByRefresh(string refreshToken)\n  {\n    lock\
+    \ (_byAccess)\n    {\n      return _byRefresh.TryGetValue(refreshToken, out var issued) ? issued : null;\n    }\n  }\n\
+    }\n\npublic sealed class TokenResponse\n{\n  [JsonPropertyName(\"access_token\")]\n  public string AccessToken { get;\
+    \ init; } = \"\";\n\n  [JsonPropertyName(\"token_type\")]\n  public string TokenType { get; init; } = \"bearer\";\n\n\
+    \  [JsonPropertyName(\"refresh_token\")]\n  public string RefreshToken { get; init; } = \"\";\n\n  [JsonPropertyName(\"\
+    expires_in\")]\n  public int ExpiresIn { get; init; }\n\n  [JsonPropertyName(\"scope\")]\n  public string Scope { get;\
+    \ init; } = \"\";\n}\n\npublic sealed class LocalTokenHandler : AuthenticationHandler<AuthenticationSchemeOptions>\n{\n\
+    \  public const string SchemeName = \"LocalToken\";\n  private readonly InMemoryTokenStore _store;\n\n  public LocalTokenHandler(\n\
+    \    IOptionsMonitor<AuthenticationSchemeOptions> options,\n    ILoggerFactory logger,\n    UrlEncoder encoder,\n    InMemoryTokenStore\
+    \ store)\n    : base(options, logger, encoder)\n  {\n    _store = store;\n  }\n\n  protected override Task<AuthenticateResult>\
+    \ HandleAuthenticateAsync()\n  {\n    var header = Request.Headers.Authorization.ToString();\n    if (string.IsNullOrEmpty(header)\
+    \ || !header.StartsWith(\"Bearer \", StringComparison.Ordinal))\n    {\n      return Task.FromResult(AuthenticateResult.NoResult());\n\
+    \    }\n    var raw = header[\"Bearer \".Length..].Trim();\n    var issued = _store.FindByAccess(raw);\n    if (issued\
+    \ == null || issued.ExpiresAt <= DateTimeOffset.UtcNow)\n    {\n      return Task.FromResult(AuthenticateResult.Fail(\"\
+    token refused\"));\n    }\n    var claims = new List<Claim>\n    {\n      new(ClaimTypes.Name, issued.Name),\n      new(\"\
+    scope\", issued.Scope)\n    };\n    var identity = new ClaimsIdentity(claims, SchemeName);\n    var ticket = new AuthenticationTicket(new\
+    \ ClaimsPrincipal(identity), SchemeName);\n    return Task.FromResult(AuthenticateResult.Success(ticket));\n  }\n}\n\n\
+    public static class AuthorizationServer\n{\n  public static IReadOnlyList<OAuthClient> ClientsFrom(IConfiguration configuration)\n\
+    \  {\n    return new[]\n    {\n      new OAuthClient\n      {\n        Id = \"browser\",\n        Secret = \"\",\n   \
+    \     Grants = new[] { \"refresh_token\", \"password\" },\n        Scopes = new[] { \"ui\" }\n      },\n      new OAuthClient\n\
+    \      {\n        Id = \"account-service\",\n        Secret = configuration[\"ACCOUNT_SERVICE_PASSWORD\"] ?? \"\",\n \
+    \       Grants = new[] { \"client_credentials\", \"refresh_token\" },\n        Scopes = new[] { \"server\" }\n      },\n\
+    \      new OAuthClient\n      {\n        Id = \"statistics-service\",\n        Secret = configuration[\"STATISTICS_SERVICE_PASSWORD\"\
+    ] ?? \"\",\n        Grants = new[] { \"client_credentials\", \"refresh_token\" },\n        Scopes = new[] { \"server\"\
+    \ }\n      },\n      new OAuthClient\n      {\n        Id = \"notification-service\",\n        Secret = configuration[\"\
+    NOTIFICATION_SERVICE_PASSWORD\"] ?? \"\",\n        Grants = new[] { \"client_credentials\", \"refresh_token\" },\n   \
+    \     Scopes = new[] { \"server\" }\n      }\n    };\n  }\n\n  public static void Map(WebApplication app, IReadOnlyList<OAuthClient>\
+    \ clients, InMemoryTokenStore store, MongoUserDetailsService users)\n  {\n    app.MapPost(\"/oauth/token\", async (HttpRequest\
+    \ request) =>\n    {\n      var form = await request.ReadFormAsync();\n      var grant = form[\"grant_type\"].ToString();\n\
+    \      var (client, error) = ResolveClient(request, form, clients);\n      if (client == null)\n      {\n        return\
+    \ Results.Json(new { error = \"invalid_client\" }, statusCode: error);\n      }\n      if (!client.Grants.Contains(grant))\n\
+    \      {\n        return Results.Json(new { error = \"unsupported_grant_type\" }, statusCode: 400);\n      }\n      if\
+    \ (grant == \"client_credentials\")\n      {\n        var issued = store.Issue(client.Id, client.Id, \"server\");\n  \
+    \      return Results.Json(ToResponse(issued));\n      }\n      if (grant == \"password\")\n      {\n        var username\
+    \ = form[\"username\"].ToString();\n        var password = form[\"password\"].ToString();\n        User user;\n      \
+    \  try\n        {\n          user = users.LoadUserByUsername(username);\n        }\n        catch (UsernameNotFoundException)\n\
+    \        {\n          return Results.Json(new { error = \"invalid_grant\" }, statusCode: 400);\n        }\n        if\
+    \ (!BCrypt.Net.BCrypt.Verify(password, user.Password))\n        {\n          return Results.Json(new { error = \"invalid_grant\"\
+    \ }, statusCode: 400);\n        }\n        var issued = store.Issue(client.Id, user.Username, \"ui\");\n        return\
+    \ Results.Json(ToResponse(issued));\n      }\n      if (grant == \"refresh_token\")\n      {\n        var current = store.FindByRefresh(form[\"\
+    refresh_token\"].ToString());\n        if (current == null || current.ClientId != client.Id)\n        {\n          return\
+    \ Results.Json(new { error = \"invalid_grant\" }, statusCode: 400);\n        }\n        var issued = store.Issue(client.Id,\
+    \ current.Name, current.Scope, current.RefreshToken);\n        return Results.Json(ToResponse(issued));\n      }\n   \
+    \   return Results.Json(new { error = \"unsupported_grant_type\" }, statusCode: 400);\n    });\n  }\n\n  private static\
+    \ TokenResponse ToResponse(IssuedToken issued)\n  {\n    return new TokenResponse\n    {\n      AccessToken = issued.AccessToken,\n\
+    \      TokenType = issued.TokenType,\n      RefreshToken = issued.RefreshToken,\n      ExpiresIn = issued.ExpiresIn,\n\
+    \      Scope = issued.Scope\n    };\n  }\n\n  private static (OAuthClient? Client, int Status) ResolveClient(HttpRequest\
+    \ request, IFormCollection form, IReadOnlyList<OAuthClient> clients)\n  {\n    string? id = null;\n    string secret =\
+    \ \"\";\n    var header = request.Headers.Authorization.ToString();\n    if (header.StartsWith(\"Basic \", StringComparison.Ordinal))\n\
+    \    {\n      var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(header[\"Basic \".Length..].Trim()));\n \
+    \     var split = decoded.Split(':', 2);\n      id = split[0];\n      secret = split.Length > 1 ? split[1] : \"\";\n \
+    \   }\n    else\n    {\n      id = form[\"client_id\"].ToString();\n      secret = form[\"client_secret\"].ToString();\n\
+    \    }\n    var client = clients.FirstOrDefault(item => item.Id == id);\n    if (client == null)\n    {\n      return\
+    \ (null, 401);\n    }\n    if (client.Secret.Length > 0 && client.Secret != secret)\n    {\n      return (null, 401);\n\
+    \    }\n    return (client, 200);\n  }\n}\n"
+  companion_required: false
+  invariants:
+  - Token type is bearer.
+  - expires_in is 43200.
+  - Path base is /uaa.
+  - Port is 5000.
+  edge_cases:
+  - browser has an empty secret and authenticates with client_id.
+  - A wrong client secret returns 401.
+  - An unknown username on the password grant returns 400.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id016
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-009
+  title: Port the five AuthService test classes
+  depends_on:
+  - STEP-008
+  requirement_refs:
+  - REQ-012
+  decision_refs:
+  - D-010
+  evidence_refs:
+  - R-011
+  files: &id017
+  - tests/AuthService.Tests/AuthService.Tests.csproj
+  - tests/AuthService.Tests/AuthTests.cs
+  exact_files: *id017
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Add AuthService.Tests with the Java method names contextLoads, shouldCreateNewUser, shouldFailWhenUserIsNotValid,
+    shouldReturnCurrentUser, shouldSaveAndFindUserByName, shouldCreateUser, shouldFailWhenUserAlreadyExists, shouldLoadByUsernameWhenUserExists,
+    and shouldFailToLoadByUsernameWhenUserNotExists. Add contract replay tests for C1, C2, and C3 against WebApplicationFactory
+    and Mongo2Go.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - contextLoads
+  - shouldCreateNewUser
+  - shouldReturnCurrentUser
+  - shouldSaveAndFindUserByName
+  acceptance: &id018
+  - The nine ported tests pass.
+  - C1, C2, and C3 pass.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: The nine ported tests pass.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: tests/AuthService.Tests/AuthService.Tests.csproj\n<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n\
+    \    <RootNamespace>AuthService.Tests</RootNamespace>\n    <AssemblyName>AuthService.Tests</AssemblyName>\n    <IsPackable>false</IsPackable>\n\
+    \  </PropertyGroup>\n  <ItemGroup>\n    <FrameworkReference Include=\"Microsoft.AspNetCore.App\" />\n    <PackageReference\
+    \ Include=\"Microsoft.NET.Test.Sdk\" Version=\"18.11.0\" />\n    <PackageReference Include=\"xunit\" Version=\"2.9.3\"\
+    \ />\n    <PackageReference Include=\"xunit.runner.visualstudio\" Version=\"2.8.2\" />\n    <PackageReference Include=\"\
+    Microsoft.AspNetCore.Mvc.Testing\" Version=\"10.0.13\" />\n    <PackageReference Include=\"Mongo2Go\" Version=\"3.1.3\"\
+    \ />\n  </ItemGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"..\\..\\src\\AuthService\\AuthService.csproj\" />\n\
+    \  </ItemGroup>\n</Project>\n\n// FILE: tests/AuthService.Tests/AuthTests.cs\nusing System.Net;\nusing System.Net.Http.Headers;\n\
+    using System.Net.Http.Json;\nusing System.Security.Claims;\nusing System.Text;\nusing System.Text.Json;\nusing AuthService.Controllers;\n\
+    using AuthService.Data;\nusing AuthService.Domain;\nusing AuthService.Security;\nusing AuthService.Services;\nusing Microsoft.AspNetCore.Http;\n\
+    using Microsoft.AspNetCore.Mvc;\nusing Microsoft.AspNetCore.Mvc.Testing;\nusing Microsoft.AspNetCore.Hosting;\nusing Microsoft.Extensions.Configuration;\n\
+    using Mongo2Go;\nusing MongoDB.Driver;\nusing PiggyMetrics.Shared.Json;\nusing PiggyMetrics.Shared.Mongo;\n\nnamespace\
+    \ AuthService.Tests;\n\npublic sealed class AuthApplicationFactory : WebApplicationFactory<Program>\n{\n  private readonly\
+    \ MongoDbRunner _runner = MongoDbRunner.Start();\n\n  protected override void ConfigureWebHost(IWebHostBuilder builder)\n\
+    \  {\n    builder.UseSetting(\"Piggy:Mongo:ConnectionString\", _runner.ConnectionString);\n    builder.UseSetting(\"Piggy:Mongo:Database\"\
+    , \"piggymetrics\");\n    builder.UseSetting(\"ACCOUNT_SERVICE_PASSWORD\", \"account-secret\");\n    builder.UseSetting(\"\
+    STATISTICS_SERVICE_PASSWORD\", \"statistics-secret\");\n    builder.UseSetting(\"NOTIFICATION_SERVICE_PASSWORD\", \"notification-secret\"\
+    );\n  }\n\n  protected override void Dispose(bool disposing)\n  {\n    base.Dispose(disposing);\n    _runner.Dispose();\n\
+    \  }\n}\n\npublic class AuthServiceApplicationTests : IClassFixture<AuthApplicationFactory>\n{\n  private readonly AuthApplicationFactory\
+    \ _factory;\n\n  public AuthServiceApplicationTests(AuthApplicationFactory factory)\n  {\n    _factory = factory;\n  }\n\
+    \n  [Fact]\n  public void contextLoads()\n  {\n    using var client = _factory.CreateClient();\n    Assert.NotNull(client);\n\
+    \  }\n}\n\npublic class UserControllerTest\n{\n  private sealed class FakeUsers : IUserService\n  {\n    public void Create(User\
+    \ user)\n    {\n    }\n  }\n\n  [Fact]\n  public void shouldCreateNewUser()\n  {\n    var controller = new UserController(new\
+    \ FakeUsers());\n    var result = controller.CreateUser(new User { Username = \"test\", Password = \"password\" });\n\
+    \    Assert.IsType<OkResult>(result);\n  }\n\n  [Fact]\n  public void shouldFailWhenUserIsNotValid()\n  {\n    var controller\
+    \ = new UserController(new FakeUsers());\n    var result = controller.CreateUser(null);\n    Assert.IsType<BadRequestResult>(result);\n\
+    \  }\n\n  [Fact]\n  public void shouldReturnCurrentUser()\n  {\n    var controller = new UserController(new FakeUsers());\n\
+    \    controller.ControllerContext = new ControllerContext\n    {\n      HttpContext = new DefaultHttpContext\n      {\n\
+    \        User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, \"test\") }, \"test\"))\n  \
+    \    }\n    };\n    var result = Assert.IsType<OkObjectResult>(controller.GetUser());\n    var json = JsonSerializer.Serialize(result.Value,\
+    \ PiggyJson.Options);\n    using var document = JsonDocument.Parse(json);\n    Assert.Equal(\"test\", document.RootElement.GetProperty(\"\
+    name\").GetString());\n  }\n}\n\npublic sealed class MemoryUserRepository : IUserRepository\n{\n  public User? Stored\
+    \ { get; private set; }\n  public int Saves { get; private set; }\n\n  public User? FindById(string username)\n  {\n \
+    \   return Stored != null && Stored.Username == username ? Stored : null;\n  }\n\n  public void Save(User user)\n  {\n\
+    \    Saves += 1;\n    Stored = user;\n  }\n}\n\npublic class UserServiceTest\n{\n  [Fact]\n  public void shouldCreateUser()\n\
+    \  {\n    var repository = new MemoryUserRepository();\n    var service = new UserService(repository);\n    var user =\
+    \ new User { Username = \"name\", Password = \"password\" };\n    service.Create(user);\n    Assert.Equal(1, repository.Saves);\n\
+    \    Assert.Same(user, repository.Stored);\n  }\n\n  [Fact]\n  public void shouldFailWhenUserAlreadyExists()\n  {\n  \
+    \  var repository = new MemoryUserRepository();\n    repository.Save(new User { Username = \"name\", Password = \"kept\"\
+    \ });\n    var service = new UserService(repository);\n    var user = new User { Username = \"name\", Password = \"password\"\
+    \ };\n    var error = Assert.Throws<ArgumentException>(() => service.Create(user));\n    Assert.Equal(\"user already exists:\
+    \ name\", error.Message);\n  }\n}\n\npublic class MongoUserDetailsServiceTest\n{\n  [Fact]\n  public void shouldLoadByUsernameWhenUserExists()\n\
+    \  {\n    var repository = new MemoryUserRepository();\n    var user = new User { Username = \"name\", Password = \"password\"\
+    \ };\n    repository.Save(user);\n    var service = new MongoUserDetailsService(repository);\n    var loaded = service.LoadUserByUsername(\"\
+    name\");\n    Assert.Same(user, loaded);\n  }\n\n  [Fact]\n  public void shouldFailToLoadByUsernameWhenUserNotExists()\n\
+    \  {\n    var service = new MongoUserDetailsService(new MemoryUserRepository());\n    Assert.Throws<UsernameNotFoundException>(()\
+    \ => service.LoadUserByUsername(\"name\"));\n  }\n}\n\npublic class UserRepositoryTest : IDisposable\n{\n  private readonly\
+    \ MongoDbRunner _runner = MongoDbRunner.Start();\n\n  [Fact]\n  public void shouldSaveAndFindUserByName()\n  {\n    PiggyMongo.RegisterConventions();\n\
+    \    var database = new MongoClient(_runner.ConnectionString).GetDatabase(\"piggymetrics\");\n    var repository = new\
+    \ UserRepository(database);\n    var user = new User { Username = \"name\", Password = \"password\" };\n    repository.Save(user);\n\
+    \    var found = repository.FindById(user.Username);\n    Assert.NotNull(found);\n    Assert.Equal(user.Username, found!.Username);\n\
+    \    Assert.Equal(user.Password, found.Password);\n  }\n\n  public void Dispose()\n  {\n    _runner.Dispose();\n  }\n\
+    }\n\npublic class ContractReplayTests : IClassFixture<AuthApplicationFactory>\n{\n  private readonly HttpClient _client;\n\
+    \n  public ContractReplayTests(AuthApplicationFactory factory)\n  {\n    _client = factory.CreateClient();\n  }\n\n  [Fact]\n\
+    \  public async Task C1_without_token_is_401_and_with_user_token_returns_name()\n  {\n    var anonymous = await _client.GetAsync(\"\
+    /uaa/users/current\");\n    Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);\n\n    await CreateUserAsync(\"\
+    ada\", \"secret\");\n    var token = await PasswordTokenAsync(\"ada\", \"secret\");\n    var request = new HttpRequestMessage(HttpMethod.Get,\
+    \ \"/uaa/users/current\");\n    request.Headers.Authorization = new AuthenticationHeaderValue(\"Bearer\", token.AccessToken);\n\
+    \    var response = await _client.SendAsync(request);\n    Assert.Equal(HttpStatusCode.OK, response.StatusCode);\n   \
+    \ using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());\n    Assert.Equal(\"ada\", document.RootElement.GetProperty(\"\
+    name\").GetString());\n    Assert.Equal(\"ui\", document.RootElement.GetProperty(\"scope\").GetString());\n  }\n\n  [Fact]\n\
+    \  public async Task C2_server_token_is_200_and_user_token_is_403()\n  {\n    var server = await ClientTokenAsync(\"account-service\"\
+    , \"account-secret\");\n    var create = new HttpRequestMessage(HttpMethod.Post, \"/uaa/users\");\n    create.Headers.Authorization\
+    \ = new AuthenticationHeaderValue(\"Bearer\", server.AccessToken);\n    create.Content = JsonContent.Create(new { username\
+    \ = \"grace\", password = \"secret\" });\n    var created = await _client.SendAsync(create);\n    Assert.Equal(HttpStatusCode.OK,\
+    \ created.StatusCode);\n\n    var user = await PasswordTokenAsync(\"grace\", \"secret\");\n    var denied = new HttpRequestMessage(HttpMethod.Post,\
+    \ \"/uaa/users\");\n    denied.Headers.Authorization = new AuthenticationHeaderValue(\"Bearer\", user.AccessToken);\n\
+    \    denied.Content = JsonContent.Create(new { username = \"other\", password = \"secret\" });\n    var response = await\
+    \ _client.SendAsync(denied);\n    Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);\n  }\n\n  [Fact]\n  public\
+    \ async Task C3_each_grant_issues_a_token_the_resource_check_accepts()\n  {\n    var clientToken = await ClientTokenAsync(\"\
+    statistics-service\", \"statistics-secret\");\n    Assert.Equal(\"bearer\", clientToken.TokenType);\n    Assert.Equal(\"\
+    server\", clientToken.Scope);\n    await AssertCurrentAccepts(clientToken.AccessToken);\n\n    await CreateUserAsync(\"\
+    nia\", \"secret\");\n    var password = await PasswordTokenAsync(\"nia\", \"secret\");\n    Assert.Equal(\"ui\", password.Scope);\n\
+    \    await AssertCurrentAccepts(password.AccessToken);\n\n    var refresh = await RefreshAsync(\"browser\", password.RefreshToken);\n\
+    \    Assert.False(string.IsNullOrEmpty(refresh.AccessToken));\n    await AssertCurrentAccepts(refresh.AccessToken);\n\
+    \  }\n\n  private async Task AssertCurrentAccepts(string accessToken)\n  {\n    var request = new HttpRequestMessage(HttpMethod.Get,\
+    \ \"/uaa/users/current\");\n    request.Headers.Authorization = new AuthenticationHeaderValue(\"Bearer\", accessToken);\n\
+    \    var response = await _client.SendAsync(request);\n    Assert.Equal(HttpStatusCode.OK, response.StatusCode);\n  }\n\
+    \n  private async Task CreateUserAsync(string username, string password)\n  {\n    var server = await ClientTokenAsync(\"\
+    notification-service\", \"notification-secret\");\n    var request = new HttpRequestMessage(HttpMethod.Post, \"/uaa/users\"\
+    );\n    request.Headers.Authorization = new AuthenticationHeaderValue(\"Bearer\", server.AccessToken);\n    request.Content\
+    \ = JsonContent.Create(new { username, password });\n    var response = await _client.SendAsync(request);\n    response.EnsureSuccessStatusCode();\n\
+    \  }\n\n  private async Task<TokenWire> ClientTokenAsync(string clientId, string secret)\n  {\n    var request = new HttpRequestMessage(HttpMethod.Post,\
+    \ \"/uaa/oauth/token\");\n    var raw = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientId + \":\" + secret));\n \
+    \   request.Headers.Authorization = new AuthenticationHeaderValue(\"Basic\", raw);\n    request.Content = new FormUrlEncodedContent(new\
+    \ Dictionary<string, string>\n    {\n      [\"grant_type\"] = \"client_credentials\",\n      [\"scope\"] = \"server\"\n\
+    \    });\n    var response = await _client.SendAsync(request);\n    response.EnsureSuccessStatusCode();\n    return (await\
+    \ response.Content.ReadFromJsonAsync<TokenWire>())!;\n  }\n\n  private async Task<TokenWire> PasswordTokenAsync(string\
+    \ username, string password)\n  {\n    var response = await _client.PostAsync(\"/uaa/oauth/token\", new FormUrlEncodedContent(new\
+    \ Dictionary<string, string>\n    {\n      [\"grant_type\"] = \"password\",\n      [\"username\"] = username,\n      [\"\
+    password\"] = password,\n      [\"client_id\"] = \"browser\"\n    }));\n    response.EnsureSuccessStatusCode();\n    return\
+    \ (await response.Content.ReadFromJsonAsync<TokenWire>())!;\n  }\n\n  private async Task<TokenWire> RefreshAsync(string\
+    \ clientId, string refreshToken)\n  {\n    var response = await _client.PostAsync(\"/uaa/oauth/token\", new FormUrlEncodedContent(new\
+    \ Dictionary<string, string>\n    {\n      [\"grant_type\"] = \"refresh_token\",\n      [\"refresh_token\"] = refreshToken,\n\
+    \      [\"client_id\"] = clientId\n    }));\n    response.EnsureSuccessStatusCode();\n    return (await response.Content.ReadFromJsonAsync<TokenWire>())!;\n\
+    \  }\n\n  private sealed class TokenWire\n  {\n    public string access_token { get; set; } = \"\";\n    public string\
+    \ token_type { get; set; } = \"\";\n    public string refresh_token { get; set; } = \"\";\n    public string scope { get;\
+    \ set; } = \"\";\n    public string AccessToken => access_token;\n    public string TokenType => token_type;\n    public\
+    \ string RefreshToken => refresh_token;\n    public string Scope => scope;\n  }\n}\n"
+  companion_required: false
+  invariants:
+  - Ported test method names match the Java names.
+  - Contract tests are additional methods.
+  edge_cases:
+  - shouldFailWhenUserIsNotValid posts a null body and expects 400.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id018
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-010
+  title: Add StatisticsService documents, repository, rates client, and routes
+  depends_on:
+  - STEP-004
+  - STEP-005
+  - STEP-003
+  requirement_refs:
+  - REQ-013
+  - REQ-014
+  - REQ-015
+  - REQ-016
+  decision_refs:
+  - D-005
+  - D-006
+  - D-011
+  evidence_refs:
+  - R-012
+  - R-013
+  files: &id019
+  - src/StatisticsService/StatisticsService.csproj
+  - src/StatisticsService/Program.cs
+  - src/StatisticsService/appsettings.json
+  - src/StatisticsService/Domain/StatisticsDomain.cs
+  - src/StatisticsService/Data/DataPointRepository.cs
+  - src/StatisticsService/Clients/ExchangeRatesClient.cs
+  - src/StatisticsService/Services/StatisticsServices.cs
+  - src/StatisticsService/Controllers/StatisticsController.cs
+  exact_files: *id019
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Host StatisticsService on port 7000 with path base /statistics and store datapoints in statistics-mongodb database
+    piggymetrics. Keep field names incomes, expenses, saving, statistics, rates, and compound id account plus date. GET /current
+    requires policy user. GET /{accountName} allows scope server or the literal account name demo. PUT /{accountName} requires
+    scope server. The rates client calls GET {Piggy:Rates:Url}/latest and on failure returns base USD with an empty rates
+    map. Normalize items with the Java double ratios and scale 4 half-up division.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - shouldSaveDataPoint
+  - shouldRewriteDataPointWithinADay
+  - shouldSaveDataPoint
+  - C8_user_token_returns_200_and_missing_token_returns_401
+  acceptance: &id020
+  - C8 missing token returns 401 and a user token returns 200.
+  - C9 server token returns 200, user token returns 403, and demo without a token returns 200.
+  - C10 server token returns 200 and user token returns 403.
+  - A down rates host returns an empty rates map and base USD.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: C8 missing token returns 401 and a user token returns 200.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: src/StatisticsService/StatisticsService.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n\
+    \    <RootNamespace>StatisticsService</RootNamespace>\n    <AssemblyName>StatisticsService</AssemblyName>\n  </PropertyGroup>\n\
+    \  <ItemGroup>\n    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n\n  </ItemGroup>\n</Project>\n\n// FILE:\
+    \ src/StatisticsService/Program.cs\nusing MongoDB.Driver;\nusing PiggyMetrics.Shared.Auth;\nusing PiggyMetrics.Shared.Health;\n\
+    using PiggyMetrics.Shared.Json;\nusing PiggyMetrics.Shared.Mongo;\nusing StatisticsService.Clients;\nusing StatisticsService.Data;\n\
+    using StatisticsService.Services;\n\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers().AddJsonOptions(options\
+    \ =>\n{\n  options.JsonSerializerOptions.PropertyNamingPolicy = PiggyJson.Options.PropertyNamingPolicy;\n  options.JsonSerializerOptions.PropertyNameCaseInsensitive\
+    \ = true;\n  options.JsonSerializerOptions.DefaultIgnoreCondition = PiggyJson.Options.DefaultIgnoreCondition;\n  options.JsonSerializerOptions.UnmappedMemberHandling\
+    \ = PiggyJson.Options.UnmappedMemberHandling;\n  options.JsonSerializerOptions.NumberHandling = PiggyJson.Options.NumberHandling;\n\
+    \  foreach (var converter in PiggyJson.Options.Converters)\n  {\n    options.JsonSerializerOptions.Converters.Add(converter);\n\
+    \  }\n});\nbuilder.Services.AddPiggyHealth();\nbuilder.Services.AddPiggyBearer(builder.Configuration);\nbuilder.Services.AddSingleton(sp\
+    \ =>\n{\n  var configuration = sp.GetRequiredService<IConfiguration>();\n  var connectionString = configuration[\"Piggy:Mongo:ConnectionString\"\
+    ];\n  if (!string.IsNullOrEmpty(connectionString))\n  {\n    PiggyMongo.RegisterConventions();\n    return new MongoClient(connectionString);\n\
+    \  }\n  return PiggyMongo.CreateClient(\n    configuration[\"Piggy:Mongo:Host\"] ?? \"statistics-mongodb\",\n    int.Parse(configuration[\"\
+    Piggy:Mongo:Port\"] ?? \"27017\"),\n    configuration[\"Piggy:Mongo:Username\"] ?? \"user\",\n    configuration[\"MONGODB_PASSWORD\"\
+    ] ?? configuration[\"Piggy:Mongo:Password\"] ?? \"\");\n});\nbuilder.Services.AddSingleton(sp =>\n{\n  var configuration\
+    \ = sp.GetRequiredService<IConfiguration>();\n  return PiggyMongo.Database(sp.GetRequiredService<MongoClient>(), configuration[\"\
+    Piggy:Mongo:Database\"] ?? \"piggymetrics\");\n});\nbuilder.Services.AddSingleton<IDataPointRepository, DataPointRepository>();\n\
+    RatesClientRegistration.AddRatesClient(builder.Services);\nbuilder.Services.AddSingleton<IExchangeRatesService, ExchangeRatesService>();\n\
+    builder.Services.AddSingleton<IStatisticsService, StatisticsApplicationService>();\n\nvar app = builder.Build();\napp.UsePathBase(\"\
+    /statistics\");\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapPiggyHealth();\napp.MapControllers();\napp.Run();\n\
+    \npublic partial class Program { }\n\n// FILE: src/StatisticsService/appsettings.json\n{\n  \"Kestrel\": {\n    \"Endpoints\"\
+    : {\n      \"Http\": {\n        \"Url\": \"http://0.0.0.0:7000\"\n      }\n    }\n  },\n  \"Piggy\": {\n    \"PathBase\"\
+    : \"/statistics\",\n    \"ApplicationName\": \"statistics-service\",\n    \"Config\": {\n      \"Uri\": \"http://config:8888\"\
+    ,\n      \"FailFast\": true,\n      \"Username\": \"user\"\n    },\n    \"Auth\": {\n      \"UserInfoUrl\": \"http://auth-service:5000/uaa/users/current\"\
+    ,\n      \"TokenUrl\": \"http://auth-service:5000/uaa/oauth/token\"\n    },\n    \"Mongo\": {\n      \"Host\": \"statistics-mongodb\"\
+    ,\n      \"Port\": 27017,\n      \"Username\": \"user\",\n      \"Database\": \"piggymetrics\",\n      \"Collection\"\
+    : \"datapoints\"\n    },\n    \"Rates\": {\n      \"Url\": \"https://api.exchangeratesapi.io\"\n    },\n    \"Client\"\
+    : {\n      \"ClientId\": \"statistics-service\",\n      \"Scope\": \"server\",\n      \"GrantType\": \"client_credentials\"\
+    \n    }\n  }\n}\n\n// FILE: src/StatisticsService/Domain/StatisticsDomain.cs\nusing System.Globalization;\nusing MongoDB.Bson.Serialization.Attributes;\n\
+    \nnamespace StatisticsService.Domain;\n\npublic enum Currency\n{\n  USD,\n  EUR,\n  RUB\n}\n\npublic static class CurrencyBase\n\
+    {\n  public static Currency GetBase() => Currency.USD;\n}\n\npublic enum TimePeriod\n{\n  YEAR,\n  QUARTER,\n  MONTH,\n\
+    \  DAY,\n  HOUR\n}\n\npublic static class TimePeriodRatio\n{\n  public static decimal GetBaseRatio(TimePeriod period)\n\
+    \  {\n    return period switch\n    {\n      TimePeriod.YEAR => Decimal.Parse(\"365.24250000000000682121026329696178436279296875\"\
+    , CultureInfo.InvariantCulture),\n      TimePeriod.QUARTER => Decimal.Parse(\"91.310599999999993769961292855441570281982421875\"\
+    , CultureInfo.InvariantCulture),\n      TimePeriod.MONTH => Decimal.Parse(\"30.436800000000001631406121305190026760101318359375\"\
+    , CultureInfo.InvariantCulture),\n      TimePeriod.DAY => 1m,\n      TimePeriod.HOUR => Decimal.Parse(\"0.0415999999999999980904163976447307504713535308837890625\"\
+    , CultureInfo.InvariantCulture),\n      _ => throw new ArgumentOutOfRangeException(nameof(period))\n    };\n  }\n\n  public\
+    \ static TimePeriod GetBase() => TimePeriod.DAY;\n}\n\npublic sealed class Item\n{\n  public string Title { get; set;\
+    \ } = \"\";\n  public decimal Amount { get; set; }\n  public Currency Currency { get; set; }\n  public TimePeriod Period\
+    \ { get; set; }\n}\n\npublic sealed class Saving\n{\n  public decimal Amount { get; set; }\n  public Currency Currency\
+    \ { get; set; }\n  public decimal Interest { get; set; }\n  public bool Deposit { get; set; }\n  public bool Capitalization\
+    \ { get; set; }\n}\n\npublic sealed class Account\n{\n  public List<Item> Incomes { get; set; } = new();\n  public List<Item>\
+    \ Expenses { get; set; } = new();\n  public Saving Saving { get; set; } = new();\n}\n\npublic sealed class ExchangeRatesContainer\n\
+    {\n  public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);\n  public Currency Base { get; set; } =\
+    \ CurrencyBase.GetBase();\n  public Dictionary<string, decimal> Rates { get; set; } = new();\n}\n\npublic enum StatisticMetric\n\
+    {\n  INCOMES_AMOUNT,\n  EXPENSES_AMOUNT,\n  SAVING_AMOUNT\n}\n\npublic sealed class ItemMetric\n{\n  public ItemMetric()\n\
+    \  {\n  }\n\n  public ItemMetric(string title, decimal amount)\n  {\n    Title = title;\n    Amount = amount;\n  }\n\n\
+    \  public string Title { get; set; } = \"\";\n  public decimal Amount { get; set; }\n\n  public override bool Equals(object?\
+    \ obj)\n  {\n    return obj is ItemMetric other && string.Equals(Title, other.Title, StringComparison.OrdinalIgnoreCase);\n\
+    \  }\n\n  public override int GetHashCode()\n  {\n    return Title.GetHashCode(StringComparison.Ordinal);\n  }\n}\n\n\
+    public sealed class DataPointId\n{\n  public DataPointId()\n  {\n  }\n\n  public DataPointId(string account, DateTime\
+    \ date)\n  {\n    Account = account;\n    Date = date;\n  }\n\n  [BsonElement(\"account\")]\n  public string Account {\
+    \ get; set; } = \"\";\n\n  [BsonElement(\"date\")]\n  public DateTime Date { get; set; }\n}\n\npublic sealed class DataPoint\n\
+    {\n  [BsonId]\n  public DataPointId Id { get; set; } = new();\n\n  [BsonElement(\"incomes\")]\n  public HashSet<ItemMetric>\
+    \ Incomes { get; set; } = new();\n\n  [BsonElement(\"expenses\")]\n  public HashSet<ItemMetric> Expenses { get; set; }\
+    \ = new();\n\n  [BsonElement(\"statistics\")]\n  public Dictionary<StatisticMetric, decimal> Statistics { get; set; }\
+    \ = new();\n\n  [BsonElement(\"rates\")]\n  public Dictionary<Currency, decimal> Rates { get; set; } = new();\n}\n\n//\
+    \ FILE: src/StatisticsService/Data/DataPointRepository.cs\nusing MongoDB.Driver;\nusing PiggyMetrics.Shared.Mongo;\nusing\
+    \ StatisticsService.Domain;\n\nnamespace StatisticsService.Data;\n\npublic interface IDataPointRepository\n{\n  void Save(DataPoint\
+    \ point);\n  List<DataPoint> FindByIdAccount(string account);\n}\n\npublic sealed class DataPointRepository : IDataPointRepository\n\
+    {\n  public const string CollectionName = \"datapoints\";\n  private readonly IMongoCollection<DataPoint> _points;\n\n\
+    \  public DataPointRepository(IMongoDatabase database)\n  {\n    PiggyMongo.RegisterConventions();\n    _points = database.GetCollection<DataPoint>(CollectionName);\n\
+    \  }\n\n  public void Save(DataPoint point)\n  {\n    point.Id.Date = DateTime.SpecifyKind(point.Id.Date, DateTimeKind.Utc);\n\
+    \    _points.ReplaceOne(\n      existing => existing.Id.Account == point.Id.Account && existing.Id.Date == point.Id.Date,\n\
+    \      point,\n      new ReplaceOptions { IsUpsert = true });\n  }\n\n  public List<DataPoint> FindByIdAccount(string\
+    \ account)\n  {\n    return _points.Find(point => point.Id.Account == account).ToList();\n  }\n}\n\n// FILE: src/StatisticsService/Clients/ExchangeRatesClient.cs\n\
+    using System.Text.Json;\nusing PiggyMetrics.Shared.Http;\nusing PiggyMetrics.Shared.Json;\nusing StatisticsService.Domain;\n\
+    \nnamespace StatisticsService.Clients;\n\npublic interface IExchangeRatesClient\n{\n  ExchangeRatesContainer GetRates(Currency\
+    \ baseCurrency);\n}\n\npublic sealed class ExchangeRatesClient : IExchangeRatesClient\n{\n  private readonly IHttpClientFactory\
+    \ _clients;\n  private readonly string _ratesUrl;\n\n  public ExchangeRatesClient(IHttpClientFactory clients, IConfiguration\
+    \ configuration)\n  {\n    _clients = clients;\n    _ratesUrl = configuration[\"Piggy:Rates:Url\"] ?? \"https://api.exchangeratesapi.io\"\
+    ;\n  }\n\n  public ExchangeRatesContainer GetRates(Currency baseCurrency)\n  {\n    try\n    {\n      var client = _clients.CreateClient(\"\
+    rates-client\");\n      var url = _ratesUrl.TrimEnd('/') + \"/latest?base=\" + baseCurrency;\n      using var response\
+    \ = client.Send(new HttpRequestMessage(HttpMethod.Get, url));\n      if (!response.IsSuccessStatusCode)\n      {\n   \
+    \     return ExchangeRatesClientFallback.Create();\n      }\n      using var stream = response.Content.ReadAsStream();\n\
+    \      var payload = JsonSerializer.Deserialize<RatesWire>(stream, PiggyJson.Options);\n      return new ExchangeRatesContainer\n\
+    \      {\n        Date = DateOnly.FromDateTime(DateTime.Now),\n        Base = payload?.Base ?? CurrencyBase.GetBase(),\n\
+    \        Rates = payload?.Rates ?? new Dictionary<string, decimal>()\n      };\n    }\n    catch (Exception)\n    {\n\
+    \      return ExchangeRatesClientFallback.Create();\n    }\n  }\n}\n\npublic static class ExchangeRatesClientFallback\n\
+    {\n  public static ExchangeRatesContainer Create()\n  {\n    return new ExchangeRatesContainer\n    {\n      Date = DateOnly.FromDateTime(DateTime.Now),\n\
+    \      Base = CurrencyBase.GetBase(),\n      Rates = new Dictionary<string, decimal>()\n    };\n  }\n}\n\npublic sealed\
+    \ class RatesWire\n{\n  public Currency Base { get; set; }\n  public Dictionary<string, decimal> Rates { get; set; } =\
+    \ new();\n}\n\npublic static class RatesClientRegistration\n{\n  public static void AddRatesClient(IServiceCollection\
+    \ services)\n  {\n    TypedClientBase.AddEdgeClient(services, \"rates-client\");\n    services.AddSingleton<IExchangeRatesClient,\
+    \ ExchangeRatesClient>();\n  }\n}\n\n// FILE: src/StatisticsService/Services/StatisticsServices.cs\nusing StatisticsService.Clients;\n\
+    using StatisticsService.Data;\nusing StatisticsService.Domain;\n\nnamespace StatisticsService.Services;\n\npublic interface\
+    \ IExchangeRatesService\n{\n  Dictionary<Currency, decimal> GetCurrentRates();\n  decimal Convert(Currency from, Currency\
+    \ to, decimal? amount);\n}\n\npublic sealed class ExchangeRatesService : IExchangeRatesService\n{\n  private readonly\
+    \ IExchangeRatesClient _client;\n  private ExchangeRatesContainer? _container;\n\n  public ExchangeRatesService(IExchangeRatesClient\
+    \ client)\n  {\n    _client = client;\n  }\n\n  public Dictionary<Currency, decimal> GetCurrentRates()\n  {\n    if (_container\
+    \ == null || _container.Date != DateOnly.FromDateTime(DateTime.Now))\n    {\n      _container = _client.GetRates(CurrencyBase.GetBase());\n\
+    \    }\n    return new Dictionary<Currency, decimal>\n    {\n      [Currency.EUR] = _container.Rates[Currency.EUR.ToString()],\n\
+    \      [Currency.RUB] = _container.Rates[Currency.RUB.ToString()],\n      [Currency.USD] = 1m\n    };\n  }\n\n  public\
+    \ decimal Convert(Currency from, Currency to, decimal? amount)\n  {\n    if (amount == null)\n    {\n      throw new ArgumentException(\"\
+    amount\");\n    }\n    var rates = GetCurrentRates();\n    var ratio = DecimalMath.Divide(rates[to], rates[from], 4);\n\
+    \    return amount.Value * ratio;\n  }\n}\n\npublic interface IStatisticsService\n{\n  List<DataPoint> FindByAccountName(string?\
+    \ accountName);\n  DataPoint Save(string accountName, Account account);\n}\n\npublic sealed class StatisticsApplicationService\
+    \ : IStatisticsService\n{\n  private readonly IDataPointRepository _repository;\n  private readonly IExchangeRatesService\
+    \ _rates;\n\n  public StatisticsApplicationService(IDataPointRepository repository, IExchangeRatesService rates)\n  {\n\
+    \    _repository = repository;\n    _rates = rates;\n  }\n\n  public List<DataPoint> FindByAccountName(string? accountName)\n\
+    \  {\n    if (string.IsNullOrEmpty(accountName))\n    {\n      throw new ArgumentException(\"accountName\");\n    }\n\
+    \    return _repository.FindByIdAccount(accountName);\n  }\n\n  public DataPoint Save(string accountName, Account account)\n\
+    \  {\n    var instant = DateOnly.FromDateTime(DateTime.Now).ToDateTime(TimeOnly.MinValue);\n    var point = new DataPoint\n\
+    \    {\n      Id = new DataPointId(accountName, DateTime.SpecifyKind(instant, DateTimeKind.Local)),\n      Incomes = account.Incomes.Select(CreateItemMetric).ToHashSet(),\n\
+    \      Expenses = account.Expenses.Select(CreateItemMetric).ToHashSet(),\n      Rates = _rates.GetCurrentRates()\n   \
+    \ };\n    point.Statistics = CreateStatisticMetrics(point.Incomes, point.Expenses, account.Saving);\n    _repository.Save(point);\n\
+    \    return point;\n  }\n\n  private Dictionary<StatisticMetric, decimal> CreateStatisticMetrics(HashSet<ItemMetric> incomes,\
+    \ HashSet<ItemMetric> expenses, Saving saving)\n  {\n    var savingAmount = _rates.Convert(saving.Currency, CurrencyBase.GetBase(),\
+    \ saving.Amount);\n    var expensesAmount = expenses.Select(item => item.Amount).Aggregate(0m, (sum, amount) => sum +\
+    \ amount);\n    var incomesAmount = incomes.Select(item => item.Amount).Aggregate(0m, (sum, amount) => sum + amount);\n\
+    \    return new Dictionary<StatisticMetric, decimal>\n    {\n      [StatisticMetric.EXPENSES_AMOUNT] = expensesAmount,\n\
+    \      [StatisticMetric.INCOMES_AMOUNT] = incomesAmount,\n      [StatisticMetric.SAVING_AMOUNT] = savingAmount\n    };\n\
+    \  }\n\n  private ItemMetric CreateItemMetric(Item item)\n  {\n    var converted = _rates.Convert(item.Currency, CurrencyBase.GetBase(),\
+    \ item.Amount);\n    var amount = DecimalMath.Divide(converted, TimePeriodRatio.GetBaseRatio(item.Period), 4);\n    return\
+    \ new ItemMetric(item.Title, amount);\n  }\n}\n\npublic static class DecimalMath\n{\n  public static decimal Divide(decimal\
+    \ amount, decimal divisor, int scale)\n  {\n    return Math.Round(amount / divisor, scale, MidpointRounding.AwayFromZero);\n\
+    \  }\n}\n\n// FILE: src/StatisticsService/Controllers/StatisticsController.cs\nusing Microsoft.AspNetCore.Authorization;\n\
+    using Microsoft.AspNetCore.Mvc;\nusing StatisticsService.Domain;\nusing StatisticsService.Services;\n\nnamespace StatisticsService.Controllers;\n\
+    \n[ApiController]\npublic sealed class StatisticsController : ControllerBase\n{\n  private readonly IStatisticsService\
+    \ _statistics;\n\n  public StatisticsController(IStatisticsService statistics)\n  {\n    _statistics = statistics;\n \
+    \ }\n\n  [Authorize(Policy = \"user\")]\n  [HttpGet(\"current\")]\n  public IActionResult GetCurrentAccountStatistics()\n\
+    \  {\n    return Ok(_statistics.FindByAccountName(User.Identity?.Name));\n  }\n\n  [HttpGet(\"{accountName}\")]\n  public\
+    \ IActionResult GetStatisticsByAccountName(string accountName)\n  {\n    var scope = User.FindFirst(\"scope\")?.Value\
+    \ ?? \"\";\n    var server = scope.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(\"server\");\n    if (accountName\
+    \ == \"demo\" || server)\n    {\n      return Ok(_statistics.FindByAccountName(accountName));\n    }\n    if (User.Identity?.IsAuthenticated\
+    \ != true)\n    {\n      return Unauthorized();\n    }\n    return Forbid();\n  }\n\n  [Authorize(Policy = \"server\"\
+    )]\n  [HttpPut(\"{accountName}\")]\n  public IActionResult SaveAccountStatistics(string accountName, [FromBody] Account?\
+    \ account)\n  {\n    if (account == null || account.Saving == null || account.Incomes == null || account.Expenses == null)\n\
+    \    {\n      return BadRequest();\n    }\n    if (account.Incomes.Any(item => item.Title.Length < 1 || item.Title.Length\
+    \ > 20))\n    {\n      return BadRequest();\n    }\n    _statistics.Save(accountName, account);\n    return Ok();\n  }\n\
+    }\n"
+  companion_required: false
+  invariants:
+  - Collection name is datapoints.
+  - Rates URL default is https://api.exchangeratesapi.io.
+  - Currency base is USD.
+  - Time period base is DAY.
+  edge_cases:
+  - demo without a token is 200.
+  - Two saves on the same account and instant leave one document.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id020
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'
+- id: STEP-011
+  title: Port the six StatisticsService test classes
+  depends_on:
+  - STEP-010
+  requirement_refs:
+  - REQ-017
+  decision_refs:
+  - D-010
+  - D-011
+  evidence_refs:
+  - R-014
+  files: &id021
+  - tests/StatisticsService.Tests/StatisticsService.Tests.csproj
+  - tests/StatisticsService.Tests/StatisticsTests.cs
+  exact_files: *id021
+  existing_implementation: README.md:1 records Sample .NET Migration and the tree has no csproj. Cited Java sources are external
+    evidence, absent from this checkout.
+  creates_file: true
+  change: Add StatisticsService.Tests with contextLoads, shouldRetrieveExchangeRates, shouldRetrieveExchangeRatesForSpecifiedCurrency,
+    shouldGetStatisticsByAccountName, shouldGetCurrentAccountStatistics, shouldSaveAccountStatistics, shouldSaveDataPoint,
+    shouldRewriteDataPointWithinADay, shouldReturnCurrentRatesWhenContainerIsEmptySoFar, shouldNotRequestRatesWhenTodaysContainerAlreadyExists,
+    shouldConvertCurrency, shouldFailToConvertWhenAmountIsNull, shouldFindDataPointListByAccountName, shouldFailToFindDataPointWhenAccountNameIsNull,
+    shouldFailToFindDataPointWhenAccountNameIsEmpty, and the service shouldSaveDataPoint. Keep the Java expected amounts 298.9802,
+    17.8861, 1250, 11.6361, and 6.25.
+  do_not:
+  - Do not edit README.md, AGENTS.md, .harnessmatters, or .rhm/agent-packs.
+  - Do not add AccountService business endpoints, NotificationService mail jobs, or Gateway route tables in this package.
+  - Do not switch the target framework away from net10.0.
+  compatibility: Mongo field names stay the Java document names. HTTP paths stay the source paths.
+  error_handling: Missing bearer yields 401. Authenticated caller without the server scope yields 403. Down rates callee returns
+    the fallback container.
+  tests:
+  - shouldConvertCurrency
+  - shouldSaveDataPoint
+  - shouldRewriteDataPointWithinADay
+  - C9_server_token_returns_200_user_token_returns_403_demo_without_token_returns_200
+  acceptance: &id022
+  - The sixteen ported tests pass.
+  - C8, C9, and C10 pass.
+  - shouldReturnFallbackWhenCalleeIsDown passes.
+  rollback: Delete the exact_files created by this step and remove their Project entries from PiggyMetrics.sln.
+  why: The intake spec maps this behavior onto the empty PiggyMetricsDotNet tree and the cited Java sources.
+  expected_result: The sixteen ported tests pass.
+  exact_commands:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  exact_snippet: "// FILE: tests/StatisticsService.Tests/StatisticsService.Tests.csproj\n<Project Sdk=\"Microsoft.NET.Sdk\"\
+    >\n  <PropertyGroup>\n    <RootNamespace>StatisticsService.Tests</RootNamespace>\n    <AssemblyName>StatisticsService.Tests</AssemblyName>\n\
+    \    <IsPackable>false</IsPackable>\n  </PropertyGroup>\n  <ItemGroup>\n    <FrameworkReference Include=\"Microsoft.AspNetCore.App\"\
+    \ />\n    <PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"18.11.0\" />\n    <PackageReference Include=\"\
+    xunit\" Version=\"2.9.3\" />\n    <PackageReference Include=\"xunit.runner.visualstudio\" Version=\"2.8.2\" />\n    <PackageReference\
+    \ Include=\"Microsoft.AspNetCore.Mvc.Testing\" Version=\"10.0.13\" />\n    <PackageReference Include=\"Mongo2Go\" Version=\"\
+    3.1.3\" />\n  </ItemGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"..\\..\\src\\StatisticsService\\StatisticsService.csproj\"\
+    \ />\n  </ItemGroup>\n</Project>\n\n// FILE: tests/StatisticsService.Tests/StatisticsTests.cs\nusing System.Net;\nusing\
+    \ System.Net.Http.Headers;\nusing System.Security.Claims;\nusing System.Text;\nusing System.Text.Json;\nusing Microsoft.AspNetCore.Builder;\n\
+    using Microsoft.AspNetCore.Hosting;\nusing Microsoft.AspNetCore.Http;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.AspNetCore.Mvc.Testing;\n\
+    using Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\nusing Mongo2Go;\nusing MongoDB.Driver;\n\
+    using StatisticsService.Clients;\nusing StatisticsService.Data;\nusing StatisticsService.Domain;\nusing StatisticsService.Services;\n\
+    using PiggyMetrics.Shared.Mongo;\n\nnamespace StatisticsService.Tests;\n\npublic sealed class StatisticsApplicationFactory\
+    \ : WebApplicationFactory<Program>\n{\n  private readonly MongoDbRunner _runner = MongoDbRunner.Start();\n\n  protected\
+    \ override void ConfigureWebHost(IWebHostBuilder builder)\n  {\n    builder.UseSetting(\"Piggy:Mongo:ConnectionString\"\
+    , _runner.ConnectionString);\n    builder.UseSetting(\"Piggy:Mongo:Database\", \"piggymetrics\");\n    builder.UseSetting(\"\
+    Piggy:Auth:UserInfoUrl\", \"http://127.0.0.1:9/uaa/users/current\");\n  }\n\n  protected override void Dispose(bool disposing)\n\
+    \  {\n    base.Dispose(disposing);\n    _runner.Dispose();\n  }\n}\n\npublic class StatisticsServiceApplicationTests :\
+    \ IClassFixture<StatisticsApplicationFactory>\n{\n  private readonly StatisticsApplicationFactory _factory;\n\n  public\
+    \ StatisticsServiceApplicationTests(StatisticsApplicationFactory factory)\n  {\n    _factory = factory;\n  }\n\n  [Fact]\n\
+    \  public void contextLoads()\n  {\n    using var client = _factory.CreateClient();\n    Assert.NotNull(client);\n  }\n\
+    }\n\npublic class ExchangeRatesClientTest\n{\n  [Fact]\n  public void shouldRetrieveExchangeRates()\n  {\n    var container\
+    \ = Client().GetRates(CurrencyBase.GetBase());\n    Assert.Equal(DateOnly.FromDateTime(DateTime.Now), container.Date);\n\
+    \    Assert.Equal(CurrencyBase.GetBase(), container.Base);\n    Assert.NotNull(container.Rates);\n    Assert.True(container.Rates.ContainsKey(Currency.USD.ToString()));\n\
+    \    Assert.True(container.Rates.ContainsKey(Currency.EUR.ToString()));\n    Assert.True(container.Rates.ContainsKey(Currency.RUB.ToString()));\n\
+    \  }\n\n  [Fact]\n  public void shouldRetrieveExchangeRatesForSpecifiedCurrency()\n  {\n    var requested = Currency.EUR;\n\
+    \    var container = Client().GetRates(CurrencyBase.GetBase());\n    Assert.Equal(DateOnly.FromDateTime(DateTime.Now),\
+    \ container.Date);\n    Assert.Equal(CurrencyBase.GetBase(), container.Base);\n    Assert.NotNull(container.Rates);\n\
+    \    Assert.True(container.Rates.ContainsKey(requested.ToString()));\n  }\n\n  [Fact]\n  public void shouldReturnFallbackWhenCalleeIsDown()\n\
+    \  {\n    var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>\n    {\n\
+    \      [\"Piggy:Rates:Url\"] = \"http://127.0.0.1:9\"\n    }).Build();\n    var services = new ServiceCollection();\n\
+    \    services.AddSingleton<IConfiguration>(configuration);\n    RatesClientRegistration.AddRatesClient(services);\n  \
+    \  var client = services.BuildServiceProvider().GetRequiredService<IExchangeRatesClient>();\n    var container = client.GetRates(Currency.USD);\n\
+    \    Assert.Equal(Currency.USD, container.Base);\n    Assert.Empty(container.Rates);\n    Assert.Equal(DateOnly.FromDateTime(DateTime.Now),\
+    \ container.Date);\n  }\n\n  private static IExchangeRatesClient Client()\n  {\n    var configuration = new ConfigurationBuilder().AddInMemoryCollection(new\
+    \ Dictionary<string, string?>\n    {\n      [\"Piggy:Rates:Url\"] = \"https://api.exchangeratesapi.io\"\n    }).Build();\n\
+    \    var services = new ServiceCollection();\n    services.AddSingleton<IConfiguration>(configuration);\n    RatesClientRegistration.AddRatesClient(services);\n\
+    \    return services.BuildServiceProvider().GetRequiredService<IExchangeRatesClient>();\n  }\n}\n\npublic class StatisticsControllerTest\n\
+    {\n  private sealed class FakeStatistics : IStatisticsService\n  {\n    public List<DataPoint> Rows { get; } = new();\n\
+    \    public int Saves { get; private set; }\n    public string? SavedName { get; private set; }\n\n    public List<DataPoint>\
+    \ FindByAccountName(string? accountName) => Rows;\n\n    public DataPoint Save(string accountName, Account account)\n\
+    \    {\n      Saves += 1;\n      SavedName = accountName;\n      return new DataPoint();\n    }\n  }\n\n  [Fact]\n  public\
+    \ void shouldGetStatisticsByAccountName()\n  {\n    var point = new DataPoint { Id = new DataPointId(\"test\", DateTime.UtcNow)\
+    \ };\n    var fake = new FakeStatistics();\n    fake.Rows.Add(point);\n    var controller = new StatisticsService.Controllers.StatisticsController(fake);\n\
+    \    var result = Assert.IsType<OkObjectResult>(controller.GetStatisticsByAccountName(\"test\"));\n    var rows = Assert.IsAssignableFrom<List<DataPoint>>(result.Value);\n\
+    \    Assert.Equal(\"test\", rows[0].Id.Account);\n  }\n\n  [Fact]\n  public void shouldGetCurrentAccountStatistics()\n\
+    \  {\n    var point = new DataPoint { Id = new DataPointId(\"test\", DateTime.UtcNow) };\n    var fake = new FakeStatistics();\n\
+    \    fake.Rows.Add(point);\n    var controller = new StatisticsService.Controllers.StatisticsController(fake);\n    controller.ControllerContext\
+    \ = new ControllerContext\n    {\n      HttpContext = new DefaultHttpContext\n      {\n        User = new ClaimsPrincipal(new\
+    \ ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, \"test\") }, \"test\"))\n      }\n    };\n    var result = Assert.IsType<OkObjectResult>(controller.GetCurrentAccountStatistics());\n\
+    \    var rows = Assert.IsAssignableFrom<List<DataPoint>>(result.Value);\n    Assert.Equal(\"test\", rows[0].Id.Account);\n\
+    \  }\n\n  [Fact]\n  public void shouldSaveAccountStatistics()\n  {\n    var account = new Account\n    {\n      Saving\
+    \ = new Saving { Amount = 1500m, Currency = Currency.USD, Interest = 3.32m, Deposit = true, Capitalization = false },\n\
+    \      Expenses = new List<Item> { new() { Title = \"Grocery\", Amount = 10m, Currency = Currency.USD, Period = TimePeriod.DAY\
+    \ } },\n      Incomes = new List<Item> { new() { Title = \"Salary\", Amount = 9100m, Currency = Currency.USD, Period =\
+    \ TimePeriod.MONTH } }\n    };\n    var fake = new FakeStatistics();\n    var controller = new StatisticsService.Controllers.StatisticsController(fake);\n\
+    \    var result = controller.SaveAccountStatistics(\"test\", account);\n    Assert.IsType<OkResult>(result);\n    Assert.Equal(1,\
+    \ fake.Saves);\n  }\n}\n\npublic class DataPointRepositoryTest : IDisposable\n{\n  private readonly MongoDbRunner _runner\
+    \ = MongoDbRunner.Start();\n\n  [Fact]\n  public void shouldSaveDataPoint()\n  {\n    var repository = Repo();\n    var\
+    \ pointId = new DataPointId(\"test-account\", DateTime.SpecifyKind(DateTime.UnixEpoch, DateTimeKind.Utc));\n    var point\
+    \ = new DataPoint\n    {\n      Id = pointId,\n      Incomes = new HashSet<ItemMetric> { new(\"salary\", 20000m) },\n\
+    \      Expenses = new HashSet<ItemMetric> { new(\"grocery\", 1000m), new(\"vacation\", 2000m) },\n      Statistics = new\
+    \ Dictionary<StatisticMetric, decimal>\n      {\n        [StatisticMetric.SAVING_AMOUNT] = 400000m,\n        [StatisticMetric.INCOMES_AMOUNT]\
+    \ = 20000m,\n        [StatisticMetric.EXPENSES_AMOUNT] = 3000m\n      }\n    };\n    repository.Save(point);\n    var\
+    \ points = repository.FindByIdAccount(pointId.Account);\n    Assert.Single(points);\n    Assert.Equal(pointId.Date, points[0].Id.Date);\n\
+    \    Assert.Equal(point.Statistics.Count, points[0].Statistics.Count);\n    Assert.Equal(point.Incomes.Count, points[0].Incomes.Count);\n\
+    \    Assert.Equal(point.Expenses.Count, points[0].Expenses.Count);\n  }\n\n  [Fact]\n  public void shouldRewriteDataPointWithinADay()\n\
+    \  {\n    var repository = Repo();\n    var pointId = new DataPointId(\"test-account\", DateTime.SpecifyKind(DateTime.UnixEpoch,\
+    \ DateTimeKind.Utc));\n    repository.Save(new DataPoint\n    {\n      Id = pointId,\n      Statistics = new Dictionary<StatisticMetric,\
+    \ decimal> { [StatisticMetric.SAVING_AMOUNT] = 100m }\n    });\n    repository.Save(new DataPoint\n    {\n      Id = new\
+    \ DataPointId(pointId.Account, pointId.Date),\n      Statistics = new Dictionary<StatisticMetric, decimal> { [StatisticMetric.SAVING_AMOUNT]\
+    \ = 200m }\n    });\n    var points = repository.FindByIdAccount(pointId.Account);\n    Assert.Single(points);\n    Assert.Equal(200m,\
+    \ points[0].Statistics[StatisticMetric.SAVING_AMOUNT]);\n  }\n\n  private DataPointRepository Repo()\n  {\n    PiggyMongo.RegisterConventions();\n\
+    \    var database = new MongoClient(_runner.ConnectionString).GetDatabase(\"piggymetrics\");\n    return new DataPointRepository(database);\n\
+    \  }\n\n  public void Dispose() => _runner.Dispose();\n}\n\npublic sealed class FakeRatesClient : IExchangeRatesClient\n\
+    {\n  public int Calls { get; private set; }\n  public ExchangeRatesContainer Container { get; } = new()\n  {\n    Rates\
+    \ = new Dictionary<string, decimal>\n    {\n      [Currency.EUR.ToString()] = 0.8m,\n      [Currency.RUB.ToString()] =\
+    \ 80m\n    }\n  };\n\n  public ExchangeRatesContainer GetRates(Currency baseCurrency)\n  {\n    Calls += 1;\n    return\
+    \ Container;\n  }\n}\n\npublic class ExchangeRatesServiceImplTest\n{\n  [Fact]\n  public void shouldReturnCurrentRatesWhenContainerIsEmptySoFar()\n\
+    \  {\n    var client = new FakeRatesClient();\n    var service = new ExchangeRatesService(client);\n    var result = service.GetCurrentRates();\n\
+    \    Assert.Equal(1, client.Calls);\n    Assert.Equal(client.Container.Rates[Currency.EUR.ToString()], result[Currency.EUR]);\n\
+    \    Assert.Equal(client.Container.Rates[Currency.RUB.ToString()], result[Currency.RUB]);\n    Assert.Equal(1m, result[Currency.USD]);\n\
+    \  }\n\n  [Fact]\n  public void shouldNotRequestRatesWhenTodaysContainerAlreadyExists()\n  {\n    var client = new FakeRatesClient();\n\
+    \    var service = new ExchangeRatesService(client);\n    service.GetCurrentRates();\n    service.GetCurrentRates();\n\
+    \    Assert.Equal(1, client.Calls);\n  }\n\n  [Fact]\n  public void shouldConvertCurrency()\n  {\n    var service = new\
+    \ ExchangeRatesService(new FakeRatesClient());\n    var result = service.Convert(Currency.RUB, Currency.USD, 100m);\n\
+    \    Assert.Equal(0, 1.25m.CompareTo(result));\n  }\n\n  [Fact]\n  public void shouldFailToConvertWhenAmountIsNull()\n\
+    \  {\n    var service = new ExchangeRatesService(new FakeRatesClient());\n    Assert.Throws<ArgumentException>(() => service.Convert(Currency.EUR,\
+    \ Currency.RUB, null));\n  }\n}\n\npublic sealed class ScriptedRates : IExchangeRatesService\n{\n  private static readonly\
+    \ Dictionary<Currency, decimal> Rates = new()\n  {\n    [Currency.EUR] = 0.8m,\n    [Currency.RUB] = 80m,\n    [Currency.USD]\
+    \ = 1m\n  };\n\n  public int CurrentCalls { get; private set; }\n\n  public Dictionary<Currency, decimal> GetCurrentRates()\n\
+    \  {\n    CurrentCalls += 1;\n    return new Dictionary<Currency, decimal>(Rates);\n  }\n\n  public decimal Convert(Currency\
+    \ from, Currency to, decimal? amount)\n  {\n    return DecimalMath.Divide(amount!.Value, Rates[from], 4);\n  }\n}\n\n\
+    public sealed class MemoryPoints : IDataPointRepository\n{\n  public DataPoint? Saved { get; private set; }\n  public\
+    \ int Saves { get; private set; }\n  public List<DataPoint> Rows { get; } = new();\n\n  public void Save(DataPoint point)\n\
+    \  {\n    Saves += 1;\n    Saved = point;\n  }\n\n  public List<DataPoint> FindByIdAccount(string account) => Rows;\n\
+    }\n\npublic class StatisticsServiceImplTest\n{\n  [Fact]\n  public void shouldFindDataPointListByAccountName()\n  {\n\
+    \    var repository = new MemoryPoints();\n    var row = new DataPoint();\n    repository.Rows.Add(row);\n    var service\
+    \ = new StatisticsApplicationService(repository, new ScriptedRates());\n    var result = service.FindByAccountName(\"\
+    test\");\n    Assert.Equal(repository.Rows, result);\n  }\n\n  [Fact]\n  public void shouldFailToFindDataPointWhenAccountNameIsNull()\n\
+    \  {\n    var service = new StatisticsApplicationService(new MemoryPoints(), new ScriptedRates());\n    Assert.Throws<ArgumentException>(()\
+    \ => service.FindByAccountName(null));\n  }\n\n  [Fact]\n  public void shouldFailToFindDataPointWhenAccountNameIsEmpty()\n\
+    \  {\n    var service = new StatisticsApplicationService(new MemoryPoints(), new ScriptedRates());\n    Assert.Throws<ArgumentException>(()\
+    \ => service.FindByAccountName(\"\"));\n  }\n\n  [Fact]\n  public void shouldSaveDataPoint()\n  {\n    var repository\
+    \ = new MemoryPoints();\n    var rates = new ScriptedRates();\n    var service = new StatisticsApplicationService(repository,\
+    \ rates);\n    var account = new Account\n    {\n      Incomes = new List<Item> { new() { Title = \"Salary\", Amount =\
+    \ 9100m, Currency = Currency.USD, Period = TimePeriod.MONTH } },\n      Expenses = new List<Item>\n      {\n        new()\
+    \ { Title = \"Grocery\", Amount = 500m, Currency = Currency.RUB, Period = TimePeriod.DAY },\n        new() { Title = \"\
+    Vacation\", Amount = 3400m, Currency = Currency.EUR, Period = TimePeriod.YEAR }\n      },\n      Saving = new Saving {\
+    \ Amount = 1000m, Currency = Currency.EUR, Interest = 3.2m, Deposit = true, Capitalization = false }\n    };\n    var\
+    \ dataPoint = service.Save(\"test\", account);\n    Assert.Equal(\"test\", dataPoint.Id.Account);\n    var expectedDate\
+    \ = DateTime.SpecifyKind(DateOnly.FromDateTime(DateTime.Now).ToDateTime(TimeOnly.MinValue), DateTimeKind.Local);\n   \
+    \ Assert.Equal(expectedDate, dataPoint.Id.Date);\n    Assert.Equal(0, 17.8861m.CompareTo(dataPoint.Statistics[StatisticMetric.EXPENSES_AMOUNT]));\n\
+    \    Assert.Equal(0, 298.9802m.CompareTo(dataPoint.Statistics[StatisticMetric.INCOMES_AMOUNT]));\n    Assert.Equal(0,\
+    \ 1250m.CompareTo(dataPoint.Statistics[StatisticMetric.SAVING_AMOUNT]));\n    Assert.Equal(0, 298.9802m.CompareTo(dataPoint.Incomes.Single(item\
+    \ => item.Title == \"Salary\").Amount));\n    Assert.Equal(0, 11.6361m.CompareTo(dataPoint.Expenses.Single(item => item.Title\
+    \ == \"Vacation\").Amount));\n    Assert.Equal(0, 6.25m.CompareTo(dataPoint.Expenses.Single(item => item.Title == \"Grocery\"\
+    ).Amount));\n    Assert.Equal(rates.GetCurrentRates(), dataPoint.Rates);\n    Assert.Equal(1, repository.Saves);\n  }\n\
+    }\n\npublic class StatisticsContractTests : IAsyncLifetime\n{\n  private WebApplication? _auth;\n  private WebApplication?\
+    \ _rates;\n  private StatisticsApplicationFactory? _factory;\n  private HttpClient? _client;\n\n  public async Task InitializeAsync()\n\
+    \  {\n    var ratesBuilder = WebApplication.CreateBuilder();\n    ratesBuilder.WebHost.UseUrls(\"http://127.0.0.1:0\"\
+    );\n    _rates = ratesBuilder.Build();\n    _rates.MapGet(\"/latest\", () => Results.Text(\"{\\\"base\\\":\\\"USD\\\"\
+    ,\\\"rates\\\":{\\\"EUR\\\":0.8,\\\"RUB\\\":80,\\\"USD\\\":1}}\", \"application/json\"));\n    await _rates.StartAsync();\n\
+    \    var ratesAddress = _rates.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()\n      .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()!.Addresses.First();\n\
+    \n    var authBuilder = WebApplication.CreateBuilder();\n    authBuilder.WebHost.UseUrls(\"http://127.0.0.1:0\");\n  \
+    \  _auth = authBuilder.Build();\n    _auth.MapGet(\"/uaa/users/current\", (HttpRequest request) =>\n    {\n      var header\
+    \ = request.Headers.Authorization.ToString();\n      if (header == \"Bearer server-token\")\n      {\n        return Results.Text(\"\
+    {\\\"name\\\":\\\"statistics-service\\\",\\\"scope\\\":\\\"server\\\"}\", \"application/json\");\n      }\n      if (header\
+    \ == \"Bearer user-token\")\n      {\n        return Results.Text(\"{\\\"name\\\":\\\"ada\\\",\\\"scope\\\":\\\"ui\\\"\
+    }\", \"application/json\");\n      }\n      return Results.Text(\"{\\\"error\\\":\\\"invalid_token\\\"}\", \"application/json\"\
+    , Encoding.UTF8, StatusCodes.Status401Unauthorized);\n    });\n    await _auth.StartAsync();\n    var address = _auth.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()\n\
+    \      .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()!.Addresses.First();\n   \
+    \ _factory = new StatisticsContractFactory(address, ratesAddress);\n    _client = _factory.CreateClient();\n  }\n\n  [Fact]\n\
+    \  public async Task C8_user_token_returns_200_and_missing_token_returns_401()\n  {\n    var missing = await _client!.GetAsync(\"\
+    /statistics/current\");\n    Assert.Equal(HttpStatusCode.Unauthorized, missing.StatusCode);\n    var request = new HttpRequestMessage(HttpMethod.Get,\
+    \ \"/statistics/current\");\n    request.Headers.Authorization = new AuthenticationHeaderValue(\"Bearer\", \"user-token\"\
+    );\n    var response = await _client.SendAsync(request);\n    Assert.Equal(HttpStatusCode.OK, response.StatusCode);\n\
+    \    using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());\n    Assert.Equal(JsonValueKind.Array,\
+    \ document.RootElement.ValueKind);\n  }\n\n  [Fact]\n  public async Task C9_server_token_returns_200_user_token_returns_403_demo_without_token_returns_200()\n\
+    \  {\n    var demo = await _client!.GetAsync(\"/statistics/demo\");\n    Assert.Equal(HttpStatusCode.OK, demo.StatusCode);\n\
+    \    var user = new HttpRequestMessage(HttpMethod.Get, \"/statistics/ada\");\n    user.Headers.Authorization = new AuthenticationHeaderValue(\"\
+    Bearer\", \"user-token\");\n    var denied = await _client.SendAsync(user);\n    Assert.Equal(HttpStatusCode.Forbidden,\
+    \ denied.StatusCode);\n    var server = new HttpRequestMessage(HttpMethod.Get, \"/statistics/ada\");\n    server.Headers.Authorization\
+    \ = new AuthenticationHeaderValue(\"Bearer\", \"server-token\");\n    var allowed = await _client.SendAsync(server);\n\
+    \    Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);\n  }\n\n  [Fact]\n  public async Task C10_server_token_returns_200_and_user_token_returns_403()\n\
+    \  {\n    var body = new StringContent(\"{\\\"incomes\\\":[{\\\"title\\\":\\\"Salary\\\",\\\"amount\\\":1,\\\"currency\\\
+    \":\\\"USD\\\",\\\"period\\\":\\\"MONTH\\\"}],\\\"expenses\\\":[{\\\"title\\\":\\\"Grocery\\\",\\\"amount\\\":1,\\\"currency\\\
+    \":\\\"USD\\\",\\\"period\\\":\\\"DAY\\\"}],\\\"saving\\\":{\\\"amount\\\":1,\\\"currency\\\":\\\"USD\\\",\\\"interest\\\
+    \":1,\\\"deposit\\\":true,\\\"capitalization\\\":false}}\", Encoding.UTF8, \"application/json\");\n    var user = new\
+    \ HttpRequestMessage(HttpMethod.Put, \"/statistics/ada\") { Content = body };\n    user.Headers.Authorization = new AuthenticationHeaderValue(\"\
+    Bearer\", \"user-token\");\n    var denied = await _client!.SendAsync(user);\n    Assert.Equal(HttpStatusCode.Forbidden,\
+    \ denied.StatusCode);\n    var serverBody = new StringContent(\"{\\\"incomes\\\":[{\\\"title\\\":\\\"Salary\\\",\\\"amount\\\
+    \":1,\\\"currency\\\":\\\"USD\\\",\\\"period\\\":\\\"MONTH\\\"}],\\\"expenses\\\":[{\\\"title\\\":\\\"Grocery\\\",\\\"\
+    amount\\\":1,\\\"currency\\\":\\\"USD\\\",\\\"period\\\":\\\"DAY\\\"}],\\\"saving\\\":{\\\"amount\\\":1,\\\"currency\\\
+    \":\\\"USD\\\",\\\"interest\\\":1,\\\"deposit\\\":true,\\\"capitalization\\\":false}}\", Encoding.UTF8, \"application/json\"\
+    );\n    var server = new HttpRequestMessage(HttpMethod.Put, \"/statistics/ada\") { Content = serverBody };\n    server.Headers.Authorization\
+    \ = new AuthenticationHeaderValue(\"Bearer\", \"server-token\");\n    var allowed = await _client.SendAsync(server);\n\
+    \    Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);\n  }\n\n  public async Task DisposeAsync()\n  {\n    _client?.Dispose();\n\
+    \    if (_factory != null)\n    {\n      await _factory.DisposeAsync();\n    }\n    if (_auth != null)\n    {\n      await\
+    \ _auth.StopAsync();\n    }\n    if (_rates != null)\n    {\n      await _rates.StopAsync();\n    }\n  }\n\n  private\
+    \ sealed class StatisticsContractFactory : WebApplicationFactory<Program>\n  {\n    private readonly MongoDbRunner _runner\
+    \ = MongoDbRunner.Start();\n    private readonly string _authAddress;\n    private readonly string _ratesAddress;\n\n\
+    \    public StatisticsContractFactory(string authAddress, string ratesAddress)\n    {\n      _authAddress = authAddress;\n\
+    \      _ratesAddress = ratesAddress;\n    }\n\n    protected override void ConfigureWebHost(IWebHostBuilder builder)\n\
+    \    {\n      builder.UseSetting(\"Piggy:Mongo:ConnectionString\", _runner.ConnectionString);\n      builder.UseSetting(\"\
+    Piggy:Mongo:Database\", \"piggymetrics\");\n      builder.UseSetting(\"Piggy:Auth:UserInfoUrl\", _authAddress + \"/uaa/users/current\"\
+    );\n      builder.UseSetting(\"Piggy:Rates:Url\", _ratesAddress);\n    }\n\n    protected override void Dispose(bool disposing)\n\
+    \    {\n      base.Dispose(disposing);\n      _runner.Dispose();\n    }\n  }\n}\n"
+  companion_required: false
+  invariants:
+  - Ported method names match the Java test methods.
+  - Expected normalized amounts match the Java assertions.
+  edge_cases:
+  - Null amount throws ArgumentException.
+  - Empty account name throws ArgumentException.
+  machine_verify:
+  - dotnet build PiggyMetrics.sln --nologo
+  - dotnet test PiggyMetrics.sln --nologo
+  human_verify: *id022
+  input_contract: Target tree contains README.md only plus HarnessMatters metadata. Java behavior is fixed by the cited sqshq/piggymetrics
+    sources.
+  output_contract: 'The exact_files exist with the exact_snippet bodies split on lines that read `// FILE: <path>`.'

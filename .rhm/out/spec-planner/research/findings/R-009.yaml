@@ -1,0 +1,19 @@
+id: R-009
+question: Which OAuth clients exist?
+conclusion: browser refresh_token+password scope ui. account-service, statistics-service,
+  and notification-service client_credentials+refresh_token scope server. Secrets
+  come from environment properties. Token store is in-memory. Access token validity
+  default is 43200 seconds.
+evidence:
+- repository: external
+  file: OAuth2AuthorizationConfig.java
+  location: configure clients
+  note: browser refresh_token+password scope ui. account-service, statistics-service,
+    and notification-service client_credentials+refresh_token scope server. Secrets
+    come from environment properties. Token store is in-memory. Access token validity
+    default is 43200 seconds.
+confidence: high
+implication: browser refresh_token+password scope ui. account-service, statistics-service,
+  and notification-service client_credentials+refresh_token scope server. Secrets
+  come from environment properties. Token store is in-memory. Access token validity
+  default is 43200 seconds.

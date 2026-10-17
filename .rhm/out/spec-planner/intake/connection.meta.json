@@ -1,0 +1,23 @@
+{
+  "source": "harness",
+  "target_repo_name": "PiggyMetricsDotNet",
+  "target_repo_slug": "sandeep-chanda/PiggyMetricsDotNet",
+  "target_repo_remote_url": "https://github.com/sandeep-chanda/PiggyMetricsDotNet",
+  "target_repo_provider": "github",
+  "target_repo_default_branch": "main",
+  "scm_root": {
+    "host": "github.com",
+    "organization": "sandeep-chanda",
+    "project": "PiggyMetricsDotNet"
+  },
+  "sibling_repos": [],
+  "related_trackers": [],
+  "auth": {
+    "provider": "github",
+    "method": "https_token",
+    "env_refs": [
+      "HM_HARNESS_SCM_TOKEN"
+    ],
+    "notes": "HTTPS user x-access-token. Do not store the token value."
+  }
+}

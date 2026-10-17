@@ -1,0 +1,13 @@
+id: R-004
+question: How do resource servers check tokens?
+conclusion: CustomUserInfoTokenServices loads the user-info URL with the inbound bearer
+  token and rejects error payloads. The spec pins http://auth-service:5000/uaa/users/current.
+evidence:
+- repository: external
+  file: account-service CustomUserInfoTokenServices.java
+  location: loadAuthentication
+  note: CustomUserInfoTokenServices loads the user-info URL with the inbound bearer
+    token and rejects error payloads. The spec pins http://auth-service:5000/uaa/users/current.
+confidence: high
+implication: CustomUserInfoTokenServices loads the user-info URL with the inbound
+  bearer token and rejects error payloads. The spec pins http://auth-service:5000/uaa/users/current.

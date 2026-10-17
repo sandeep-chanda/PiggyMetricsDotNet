@@ -1,0 +1,5 @@
+sources:
+- https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
+- https://github.com/sqshq/piggymetrics
+- https://raw.githubusercontent.com/OpenFeign/feign/10.2.3/core/src/main/java/feign/Request.java
+- https://api.nuget.org/v3-flatcontainer/mongodb.driver/index.json

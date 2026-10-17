@@ -1,0 +1,10 @@
+id: R-002
+question: Which .NET release is the active LTS on 2026-10-17?
+conclusion: .NET 10 is the active LTS through 2028-11-14. .NET 8 support ends 2026-11-10.
+evidence:
+- repository: external
+  file: https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
+  location: table
+  note: .NET 10 is the active LTS through 2028-11-14. .NET 8 support ends 2026-11-10.
+confidence: high
+implication: .NET 10 is the active LTS through 2028-11-14. .NET 8 support ends 2026-11-10.

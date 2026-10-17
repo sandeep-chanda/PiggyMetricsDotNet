@@ -1,0 +1,16 @@
+id: R-014
+question: Which six statistics test classes exist?
+conclusion: StatisticsServiceApplicationTests, ExchangeRatesClientTest, StatisticsControllerTest,
+  DataPointRepositoryTest, ExchangeRatesServiceImplTest, StatisticsServiceImplTest.
+  Sixteen @Test methods.
+evidence:
+- repository: external
+  file: statistics-service/src/test
+  location: tree
+  note: StatisticsServiceApplicationTests, ExchangeRatesClientTest, StatisticsControllerTest,
+    DataPointRepositoryTest, ExchangeRatesServiceImplTest, StatisticsServiceImplTest.
+    Sixteen @Test methods.
+confidence: high
+implication: StatisticsServiceApplicationTests, ExchangeRatesClientTest, StatisticsControllerTest,
+  DataPointRepositoryTest, ExchangeRatesServiceImplTest, StatisticsServiceImplTest.
+  Sixteen @Test methods.

@@ -1,0 +1,13 @@
+id: R-001
+question: What build manifests exist in the target tree?
+conclusion: The checkout has README.md and HarnessMatters metadata only. No csproj,
+  sln, Dockerfile, or CI workflow.
+evidence:
+- repository: target
+  file: README.md
+  location: '1'
+  note: The checkout has README.md and HarnessMatters metadata only. No csproj, sln,
+    Dockerfile, or CI workflow.
+confidence: high
+implication: The checkout has README.md and HarnessMatters metadata only. No csproj,
+  sln, Dockerfile, or CI workflow.

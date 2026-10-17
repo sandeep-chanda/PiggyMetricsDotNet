@@ -1,0 +1,13 @@
+id: R-003
+question: How does Spring Boot 2.0.3 write dates and health?
+conclusion: Parent pom is Spring Boot 2.0.3. Jackson writes ISO-8601 timestamps disabled.
+  Actuator health body is {"status":"UP"} at /actuator/health.
+evidence:
+- repository: external
+  file: https://raw.githubusercontent.com/sqshq/piggymetrics/master/pom.xml
+  location: parent
+  note: Parent pom is Spring Boot 2.0.3. Jackson writes ISO-8601 timestamps disabled.
+    Actuator health body is {"status":"UP"} at /actuator/health.
+confidence: high
+implication: Parent pom is Spring Boot 2.0.3. Jackson writes ISO-8601 timestamps disabled.
+  Actuator health body is {"status":"UP"} at /actuator/health.

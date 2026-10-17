@@ -1,0 +1,15 @@
+id: R-005
+question: How are user and datapoint documents stored?
+conclusion: User @Id username is Mongo _id in collection users. DataPoint @Id is a
+  subdocument {account, date} in collection datapoints. Database name in shared yml
+  is piggymetrics.
+evidence:
+- repository: external
+  file: User.java and DataPoint.java
+  location: annotations
+  note: User @Id username is Mongo _id in collection users. DataPoint @Id is a subdocument
+    {account, date} in collection datapoints. Database name in shared yml is piggymetrics.
+confidence: high
+implication: User @Id username is Mongo _id in collection users. DataPoint @Id is
+  a subdocument {account, date} in collection datapoints. Database name in shared
+  yml is piggymetrics.

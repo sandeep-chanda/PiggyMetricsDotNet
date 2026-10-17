@@ -1,0 +1,11 @@
+triggered: true
+from: Spring Boot 2.0.3 PiggyMetrics services
+to: net10.0 projects in PiggyMetricsDotNet
+phases:
+- P1 Shared and solution
+- P2 AuthService
+- P3 StatisticsService
+out_of_scope:
+- AccountService business routes
+- NotificationService jobs
+- Gateway routes

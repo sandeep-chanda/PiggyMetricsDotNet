@@ -1,0 +1,13 @@
+id: R-008
+question: What does auth user creation persist?
+conclusion: UserServiceImpl bcrypt-hashes the password with BCryptPasswordEncoder
+  and rejects an existing id with IllegalArgumentException user already exists.
+evidence:
+- repository: external
+  file: UserServiceImpl.java
+  location: create
+  note: UserServiceImpl bcrypt-hashes the password with BCryptPasswordEncoder and
+    rejects an existing id with IllegalArgumentException user already exists.
+confidence: high
+implication: UserServiceImpl bcrypt-hashes the password with BCryptPasswordEncoder
+  and rejects an existing id with IllegalArgumentException user already exists.

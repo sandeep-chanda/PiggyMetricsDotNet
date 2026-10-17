@@ -1,0 +1,7 @@
+provider: github
+organization: sandeep-chanda
+sibling_repos: []
+local_related: []
+external_reference_repo: https://github.com/sqshq/piggymetrics
+note: No sibling checkout was supplied. Java behavior was read from the public source
+  URLs cited by the spec paths. That repository was not cloned.

@@ -1,0 +1,19 @@
+id: R-012
+question: What does statistics save compute?
+conclusion: StatisticsServiceImpl normalizes amounts with ExchangeRatesService.convert
+  and TimePeriod base ratios from Java double BigDecimal values, scale 4 HALF_UP.
+  Expected salary 298.9802, grocery 6.25, vacation 11.6361, expenses 17.8861, saving
+  1250.
+evidence:
+- repository: external
+  file: StatisticsServiceImpl.java
+  location: createItemMetric
+  note: StatisticsServiceImpl normalizes amounts with ExchangeRatesService.convert
+    and TimePeriod base ratios from Java double BigDecimal values, scale 4 HALF_UP.
+    Expected salary 298.9802, grocery 6.25, vacation 11.6361, expenses 17.8861, saving
+    1250.
+confidence: high
+implication: StatisticsServiceImpl normalizes amounts with ExchangeRatesService.convert
+  and TimePeriod base ratios from Java double BigDecimal values, scale 4 HALF_UP.
+  Expected salary 298.9802, grocery 6.25, vacation 11.6361, expenses 17.8861, saving
+  1250.

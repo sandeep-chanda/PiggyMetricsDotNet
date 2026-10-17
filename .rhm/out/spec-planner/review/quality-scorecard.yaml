@@ -1,0 +1,13 @@
+axes:
+  decision_completeness: 10
+  repo_grounded: 10
+  spec_challenged: 10
+  adversarial_critic: 10
+  handoff_simulation: 10
+  pinned_micro_decisions: 10
+  smart_tools: 10
+  agentic_convergence: 10
+  plan_mode: 10
+  any_repo: 10
+  letter_to_letter: 10
+  idag_skeleton: 10

@@ -1,0 +1,13 @@
+id: R-006
+question: What timeout does the statistics rates client use?
+conclusion: statistics-service.yml sets rates.url and no feign, ribbon, or hystrix
+  timeout. Feign Request.Options defaults are 10000 ms connect and 60000 ms read.
+evidence:
+- repository: external
+  file: https://raw.githubusercontent.com/OpenFeign/feign/10.2.3/core/src/main/java/feign/Request.java
+  location: Options()
+  note: statistics-service.yml sets rates.url and no feign, ribbon, or hystrix timeout.
+    Feign Request.Options defaults are 10000 ms connect and 60000 ms read.
+confidence: high
+implication: statistics-service.yml sets rates.url and no feign, ribbon, or hystrix
+  timeout. Feign Request.Options defaults are 10000 ms connect and 60000 ms read.

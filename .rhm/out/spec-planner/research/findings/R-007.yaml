@@ -1,0 +1,13 @@
+id: R-007
+question: Which ports and path bases do the shell hosts use?
+conclusion: gateway.yml port 4000. account-service.yml port 6000 context /accounts.
+  notification-service.yml port 8000 context /notifications.
+evidence:
+- repository: external
+  file: config/src/main/resources/shared
+  location: server
+  note: gateway.yml port 4000. account-service.yml port 6000 context /accounts. notification-service.yml
+    port 8000 context /notifications.
+confidence: high
+implication: gateway.yml port 4000. account-service.yml port 6000 context /accounts.
+  notification-service.yml port 8000 context /notifications.

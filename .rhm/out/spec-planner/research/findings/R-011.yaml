@@ -1,0 +1,13 @@
+id: R-011
+question: Which five auth test classes exist?
+conclusion: AuthServiceApplicationTests, UserControllerTest, UserRepositoryTest, UserServiceTest,
+  MongoUserDetailsServiceTest. Nine @Test methods.
+evidence:
+- repository: external
+  file: auth-service/src/test
+  location: tree
+  note: AuthServiceApplicationTests, UserControllerTest, UserRepositoryTest, UserServiceTest,
+    MongoUserDetailsServiceTest. Nine @Test methods.
+confidence: high
+implication: AuthServiceApplicationTests, UserControllerTest, UserRepositoryTest,
+  UserServiceTest, MongoUserDetailsServiceTest. Nine @Test methods.

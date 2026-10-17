@@ -1,0 +1,11 @@
+task_id: task-migration-java-dotnet-v18-p1
+spec_path: intake/raw-spec.md
+target_repo_path: /agent/PiggyMetricsDotNet
+connection_meta_path: intake/connection.meta.json
+related_repos: []
+mode: plan_only
+constraints:
+  - Cursor Plan Mode only
+  - No writes to target repository product code
+  - Writes only under this package
+created_at: 2026-10-17T04:10:16Z

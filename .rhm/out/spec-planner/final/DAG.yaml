@@ -1,0 +1,299 @@
+task_id: task-migration-java-dotnet-v18-p1
+nodes:
+- id: STEP-001
+  playbook_ref: STEP-001
+  title: Create the net10.0 solution and shared project skeleton
+  depends_on: []
+  critical_path: true
+  exact_files:
+  - PiggyMetrics.sln
+  - global.json
+  - Directory.Build.props
+  - src/Shared/Shared.csproj
+  summary_spec: Create PiggyMetrics.sln at the repository root with Shared, Gateway, AuthService, AccountService, StatisticsService,
+    NotificationService, Shared.Tests, AuthService.Tests, and StatisticsService.Tests. Pin net10.0 in Directory.Build.props
+    and the SDK floor in global.json. Shared is a class library with FrameworkReference Microsoft.AspNetCore.App and MongoDB.Driver
+    2.30.0.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id001
+    - PiggyMetrics.sln lists nine projects.
+    - Directory.Build.props sets TargetFramework net10.0.
+  acceptance: *id001
+  no_imagination: true
+- id: STEP-002
+  playbook_ref: STEP-002
+  title: Add shared JSON options and actuator health
+  depends_on:
+  - STEP-001
+  critical_path: true
+  exact_files:
+  - src/Shared/Json/PiggyJson.cs
+  - src/Shared/Health/PiggyHealthExtensions.cs
+  summary_spec: Add PiggyJson with camelCase names, string enums, skipped unknown members, and Jackson 2.9 date text yyyy-MM-ddTHH:mm:ss.fff
+    plus a numeric zone without a colon. Map GET /actuator/health to the body {"status":"UP"}.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id002
+    - GET /actuator/health returns 200 and the body {"status":"UP"}.
+    - Enum values serialize as their names.
+  acceptance: *id002
+  no_imagination: true
+- id: STEP-003
+  playbook_ref: STEP-003
+  title: Add the shared bearer handler that calls auth-service
+  depends_on:
+  - STEP-002
+  critical_path: true
+  exact_files:
+  - src/Shared/Auth/AuthServiceBearerHandler.cs
+  - tests/Shared.Tests/Shared.Tests.csproj
+  - tests/Shared.Tests/BearerHandlerTests.cs
+  summary_spec: Add AuthServiceBearerHandler. It forwards the inbound Authorization header to Piggy:Auth:UserInfoUrl, default
+    http://auth-service:5000/uaa/users/current. HTTP 200 with a name claim succeeds. Any other status refuses the token. Register
+    policies user and server.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id003
+    - accepts_a_token_the_authorization_server_issued passes.
+    - refuses_a_token_the_authorization_server_did_not_issue passes.
+  acceptance: *id003
+  no_imagination: true
+- id: STEP-004
+  playbook_ref: STEP-004
+  title: Add shared Mongo conventions for document ids and field names
+  depends_on:
+  - STEP-001
+  critical_path: true
+  exact_files:
+  - src/Shared/Mongo/PiggyMongo.cs
+  summary_spec: Register a convention pack that stores enums as strings and ignores extra elements. Build the Mongo client
+    from host, port, username, and password with authSource=admin. Callers still place _id and field names on each document
+    type.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id004
+    - PiggyMongo.RegisterConventions runs once.
+    - The client URL contains authSource=admin.
+  acceptance: *id004
+  no_imagination: true
+- id: STEP-005
+  playbook_ref: STEP-005
+  title: Add the typed client base and client-credentials token cache
+  depends_on:
+  - STEP-002
+  critical_path: true
+  exact_files:
+  - src/Shared/Http/TypedClientBase.cs
+  summary_spec: Add TypedClientBase.AddEdgeClient with connect timeout 10000 ms and read timeout 60000 ms, matching Feign
+    Request.Options defaults because statistics-service.yml sets no ribbon timeout. ClientCredentialsTokenCache posts grant_type=client_credentials
+    to the token URL and reuses access_token until expires_in elapses.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id005
+    - Named client rates-client uses a 60000 ms timeout.
+    - A second GetAsync before expiry does not post again.
+  acceptance: *id005
+  no_imagination: true
+- id: STEP-006
+  playbook_ref: STEP-006
+  title: Add buildable Gateway, AccountService, and NotificationService hosts
+  depends_on:
+  - STEP-002
+  critical_path: true
+  exact_files:
+  - src/Gateway/Gateway.csproj
+  - src/Gateway/Program.cs
+  - src/Gateway/appsettings.json
+  - src/AccountService/AccountService.csproj
+  - src/AccountService/Program.cs
+  - src/AccountService/appsettings.json
+  - src/NotificationService/NotificationService.csproj
+  - src/NotificationService/Program.cs
+  - src/NotificationService/appsettings.json
+  summary_spec: 'Add three web projects that reference Shared, map /actuator/health, and listen on the source ports: Gateway
+    4000 with an empty path base, AccountService 6000 with path base /accounts, NotificationService 8000 with path base /notifications.
+    Do not add their business routes.'
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id006
+    - Gateway listens on port 4000.
+    - AccountService path base is /accounts.
+    - NotificationService path base is /notifications.
+  acceptance: *id006
+  no_imagination: true
+- id: STEP-007
+  playbook_ref: STEP-007
+  title: Add AuthService user document, repository, and user services
+  depends_on:
+  - STEP-004
+  critical_path: true
+  exact_files:
+  - src/AuthService/AuthService.csproj
+  - src/AuthService/Domain/User.cs
+  - src/AuthService/Data/UserRepository.cs
+  - src/AuthService/Security/MongoUserDetailsService.cs
+  - src/AuthService/Services/UserService.cs
+  summary_spec: Add the users collection document with _id equal to username and a password field. UserRepository saves and
+    finds by that id on database piggymetrics. UserService rejects an existing username with ArgumentException user already
+    exists and stores a BCrypt work-factor 10 hash. MongoUserDetailsService throws UsernameNotFoundException when the id is
+    absent.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id007
+    - shouldSaveAndFindUserByName reads the same username and password.
+    - 'shouldFailWhenUserAlreadyExists throws ArgumentException with message user already exists: name.'
+  acceptance: *id007
+  no_imagination: true
+- id: STEP-008
+  playbook_ref: STEP-008
+  title: Add AuthService settings, token endpoint, and user routes
+  depends_on:
+  - STEP-007
+  - STEP-003
+  critical_path: true
+  exact_files:
+  - src/AuthService/Program.cs
+  - src/AuthService/appsettings.json
+  - src/AuthService/Controllers/UserController.cs
+  - src/AuthService/OAuth/AuthorizationServer.cs
+  summary_spec: 'Host AuthService on port 5000 with path base /uaa. Persist users in auth-mongodb database piggymetrics. Register
+    four clients: browser with grants refresh_token and password and scope ui; account-service, statistics-service, and notification-service
+    with grants client_credentials and refresh_token, scope server, and secrets from ACCOUNT_SERVICE_PASSWORD, STATISTICS_SERVICE_PASSWORD,
+    and NOTIFICATION_SERVICE_PASSWORD. POST /oauth/token issues an opaque bearer token stored in memory for 43200 seconds.
+    GET /users/current requires policy user and returns name plus scope. POST /users requires policy server.'
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id008
+    - C1 without a token returns 401 and with a user token returns name.
+    - C2 with a server token returns 200 and with a user token returns 403.
+    - C3 client_credentials, password, and refresh_token each yield a token accepted by GET /uaa/users/current.
+  acceptance: *id008
+  no_imagination: true
+- id: STEP-009
+  playbook_ref: STEP-009
+  title: Port the five AuthService test classes
+  depends_on:
+  - STEP-008
+  critical_path: true
+  exact_files:
+  - tests/AuthService.Tests/AuthService.Tests.csproj
+  - tests/AuthService.Tests/AuthTests.cs
+  summary_spec: Add AuthService.Tests with the Java method names contextLoads, shouldCreateNewUser, shouldFailWhenUserIsNotValid,
+    shouldReturnCurrentUser, shouldSaveAndFindUserByName, shouldCreateUser, shouldFailWhenUserAlreadyExists, shouldLoadByUsernameWhenUserExists,
+    and shouldFailToLoadByUsernameWhenUserNotExists. Add contract replay tests for C1, C2, and C3 against WebApplicationFactory
+    and Mongo2Go.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id009
+    - The nine ported tests pass.
+    - C1, C2, and C3 pass.
+  acceptance: *id009
+  no_imagination: true
+- id: STEP-010
+  playbook_ref: STEP-010
+  title: Add StatisticsService documents, repository, rates client, and routes
+  depends_on:
+  - STEP-004
+  - STEP-005
+  - STEP-003
+  critical_path: true
+  exact_files:
+  - src/StatisticsService/StatisticsService.csproj
+  - src/StatisticsService/Program.cs
+  - src/StatisticsService/appsettings.json
+  - src/StatisticsService/Domain/StatisticsDomain.cs
+  - src/StatisticsService/Data/DataPointRepository.cs
+  - src/StatisticsService/Clients/ExchangeRatesClient.cs
+  - src/StatisticsService/Services/StatisticsServices.cs
+  - src/StatisticsService/Controllers/StatisticsController.cs
+  summary_spec: Host StatisticsService on port 7000 with path base /statistics and store datapoints in statistics-mongodb
+    database piggymetrics. Keep field names incomes, expenses, saving, statistics, rates, and compound id account plus date.
+    GET /current requires policy user. GET /{accountName} allows scope server or the literal account name demo. PUT /{accountName}
+    requires scope server. The rates client calls GET {Piggy:Rates:Url}/latest and on failure returns base USD with an empty
+    rates map. Normalize items with the Java double ratios and scale 4 half-up division.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id010
+    - C8 missing token returns 401 and a user token returns 200.
+    - C9 server token returns 200, user token returns 403, and demo without a token returns 200.
+    - C10 server token returns 200 and user token returns 403.
+    - A down rates host returns an empty rates map and base USD.
+  acceptance: *id010
+  no_imagination: true
+- id: STEP-011
+  playbook_ref: STEP-011
+  title: Port the six StatisticsService test classes
+  depends_on:
+  - STEP-010
+  critical_path: true
+  exact_files:
+  - tests/StatisticsService.Tests/StatisticsService.Tests.csproj
+  - tests/StatisticsService.Tests/StatisticsTests.cs
+  summary_spec: Add StatisticsService.Tests with contextLoads, shouldRetrieveExchangeRates, shouldRetrieveExchangeRatesForSpecifiedCurrency,
+    shouldGetStatisticsByAccountName, shouldGetCurrentAccountStatistics, shouldSaveAccountStatistics, shouldSaveDataPoint,
+    shouldRewriteDataPointWithinADay, shouldReturnCurrentRatesWhenContainerIsEmptySoFar, shouldNotRequestRatesWhenTodaysContainerAlreadyExists,
+    shouldConvertCurrency, shouldFailToConvertWhenAmountIsNull, shouldFindDataPointListByAccountName, shouldFailToFindDataPointWhenAccountNameIsNull,
+    shouldFailToFindDataPointWhenAccountNameIsEmpty, and the service shouldSaveDataPoint. Keep the Java expected amounts 298.9802,
+    17.8861, 1250, 11.6361, and 6.25.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln --nologo
+    - dotnet test PiggyMetrics.sln --nologo
+    human: &id011
+    - The sixteen ported tests pass.
+    - C8, C9, and C10 pass.
+    - shouldReturnFallbackWhenCalleeIsDown passes.
+  acceptance: *id011
+  no_imagination: true
+edges:
+- from: STEP-001
+  to: STEP-002
+- from: STEP-002
+  to: STEP-003
+- from: STEP-001
+  to: STEP-004
+- from: STEP-002
+  to: STEP-005
+- from: STEP-002
+  to: STEP-006
+- from: STEP-004
+  to: STEP-007
+- from: STEP-007
+  to: STEP-008
+- from: STEP-003
+  to: STEP-008
+- from: STEP-008
+  to: STEP-009
+- from: STEP-004
+  to: STEP-010
+- from: STEP-005
+  to: STEP-010
+- from: STEP-003
+  to: STEP-010
+- from: STEP-010
+  to: STEP-011
+parallel_groups:
+- - STEP-003
+  - STEP-004
+  - STEP-006

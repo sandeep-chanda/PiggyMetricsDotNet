@@ -1,0 +1,102 @@
+title: Migration Java 2 .NET v18
+summary: Build the .NET solution for Shared, AuthService, and StatisticsService so
+  the cited contracts and ported tests match the Java source behavior.
+requirements:
+- id: REQ-001
+  type: migration
+  text: P1.T1 Create the solution and one project per Gateway, AuthService, AccountService,
+    StatisticsService, NotificationService, plus Shared.
+  acceptance:
+  - Every project builds.
+- id: REQ-002
+  type: functional
+  text: P1.T5 JSON enums as names, unknown fields ignored, Jackson date format, and
+    health body {"status":"UP"}.
+  acceptance:
+  - GET /actuator/health returns that body.
+- id: REQ-003
+  type: functional
+  text: P1.T2 Bearer handler calls http://auth-service:5000/uaa/users/current and
+    accepts only a token that endpoint accepts.
+  acceptance:
+  - Issued token succeeds. Foreign token is refused.
+- id: REQ-004
+  type: functional
+  text: P1.T3 Store conventions keep the source databases, collections, ids, and field
+    names.
+  acceptance:
+  - users and datapoints keep their Java field names.
+- id: REQ-005
+  type: functional
+  text: P1.T4 Typed client base uses the source Feign default timeout and caches client-credentials
+    tokens.
+  acceptance:
+  - Connect 10000 ms and read 60000 ms.
+- id: REQ-006
+  type: functional
+  text: P2.T1 User document in collection users with _id equal to username and a password
+    field.
+  acceptance:
+  - Repository round-trips username and password.
+- id: REQ-007
+  type: functional
+  text: P2.T2 UserRepository on auth-mongodb database piggymetrics.
+  acceptance:
+  - shouldSaveAndFindUserByName passes.
+- id: REQ-008
+  type: functional
+  text: P2.T3 C1 GET /uaa/users/current. User token returns name. Missing token returns
+    401.
+  acceptance:
+  - C1 replay passes.
+- id: REQ-009
+  type: functional
+  text: P2.T4 C2 POST /uaa/users. Server token returns 200. User token returns 403.
+  acceptance:
+  - C2 replay passes.
+- id: REQ-010
+  type: functional
+  text: P2.T5 and P2.T6 Token endpoint supports client_credentials, password, and
+    refresh_token for the four source clients.
+  acceptance:
+  - Each grant is accepted by GET /uaa/users/current.
+- id: REQ-011
+  type: operational
+  text: P2.T7 AuthService port 5000, path /uaa, store auth-mongodb/piggymetrics.
+  acceptance:
+  - appsettings binds those values.
+- id: REQ-012
+  type: acceptance
+  text: P2.T8-P2.T12 Five AuthService test classes and nine tests stay green.
+  acceptance:
+  - Nine ported tests pass.
+- id: REQ-013
+  type: functional
+  text: P3.T1-P3.T3 Account shape, DataPoint collection datapoints, and DataPointRepository.
+  acceptance:
+  - shouldSaveDataPoint and shouldRewriteDataPointWithinADay pass.
+- id: REQ-014
+  type: functional
+  text: P3.T4 C8 GET /statistics/current.
+  acceptance:
+  - User token returns 200. Missing token returns 401.
+- id: REQ-015
+  type: functional
+  text: P3.T5 C9 GET /statistics/{accountName} allows server scope or the name demo.
+  acceptance:
+  - Server token 200. User token 403. Demo without a token 200.
+- id: REQ-016
+  type: functional
+  text: P3.T6 and P3.T7 PUT statistics plus rates client fallback.
+  acceptance:
+  - Server token 200. User token 403. Down callee returns empty rates and base USD.
+- id: REQ-017
+  type: acceptance
+  text: 'P3 done-when: six statistics test classes and sixteen tests stay green.'
+  acceptance:
+  - Sixteen ported tests pass.
+ambiguities: []
+assumptions:
+- text: Intake text fully states P1, P2, and P3 done-when clauses. Account, notification,
+    and gateway business routes are outside this package.
+  confidence: high

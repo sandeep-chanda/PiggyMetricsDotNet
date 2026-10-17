@@ -1,0 +1,4 @@
+assumptions:
+- text: Intake text fully states P1, P2, and P3 done-when clauses. Account, notification,
+    and gateway business routes are outside this package.
+  confidence: high

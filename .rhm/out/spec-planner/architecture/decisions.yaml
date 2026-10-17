@@ -1,0 +1,196 @@
+- id: D-001
+  decision: Target framework
+  alternatives:
+  - net8.0
+  - net10.0
+  - net11.0 RC
+  chosen: net10.0
+  rationale: .NET 10 is the active LTS. net8.0 support ends 2026-11-10. net11.0 is
+    a release candidate.
+  evidence_refs:
+  - R-002
+  consequences:
+  - global.json rolls forward on the 10.x SDK.
+  constraints:
+  - Directory.Build.props TargetFramework is net10.0.
+  rejected_with_reason:
+  - alt: net8.0
+    why: Support ends within weeks of this plan.
+  - alt: net11.0 RC
+    why: Not the active LTS.
+- id: D-002
+  decision: Verify commands
+  alternatives:
+  - dotnet CLI
+  - invent an npm script
+  - skip verification
+  chosen: dotnet build PiggyMetrics.sln and dotnet test PiggyMetrics.sln
+  rationale: The tree defines no script. The .NET SDK documents these commands for
+    a solution.
+  evidence_refs:
+  - R-001
+  consequences:
+  - The coding agent needs the .NET 10 SDK.
+  constraints:
+  - Do not add a second package manager.
+  rejected_with_reason:
+  - alt: npm
+    why: No package.json exists and the stack is .NET.
+- id: D-003
+  decision: JSON and health shape
+  alternatives:
+  - Spring Boot actuator shape
+  - ASP.NET health JSON
+  chosen: GET /actuator/health body {"status":"UP"} and Jackson-style dates
+  rationale: The source services expose actuator health and Jackson 2.9 date text.
+  evidence_refs:
+  - R-003
+  consequences:
+  - Enums serialize as names. Unknown members are skipped.
+  constraints:
+  - Do not emit integer enum values.
+  rejected_with_reason:
+  - alt: ASP.NET status Healthy
+    why: That is not the source body.
+- id: D-004
+  decision: Bearer validation
+  alternatives:
+  - Local JWT validation
+  - Remote user-info call
+  chosen: Remote GET of the user-info URL with the inbound bearer token
+  rationale: The source uses an in-memory opaque token store and CustomUserInfoTokenServices.
+    The spec names the user-info URL.
+  evidence_refs:
+  - R-004
+  - R-009
+  consequences:
+  - AuthService validates its own tokens from the in-memory store so it does not call
+    itself.
+  constraints:
+  - A non-success user-info status refuses the token.
+  rejected_with_reason:
+  - alt: Local JWT
+    why: The source tokens are opaque.
+- id: D-005
+  decision: Mongo field names
+  alternatives:
+  - CamelCase convention only
+  - Explicit element names from Java
+  chosen: Explicit _id and Java field names
+  rationale: Spring Data stores @Id as _id and the other properties under their Java
+    names.
+  evidence_refs:
+  - R-005
+  consequences:
+  - users holds _id and password. datapoints holds _id.{account,date}.
+  constraints:
+  - Database name is piggymetrics.
+  rejected_with_reason:
+  - alt: PascalCase BSON
+    why: It would not match existing documents.
+- id: D-006
+  decision: HTTP timeout
+  alternatives:
+  - Gateway ribbon 20000 ms
+  - Feign Options default 10000/60000
+  chosen: 10000 ms connect and 60000 ms read
+  rationale: The rates client yml sets no timeout. Feign Options defaults apply. Gateway
+    ribbon values belong to Zuul, which this package does not implement.
+  evidence_refs:
+  - R-006
+  consequences:
+  - Every named edge client uses those two values.
+  constraints:
+  - Do not copy the gateway 20000 ms value onto the rates client.
+  rejected_with_reason:
+  - alt: 20000 ms
+    why: That value is in gateway.yml, not statistics-service.yml.
+- id: D-007
+  decision: Scope of shell hosts
+  alternatives:
+  - Implement gateway routes and account APIs now
+  - Health-only hosts
+  chosen: Health-only Gateway, AccountService, and NotificationService
+  rationale: P1.T1 requires the projects to build. The intake done-when clauses for
+    those services business routes are not in the supplied spec.
+  evidence_refs:
+  - R-007
+  consequences:
+  - Later plans can add routes without renaming projects.
+  constraints:
+  - Ports and path bases still match the source yml.
+  rejected_with_reason:
+  - alt: Full gateway
+    why: No gateway todo is in the supplied spec.
+- id: D-008
+  decision: Password and client secret encoding
+  alternatives:
+  - BCrypt for both
+  - BCrypt for users and plain comparison for client secrets
+  chosen: BCrypt work factor 10 for users and plain comparison for client secrets
+  rationale: UserServiceImpl uses BCryptPasswordEncoder. The authorization server
+    sets NoOpPasswordEncoder for client secrets.
+  evidence_refs:
+  - R-008
+  - R-009
+  consequences:
+  - ACCOUNT_SERVICE_PASSWORD is compared as plain text.
+  constraints:
+  - Work factor stays 10.
+  rejected_with_reason:
+  - alt: BCrypt client secrets
+    why: The source does not hash those secrets.
+- id: D-009
+  decision: Config server startup
+  alternatives:
+  - Call http://config:8888 before boot
+  - Embed the shared yml values in appsettings
+  chosen: Embed the shared yml values in appsettings
+  rationale: The supplied runtime list has no config-service project. Bootstrap fail-fast
+    would block every host.
+  evidence_refs:
+  - R-009
+  consequences:
+  - Piggy:Config records the uri, username, and fail-fast flag but boot does not call
+    it.
+  constraints:
+  - Ports, path bases, mongo hosts, and client ids stay equal to the yml.
+  rejected_with_reason:
+  - alt: Runtime config pull
+    why: No config service is in scope.
+- id: D-010
+  decision: Test runner
+  alternatives:
+  - xUnit
+  - NUnit
+  chosen: xUnit 2.9.3
+  rationale: xUnit is the SDK template runner. Method names stay the Java names.
+  evidence_refs:
+  - R-011
+  - R-014
+  consequences:
+  - Mongo2Go 3.1.3 stands in for flapdoodle embedded Mongo.
+  constraints:
+  - Do not rename ported test methods.
+  rejected_with_reason:
+  - alt: NUnit
+    why: The SDK template path is xUnit.
+- id: D-011
+  decision: Current-user JSON
+  alternatives:
+  - Full OAuth2Authentication graph
+  - name and scope document
+  chosen: JSON object with name and scope
+  rationale: UserControllerTest asserts $.name. Downstream policy checks need the
+    scope the user-info map carries.
+  evidence_refs:
+  - R-010
+  - R-004
+  consequences:
+  - Bearer handler reads name and scope.
+  constraints:
+  - name is the username for the password grant and the client id for client_credentials.
+  rejected_with_reason:
+  - alt: Full authentication graph
+    why: Jackson output of OAuth2Authentication is not asserted by the tests and is
+      unstable.

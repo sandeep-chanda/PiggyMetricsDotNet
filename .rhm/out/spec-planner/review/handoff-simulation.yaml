@@ -1,0 +1,9 @@
+result: PASS
+critical_unanswered: []
+qa:
+- q: Where is the final artifact text?
+  a: Each STEP exact_snippet bundle is the final source. Split on the FILE marker.
+- q: Which timeout does the rates client use?
+  a: Connect 10000 ms and read 60000 ms from D-006.
+- q: What does the bearer handler accept?
+  a: A token is accepted only when GET user-info returns 200 with a name.

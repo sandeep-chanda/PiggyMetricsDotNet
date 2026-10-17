@@ -1,0 +1,11 @@
+discovered: true
+stack: none in tree
+evidence:
+- README.md
+- absence of *.csproj
+- https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
+sdk_on_planner_host: false
+chosen_tfm: net10.0
+verify_commands:
+- dotnet build PiggyMetrics.sln --nologo
+- dotnet test PiggyMetrics.sln --nologo

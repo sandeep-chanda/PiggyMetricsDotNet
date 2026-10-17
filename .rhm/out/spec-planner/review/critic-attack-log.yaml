@@ -1,0 +1,72 @@
+vectors:
+- vector: wrong_paths
+  checked: true
+  finding: clear
+  evidence: Cited Java paths are absent from the target tree. New paths are creates
+    under src/ and tests/.
+- vector: missing_scripts
+  checked: true
+  finding: clear
+  evidence: No build script exists. Commands are the dotnet CLI from D-002.
+- vector: scope_creep
+  checked: true
+  finding: clear
+  evidence: D-007 keeps Gateway, AccountService, and NotificationService health-only.
+- vector: weak_evidence
+  checked: true
+  finding: clear
+  evidence: Findings R-001 through R-014 cite the tree, the support policy, and the
+    public Java sources.
+- vector: missing_alternatives
+  checked: true
+  finding: clear
+  evidence: Decisions D-001 through D-011 each record rejected alternatives.
+- vector: dag_order
+  checked: true
+  finding: clear
+  evidence: Edges follow depends_on. Auth waits on Shared. Statistics waits on bearer,
+    mongo, and the typed client.
+- vector: residual_entropy
+  checked: true
+  finding: clear
+  evidence: critical_unresolved_count is 0.
+- vector: a11y_or_security_or_ops
+  checked: true
+  finding: clear
+  evidence: Bearer refusal, server scope, and BCrypt work factor 10 are pinned. No
+    UI affordance changes.
+- vector: test_gaps
+  checked: true
+  finding: clear
+  evidence: Nine auth tests, sixteen statistics tests, bearer tests, and contract
+    replays are named.
+- vector: spec_plan_contradiction
+  checked: true
+  finding: clear
+  evidence: Ports, paths, collections, and grant lists match the spec and the yml
+    files.
+- vector: soft_shape_variance
+  checked: true
+  finding: clear
+  evidence: Plan step text has no soft-shape phrase.
+- vector: instructional_pin
+  checked: true
+  finding: clear
+  evidence: exact_snippet bodies are final source, not edit recipes.
+- vector: reference_trace
+  checked: true
+  finding: clear
+  evidence: The target tree has no symbols to rename. New symbols are introduced once.
+- vector: constraint_risk
+  checked: true
+  finding: clear
+  evidence: No user-visible layout change. Health body length is the short actuator
+    string.
+- vector: imagination_gap
+  checked: true
+  finding: clear
+  evidence: Every product file is inside an exact_snippet bundle.
+- vector: thin_dag
+  checked: true
+  finding: clear
+  evidence: Each node carries summary_spec, verification, acceptance, and exact_files.

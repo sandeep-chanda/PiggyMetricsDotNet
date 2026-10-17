@@ -1,0 +1,13 @@
+id: R-013
+question: How does the rates fallback behave?
+conclusion: ExchangeRatesClientFallback sets base to Currency.USD and an empty rates
+  map. The Feign client declares that fallback.
+evidence:
+- repository: external
+  file: ExchangeRatesClientFallback.java
+  location: getRates
+  note: ExchangeRatesClientFallback sets base to Currency.USD and an empty rates map.
+    The Feign client declares that fallback.
+confidence: high
+implication: ExchangeRatesClientFallback sets base to Currency.USD and an empty rates
+  map. The Feign client declares that fallback.

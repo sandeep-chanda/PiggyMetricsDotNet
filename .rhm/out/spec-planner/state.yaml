@@ -1,0 +1,7 @@
+task_id: task-migration-java-dotnet-v18-p1
+phase: approved
+loops: 1
+blockers: []
+approved: true
+plan_mode: true
+target_repo_writes_allowed: false
