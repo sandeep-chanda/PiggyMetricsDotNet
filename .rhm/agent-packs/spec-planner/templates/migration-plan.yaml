@@ -1,0 +1,13 @@
+required: false
+na_justification: ""
+current_state: ""
+breaking_changes: []
+repo_usage: []
+transitive_dependencies: []
+cross_repo_consumers: []
+compatibility_analysis: ""
+target_state: ""
+transition_strategy: ""
+sequence: []
+validation: []
+rollback: ""

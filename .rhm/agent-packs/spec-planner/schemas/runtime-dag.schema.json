@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "runtime-dag.schema.json",
+  "title": "RuntimeDAG",
+  "type": "object",
+  "required": ["applicable", "nodes"],
+  "properties": {
+    "applicable": { "type": "boolean" },
+    "reason_if_not": { "type": "string" },
+    "nodes": { "type": "array", "items": { "type": "object" } },
+    "edges": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": true
+}

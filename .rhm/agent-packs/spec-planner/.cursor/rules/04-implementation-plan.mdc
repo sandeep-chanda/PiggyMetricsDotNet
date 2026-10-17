@@ -1,0 +1,16 @@
+---
+description: STEP-grade letter-to-letter playbook — no coding-agent imagination
+alwaysApply: false
+globs: workspace/**/planning/**
+---
+
+# Implementation plan + iDAG
+
+Follow `docs/EXECUTION_SPEC.md`.
+
+Every product STEP: before/after final artifacts, invariants, edge_cases, machine_verify, human_verify, exact pins.
+Every iDAG node: summary_spec, verification, acceptance, exact_files, no_imagination: true — not titles only.
+
+Forbidden: outline STEPs; leaving design to the coding agent. Planner never edits the target repo.
+
+When those STEPs are presented in PLAYBOOK/HANDOFF, every `exact_snippet` / command uses the placeholder in `docs/PLAYBOOK_FORMAT.md` — not a loose dump.

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "job.schema.json",
+  "title": "Job",
+  "type": "object",
+  "required": ["task_id", "spec_path", "target_repo_path", "mode"],
+  "properties": {
+    "task_id": { "type": "string", "minLength": 1 },
+    "spec_path": { "type": "string" },
+    "target_repo_path": { "type": "string" },
+    "connection_meta_path": {
+      "type": "string",
+      "description": "Path to connection.meta.json (provider, siblings, auth refs)"
+    },
+    "related_repos": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Local checkout paths for deep inspect (often overlap sibling_repos[].local_path)"
+    },
+    "mode": { "const": "plan_only" },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": true
+}

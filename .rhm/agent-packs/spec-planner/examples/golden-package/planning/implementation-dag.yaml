@@ -1,0 +1,16 @@
+nodes:
+  - id: STEP-001
+    playbook_ref: STEP-001
+    critical_path: true
+  - id: STEP-002
+    playbook_ref: STEP-002
+    critical_path: true
+  - id: STEP-003
+    playbook_ref: STEP-003
+    critical_path: true
+edges:
+  - from: STEP-001
+    to: STEP-002
+  - from: STEP-002
+    to: STEP-003
+parallel_groups: []

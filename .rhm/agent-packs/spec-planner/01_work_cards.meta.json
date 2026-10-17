@@ -1,0 +1,18 @@
+{
+  "source": "rhm_specs",
+  "spec_id": "",
+  "title": "",
+  "plan_key": "",
+  "status": "",
+  "master_id": "",
+  "master_title": "",
+  "spec_bytes": 0,
+  "target_repo_name": "",
+  "target_repo_slug": "",
+  "target_repo_remote_url": "",
+  "target_repo_provider": "",
+  "target_repo_default_branch": "",
+  "target_repo_connector_id": "",
+  "master_metadata": {},
+  "notes": "Placeholder — tip the selected RHM spec at runtime; do not bake a demo title/repo here"
+}
