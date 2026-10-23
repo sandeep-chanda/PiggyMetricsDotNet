@@ -2,23 +2,23 @@
   "schema": "harnessmatters.project/v1",
   "product": "HarnessMatters",
   "project_key": "sandeep-chanda-PiggyMetricsDotNet",
-  "workspace_id": "cce8be4b-c352-43b6-bfe2-51116f607506",
+  "workspace_id": "5f1a74b0-4a9b-4ffc-859f-33126dca1c80",
   "workspace": {
-    "id": "cce8be4b-c352-43b6-bfe2-51116f607506",
-    "name": "PiggyMetricsRun",
-    "label": "PiggyMetricsRun"
+    "id": "5f1a74b0-4a9b-4ffc-859f-33126dca1c80",
+    "name": "PiggyMetricsPublic",
+    "label": "PiggyMetricsPublic"
   },
   "associations": [],
-  "connector_id": "2eac28dd-8701-4a42-8e78-ea8b38261cc1",
+  "connector_id": "881acafb-ad4c-499f-b9b0-aa34e86ac0f3",
   "repo": {
     "host": "github.com",
     "full_name": "sandeep-chanda/PiggyMetricsDotNet",
     "default_branch": "main"
   },
-  "elevated_at": "2026-10-18T12:12:51.744948+00:00",
+  "elevated_at": "2026-10-23T03:35:04.920853+00:00",
   "signature_class": "hm",
   "context_ref": {
     "pack_id": "",
-    "content_hash": "dc09c2317b97336e"
+    "content_hash": "24a5d00b0f593be4"
   }
 }
