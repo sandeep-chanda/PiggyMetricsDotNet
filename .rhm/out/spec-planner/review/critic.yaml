@@ -1,0 +1,21 @@
+result: PASS
+loops: 1
+attacks:
+- vector: imagination_gap
+  result: PASS
+  notes: All Shared types pinned with exact_snippet
+- vector: thin_dag
+  result: PASS
+  notes: Each node has summary_spec/verification/acceptance/exact_files
+- vector: soft_shape
+  result: PASS
+  notes: No e.g./or-equivalent in STEPs
+- vector: instructional_pin
+  result: PASS
+  notes: Pins are final file bodies
+- vector: reference_trace
+  result: PASS
+  notes: Greenfield creates_file; no rename leftovers in target
+- vector: constraint_risk
+  result: PASS
+  notes: N/A UI; timeout/BSON constraints pinned

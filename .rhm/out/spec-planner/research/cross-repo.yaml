@@ -1,0 +1,14 @@
+provider: github
+siblings:
+- full_name: sandeep-chanda/piggymetricsJava
+  local_inspect: blocked_no_clone
+  evidence_method: raw.githubusercontent.com HTTPS file fetch
+  role: java_source_of_truth
+cited_paths_resolved:
+- account-service/pom.xml
+- account-service/.../ResourceServerConfig.java
+- account-service/.../CustomUserInfoTokenServices.java
+- account-service/.../AccountRepository.java
+- account-service/.../domain/Account.java
+- config/.../shared/application.yml (hystrix 10000, user-info-uri)
+- config/.../shared/account-service.yml

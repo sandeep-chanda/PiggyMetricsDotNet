@@ -1,0 +1,10 @@
+options:
+- id: O-TFM
+  decision_ref: D-001
+  selected: net8.0
+- id: O-AUTHN
+  decision_ref: D-002
+  selected: userinfo-bearer
+- id: O-STORE
+  decision_ref: D-003
+  selected: mongodb.driver-conventions

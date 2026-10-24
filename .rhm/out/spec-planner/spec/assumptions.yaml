@@ -1,0 +1,9 @@
+assumptions:
+- id: A-001
+  text: Target PiggyMetricsDotNet is greenfield; Java source of truth is sibling sandeep-chanda/piggymetricsJava
+    (evidence fetched over HTTPS, not cloned).
+  impact: All production paths are creates_file:true
+- id: A-002
+  text: Spring Boot 2.0.3 Jackson defaults map to System.Text.Json camelCase, string enums, ignore unknown
+    properties, ISO-8601 dates.
+  impact: Pins PiggyJsonOptions converters

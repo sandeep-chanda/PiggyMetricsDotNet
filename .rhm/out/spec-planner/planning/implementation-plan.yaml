@@ -1,0 +1,629 @@
+task_id: walk-24-oct-migration-P1
+summary: P1 solution skeleton and Shared (bearer, Mongo conventions, typed clients, health/JSON)
+plan_key: P1
+steps:
+- id: STEP-001
+  title: P1.T1 Create PiggyMetrics.sln with Shared and five service projects
+  depends_on: []
+  requirement_refs:
+  - REQ-P1-T1
+  decision_refs:
+  - D-001
+  evidence_refs:
+  - R-001
+  files:
+  - global.json
+  - Directory.Build.props
+  - PiggyMetrics.sln
+  - Shared/Shared.csproj
+  - Gateway/Gateway.csproj
+  - AuthService/AuthService.csproj
+  - AccountService/AccountService.csproj
+  - StatisticsService/StatisticsService.csproj
+  - NotificationService/NotificationService.csproj
+  - Shared.Tests/Shared.Tests.csproj
+  exact_files:
+  - global.json
+  - Directory.Build.props
+  - PiggyMetrics.sln
+  - Shared/Shared.csproj
+  - Gateway/Gateway.csproj
+  - AuthService/AuthService.csproj
+  - AccountService/AccountService.csproj
+  - StatisticsService/StatisticsService.csproj
+  - NotificationService/NotificationService.csproj
+  - Gateway/Program.cs
+  - AuthService/Program.cs
+  - AccountService/Program.cs
+  - StatisticsService/Program.cs
+  - NotificationService/Program.cs
+  - Shared.Tests/Shared.Tests.csproj
+  existing_implementation: account-service/pom.xml + root pom.xml modules gateway/auth-service/account-service/statistics-service/notification-service
+    (Java sibling; target empty)
+  creates_file: true
+  change: Create net8.0 solution PiggyMetrics.sln with Shared class library (FrameworkReference AspNetCore
+    + MongoDB.Driver/Polly package coordinates), five Web SDK service projects referencing Shared, Shared.Tests
+    with xunit/TestHost/Moq coordinates, global.json SDK 8.0.400, Directory.Build.props, and minimal Program.cs
+    hosts so the solution builds before service logic arrives.
+  do_not:
+  - Add Java config/registry/monitoring/turbine projects
+  - Use TFM other than net8.0
+  - Omit Shared.Tests project or test PackageReferences
+  - Lower acceptance to test-compile or skip tests
+  compatibility: Empty target tree; no existing .sln to preserve
+  error_handling: dotnet CLI nonzero exit fails the step
+  tests:
+  - dotnet build PiggyMetrics.sln exits 0
+  acceptance:
+  - PiggyMetrics.sln lists Shared, Gateway, AuthService, AccountService, StatisticsService, NotificationService,
+    Shared.Tests
+  - dotnet build PiggyMetrics.sln succeeds
+  rollback: Delete PiggyMetrics.sln, global.json, Directory.Build.props, Shared/, Gateway/, AuthService/,
+    AccountService/, StatisticsService/, NotificationService/, Shared.Tests/
+  why: P1.T1 requires the .NET solution every later service plan builds on, mirrored from Java module
+    list
+  expected_result: A buildable net8.0 solution exists with one project per runtime service plus Shared
+    and Shared.Tests, including every PackageReference coordinate later Shared code needs.
+  exact_commands:
+  - dotnet new sln -n PiggyMetrics -o . --force
+  - dotnet new classlib -n Shared -o Shared -f net8.0 --force
+  - dotnet new web -n Gateway -o Gateway -f net8.0 --no-https --force
+  - dotnet new web -n AuthService -o AuthService -f net8.0 --no-https --force
+  - dotnet new web -n AccountService -o AccountService -f net8.0 --no-https --force
+  - dotnet new web -n StatisticsService -o StatisticsService -f net8.0 --no-https --force
+  - dotnet new web -n NotificationService -o NotificationService -f net8.0 --no-https --force
+  - dotnet new xunit -n Shared.Tests -o Shared.Tests -f net8.0 --force
+  - dotnet sln PiggyMetrics.sln add Shared/Shared.csproj Gateway/Gateway.csproj AuthService/AuthService.csproj
+    AccountService/AccountService.csproj StatisticsService/StatisticsService.csproj NotificationService/NotificationService.csproj
+    Shared.Tests/Shared.Tests.csproj
+  - dotnet add Gateway/Gateway.csproj reference Shared/Shared.csproj
+  - dotnet add AuthService/AuthService.csproj reference Shared/Shared.csproj
+  - dotnet add AccountService/AccountService.csproj reference Shared/Shared.csproj
+  - dotnet add StatisticsService/StatisticsService.csproj reference Shared/Shared.csproj
+  - dotnet add NotificationService/NotificationService.csproj reference Shared/Shared.csproj
+  - dotnet add Shared.Tests/Shared.Tests.csproj reference Shared/Shared.csproj
+  exact_snippet: "{\n  \"sdk\": {\n    \"version\": \"8.0.400\",\n    \"rollForward\": \"latestFeature\"\
+    \n  }\n}\n"
+  exact_companion: "FILE Directory.Build.props\n<Project>\n  <PropertyGroup>\n    <LangVersion>12.0</LangVersion>\n\
+    \    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>\n    <Nullable>enable</Nullable>\n  </PropertyGroup>\n\
+    </Project>\n\nFILE Shared/Shared.csproj\n<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n\
+    \    <TargetFramework>net8.0</TargetFramework>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <Nullable>enable</Nullable>\n\
+    \    <RootNamespace>PiggyMetrics.Shared</RootNamespace>\n    <AssemblyName>PiggyMetrics.Shared</AssemblyName>\n\
+    \  </PropertyGroup>\n  <ItemGroup>\n    <FrameworkReference Include=\"Microsoft.AspNetCore.App\" />\n\
+    \  </ItemGroup>\n  <ItemGroup>\n    <PackageReference Include=\"MongoDB.Driver\" Version=\"2.28.0\"\
+    \ />\n    <PackageReference Include=\"Microsoft.Extensions.Http.Polly\" Version=\"8.0.8\" />\n   \
+    \ <PackageReference Include=\"Polly.Extensions.Http\" Version=\"3.0.0\" />\n  </ItemGroup>\n</Project>\n\
+    \nFILE Gateway/Gateway.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n\
+    \    <ImplicitUsings>enable</ImplicitUsings>\n    <Nullable>enable</Nullable>\n    <RootNamespace>PiggyMetrics.Gateway</RootNamespace>\n\
+    \  </PropertyGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n\
+    \  </ItemGroup>\n</Project>\n\nFILE AuthService/AuthService.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\"\
+    >\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n    <ImplicitUsings>enable</ImplicitUsings>\n\
+    \    <Nullable>enable</Nullable>\n    <RootNamespace>PiggyMetrics.AuthService</RootNamespace>\n  </PropertyGroup>\n\
+    \  <ItemGroup>\n    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n  </ItemGroup>\n</Project>\n\
+    \nFILE AccountService/AccountService.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n\
+    \    <TargetFramework>net8.0</TargetFramework>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <Nullable>enable</Nullable>\n\
+    \    <RootNamespace>PiggyMetrics.AccountService</RootNamespace>\n  </PropertyGroup>\n  <ItemGroup>\n\
+    \    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n  </ItemGroup>\n</Project>\n\nFILE\
+    \ StatisticsService/StatisticsService.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n\
+    \    <TargetFramework>net8.0</TargetFramework>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <Nullable>enable</Nullable>\n\
+    \    <RootNamespace>PiggyMetrics.StatisticsService</RootNamespace>\n  </PropertyGroup>\n  <ItemGroup>\n\
+    \    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n  </ItemGroup>\n</Project>\n\nFILE\
+    \ NotificationService/NotificationService.csproj\n<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n\
+    \    <TargetFramework>net8.0</TargetFramework>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <Nullable>enable</Nullable>\n\
+    \    <RootNamespace>PiggyMetrics.NotificationService</RootNamespace>\n  </PropertyGroup>\n  <ItemGroup>\n\
+    \    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n  </ItemGroup>\n</Project>\n\nFILE\
+    \ Gateway/Program.cs\nvar builder = WebApplication.CreateBuilder(args);\nvar app = builder.Build();\n\
+    app.MapGet(\"/\", () => Results.Ok(new { service = app.Environment.ApplicationName }));\napp.Run();\n\
+    \nFILE AuthService/Program.cs\nvar builder = WebApplication.CreateBuilder(args);\nvar app = builder.Build();\n\
+    app.MapGet(\"/\", () => Results.Ok(new { service = app.Environment.ApplicationName }));\napp.Run();\n\
+    \nFILE AccountService/Program.cs\nvar builder = WebApplication.CreateBuilder(args);\nvar app = builder.Build();\n\
+    app.MapGet(\"/\", () => Results.Ok(new { service = app.Environment.ApplicationName }));\napp.Run();\n\
+    \nFILE StatisticsService/Program.cs\nvar builder = WebApplication.CreateBuilder(args);\nvar app =\
+    \ builder.Build();\napp.MapGet(\"/\", () => Results.Ok(new { service = app.Environment.ApplicationName\
+    \ }));\napp.Run();\n\nFILE NotificationService/Program.cs\nvar builder = WebApplication.CreateBuilder(args);\n\
+    var app = builder.Build();\napp.MapGet(\"/\", () => Results.Ok(new { service = app.Environment.ApplicationName\
+    \ }));\napp.Run();\n\nFILE Shared.Tests/Shared.Tests.csproj\n<Project Sdk=\"Microsoft.NET.Sdk\">\n\
+    \  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n    <ImplicitUsings>enable</ImplicitUsings>\n\
+    \    <Nullable>enable</Nullable>\n    <IsPackable>false</IsPackable>\n    <RootNamespace>PiggyMetrics.Shared.Tests</RootNamespace>\n\
+    \  </PropertyGroup>\n  <ItemGroup>\n    <PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"\
+    17.11.1\" />\n    <PackageReference Include=\"xunit\" Version=\"2.9.2\" />\n    <PackageReference\
+    \ Include=\"xunit.runner.visualstudio\" Version=\"2.8.2\">\n      <IncludeAssets>runtime; build; native;\
+    \ contentfiles; analyzers; buildtransitive</IncludeAssets>\n      <PrivateAssets>all</PrivateAssets>\n\
+    \    </PackageReference>\n    <PackageReference Include=\"Microsoft.AspNetCore.TestHost\" Version=\"\
+    8.0.8\" />\n    <PackageReference Include=\"Moq\" Version=\"4.20.72\" />\n  </ItemGroup>\n  <ItemGroup>\n\
+    \    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />\n  </ItemGroup>\n</Project>\n"
+  companion_required: true
+  invariants:
+  - TFM is net8.0 for every project
+  - Shared.csproj includes FrameworkReference Microsoft.AspNetCore.App and PackageReferences MongoDB.Driver
+    2.28.0, Microsoft.Extensions.Http.Polly 8.0.8, Polly.Extensions.Http 3.0.0
+  - Shared.Tests includes Microsoft.NET.Test.Sdk 17.11.1, xunit 2.9.2, xunit.runner.visualstudio 2.8.2,
+    Microsoft.AspNetCore.TestHost 8.0.8, Moq 4.20.72
+  edge_cases:
+  - Replace template Class1.cs / generated HTTPS defaults with pinned Program.cs bodies
+  - On Windows path separators in ProjectReference remain as written in csproj pins
+  machine_verify:
+  - dotnet build PiggyMetrics.sln
+  human_verify:
+  - Solution explorer shows six product projects plus Shared.Tests
+  input_contract: Empty product root aside from harness metadata
+  output_contract: Buildable solution files as exact_files
+- id: STEP-002
+  title: P1.T2 Shared UserInfoBearerHandler validating via auth-service user-info
+  depends_on:
+  - STEP-001
+  requirement_refs:
+  - REQ-P1-T2
+  - REQ-P1-DONE
+  decision_refs:
+  - D-002
+  evidence_refs:
+  - R-002
+  files:
+  - Shared/Security/UserInfoBearerOptions.cs
+  - Shared/Security/UserInfoBearerHandler.cs
+  - Shared/Security/UserInfoBearerExtensions.cs
+  - Shared.Tests/Security/UserInfoBearerHandlerTests.cs
+  exact_files:
+  - Shared/Security/UserInfoBearerOptions.cs
+  - Shared/Security/UserInfoBearerHandler.cs
+  - Shared/Security/UserInfoBearerExtensions.cs
+  - Shared.Tests/Security/UserInfoBearerHandlerTests.cs
+  existing_implementation: account-service CustomUserInfoTokenServices.java + ResourceServerConfig.java
+    + application.yml user-info-uri
+  creates_file: true
+  change: Add UserInfoBearerOptions defaulting UserInfoEndpoint to http://auth-service:5000/uaa/users/current,
+    UserInfoBearerHandler that forwards Authorization Bearer to that URI and succeeds only when HTTP success
+    and JSON lacks error (principal from user/username/userid/user_id/login/id/name; scopes/client_id
+    from oauth2Request), AddUserInfoBearer extension registering HttpClient userinfo, and xunit tests
+    proving issued token accepted and unissued token refused.
+  do_not:
+  - Validate JWT signatures locally instead of user-info
+  - Change UserInfoEndpoint default away from http://auth-service:5000/uaa/users/current
+  - Skip refuse-path test
+  compatibility: Matches CustomUserInfoTokenServices error-map and principal key order
+  error_handling: HTTP/parse failures return AuthenticateResult.Fail like source catch returning error
+    map
+  tests:
+  - UserInfoBearerHandlerTests.Accepts_token_authorization_server_issued
+  - UserInfoBearerHandlerTests.Refuses_token_authorization_server_did_not_issue
+  acceptance:
+  - dotnet test --filter UserInfoBearerHandlerTests succeeds
+  - Accept test returns 200 with principal name demo for issued token stub
+  - Refuse test returns 401 for forged token stub
+  rollback: Delete Shared/Security/* and Shared.Tests/Security/*
+  why: P1.T2 and Done-when require Shared bearer to accept authorization-server-issued tokens and refuse
+    others
+  expected_result: Shared authentication handler mirrors Java resource-server user-info validation with
+    green accept/refuse tests.
+  exact_commands:
+  - dotnet test Shared.Tests/Shared.Tests.csproj --filter FullyQualifiedName~UserInfoBearerHandlerTests
+  exact_snippet: "namespace PiggyMetrics.Shared.Security;\n\nusing System.Net.Http.Headers;\nusing System.Security.Claims;\n\
+    using System.Text.Json;\nusing Microsoft.AspNetCore.Authentication;\nusing Microsoft.Extensions.Logging;\n\
+    using Microsoft.Extensions.Options;\n\npublic sealed class UserInfoBearerHandler : AuthenticationHandler<UserInfoBearerOptions>\n\
+    {\n  private static readonly string[] PrincipalKeys =\n  {\n    \"user\", \"username\", \"userid\"\
+    , \"user_id\", \"login\", \"id\", \"name\"\n  };\n\n  private readonly IHttpClientFactory _httpClientFactory;\n\
+    \n  public UserInfoBearerHandler(\n    IOptionsMonitor<UserInfoBearerOptions> options,\n    ILoggerFactory\
+    \ logger,\n    System.Text.Encodings.Web.UrlEncoder encoder,\n    IHttpClientFactory httpClientFactory)\n\
+    \    : base(options, logger, encoder)\n  {\n    _httpClientFactory = httpClientFactory;\n  }\n\n \
+    \ protected override async Task<AuthenticateResult> HandleAuthenticateAsync()\n  {\n    if (!Request.Headers.TryGetValue(\"\
+    Authorization\", out var headerValues))\n    {\n      return AuthenticateResult.NoResult();\n    }\n\
+    \n    var header = headerValues.ToString();\n    if (string.IsNullOrWhiteSpace(header) ||\n      \
+    \  !header.StartsWith(\"Bearer \", StringComparison.OrdinalIgnoreCase))\n    {\n      return AuthenticateResult.NoResult();\n\
+    \    }\n\n    var accessToken = header[\"Bearer \".Length..].Trim();\n    if (string.IsNullOrEmpty(accessToken))\n\
+    \    {\n      return AuthenticateResult.Fail(\"Missing bearer token\");\n    }\n\n    try\n    {\n\
+    \      var client = _httpClientFactory.CreateClient(\"userinfo\");\n      using var request = new\
+    \ HttpRequestMessage(HttpMethod.Get, Options.UserInfoEndpoint);\n      request.Headers.Authorization\
+    \ = new AuthenticationHeaderValue(\"Bearer\", accessToken);\n      using var response = await client.SendAsync(request,\
+    \ Context.RequestAborted);\n      var body = await response.Content.ReadAsStringAsync(Context.RequestAborted);\n\
+    \      using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? \"{}\" : body);\n    \
+    \  var root = doc.RootElement;\n      if (!response.IsSuccessStatusCode || root.TryGetProperty(\"\
+    error\", out _))\n      {\n        return AuthenticateResult.Fail(\"Token rejected by authorization\
+    \ server\");\n      }\n\n      var principalName = \"unknown\";\n      foreach (var key in PrincipalKeys)\n\
+    \      {\n        if (root.TryGetProperty(key, out var p) && p.ValueKind == JsonValueKind.String)\n\
+    \        {\n          principalName = p.GetString() ?? \"unknown\";\n          break;\n        }\n\
+    \      }\n\n      var claims = new List<Claim> { new Claim(ClaimTypes.Name, principalName) };\n  \
+    \    if (root.TryGetProperty(\"oauth2Request\", out var oauth2) &&\n          oauth2.ValueKind ==\
+    \ JsonValueKind.Object)\n      {\n        if (oauth2.TryGetProperty(\"clientId\", out var clientId)\
+    \ &&\n            clientId.ValueKind == JsonValueKind.String)\n        {\n          claims.Add(new\
+    \ Claim(\"client_id\", clientId.GetString() ?? string.Empty));\n        }\n        if (oauth2.TryGetProperty(\"\
+    scope\", out var scopeEl))\n        {\n          if (scopeEl.ValueKind == JsonValueKind.Array)\n \
+    \         {\n            foreach (var s in scopeEl.EnumerateArray())\n            {\n            \
+    \  if (s.ValueKind == JsonValueKind.String)\n              {\n                claims.Add(new Claim(\"\
+    scope\", s.GetString() ?? string.Empty));\n              }\n            }\n          }\n         \
+    \ else if (scopeEl.ValueKind == JsonValueKind.String)\n          {\n            foreach (var s in\
+    \ (scopeEl.GetString() ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries))\n     \
+    \       {\n              claims.Add(new Claim(\"scope\", s));\n            }\n          }\n      \
+    \  }\n      }\n\n      var identity = new ClaimsIdentity(claims, Scheme.Name);\n      var ticket =\
+    \ new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name);\n      return AuthenticateResult.Success(ticket);\n\
+    \    }\n    catch (Exception ex)\n    {\n      Logger.LogInformation(ex, \"Could not fetch user details\
+    \ from {Endpoint}\", Options.UserInfoEndpoint);\n      return AuthenticateResult.Fail(\"Could not\
+    \ fetch user details\");\n    }\n  }\n}\n"
+  exact_companion: "FILE Shared/Security/UserInfoBearerOptions.cs\nnamespace PiggyMetrics.Shared.Security;\n\
+    \npublic sealed class UserInfoBearerOptions\n{\n  public const string DefaultScheme = \"Bearer\";\n\
+    \  public string UserInfoEndpoint { get; set; } = \"http://auth-service:5000/uaa/users/current\";\n\
+    \  public string ChallengeScheme { get; set; } = DefaultScheme;\n}\n\nFILE Shared/Security/UserInfoBearerExtensions.cs\n\
+    namespace PiggyMetrics.Shared.Security;\n\nusing Microsoft.AspNetCore.Authentication;\nusing Microsoft.Extensions.DependencyInjection;\n\
+    \npublic static class UserInfoBearerExtensions\n{\n  public static AuthenticationBuilder AddUserInfoBearer(\n\
+    \    this AuthenticationBuilder builder,\n    Action<UserInfoBearerOptions>? configure = null)\n \
+    \ {\n    builder.Services.AddHttpClient(\"userinfo\");\n    return builder.AddScheme<UserInfoBearerOptions,\
+    \ UserInfoBearerHandler>(\n      UserInfoBearerOptions.DefaultScheme,\n      configure);\n  }\n}\n\
+    \nFILE Shared.Tests/Security/UserInfoBearerHandlerTests.cs\nnamespace PiggyMetrics.Shared.Tests.Security;\n\
+    \nusing System.Net;\nusing System.Net.Http.Headers;\nusing System.Text;\nusing System.Text.Json;\n\
+    using Microsoft.AspNetCore.Authentication;\nusing Microsoft.AspNetCore.Builder;\nusing Microsoft.AspNetCore.Hosting;\n\
+    using Microsoft.AspNetCore.Http;\nusing Microsoft.AspNetCore.TestHost;\nusing Microsoft.Extensions.DependencyInjection;\n\
+    using PiggyMetrics.Shared.Security;\nusing Xunit;\n\npublic sealed class UserInfoBearerHandlerTests\n\
+    {\n  [Fact]\n  public async Task Accepts_token_authorization_server_issued()\n  {\n    var userInfo\
+    \ = JsonSerializer.Serialize(new\n    {\n      name = \"demo\",\n      oauth2Request = new { clientId\
+    \ = \"browser\", scope = new[] { \"ui\" } }\n    });\n    using var host = CreateHost(_ => new HttpResponseMessage(HttpStatusCode.OK)\n\
+    \    {\n      Content = new StringContent(userInfo, Encoding.UTF8, \"application/json\")\n    });\n\
+    \    var client = host.GetTestClient();\n    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(\"\
+    Bearer\", \"issued-token\");\n    var response = await client.GetAsync(\"/secure\");\n    Assert.Equal(HttpStatusCode.OK,\
+    \ response.StatusCode);\n    Assert.Equal(\"demo\", await response.Content.ReadAsStringAsync());\n\
+    \  }\n\n  [Fact]\n  public async Task Refuses_token_authorization_server_did_not_issue()\n  {\n  \
+    \  using var host = CreateHost(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized)\n    {\n\
+    \      Content = new StringContent(\"{\"error\":\"invalid_token\"}\", Encoding.UTF8, \"application/json\"\
+    )\n    });\n    var client = host.GetTestClient();\n    client.DefaultRequestHeaders.Authorization\
+    \ = new AuthenticationHeaderValue(\"Bearer\", \"forged-token\");\n    var response = await client.GetAsync(\"\
+    /secure\");\n    Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);\n  }\n\n  private\
+    \ static TestServer CreateHost(Func<HttpRequestMessage, HttpResponseMessage> userInfo)\n  {\n    var\
+    \ builder = new WebHostBuilder()\n      .ConfigureServices(services =>\n      {\n        services.AddRouting();\n\
+    \        services.AddAuthentication(UserInfoBearerOptions.DefaultScheme)\n          .AddUserInfoBearer(o\
+    \ => o.UserInfoEndpoint = \"http://auth-service:5000/uaa/users/current\");\n        services.AddAuthorization();\n\
+    \        services.AddHttpClient(\"userinfo\")\n          .ConfigurePrimaryHttpMessageHandler(() =>\
+    \ new StubHandler(userInfo));\n      })\n      .Configure(app =>\n      {\n        app.UseRouting();\n\
+    \        app.UseAuthentication();\n        app.UseAuthorization();\n        app.UseEndpoints(endpoints\
+    \ =>\n        {\n          endpoints.MapGet(\"/secure\", async (HttpContext ctx) =>\n          {\n\
+    \            var result = await ctx.AuthenticateAsync(UserInfoBearerOptions.DefaultScheme);\n    \
+    \        if (!result.Succeeded)\n            {\n              ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;\n\
+    \              return;\n            }\n            await ctx.Response.WriteAsync(result.Principal!.Identity!.Name\
+    \ ?? string.Empty);\n          });\n        });\n      });\n    return new TestServer(builder);\n\
+    \  }\n\n  private sealed class StubHandler : HttpMessageHandler\n  {\n    private readonly Func<HttpRequestMessage,\
+    \ HttpResponseMessage> _impl;\n    public StubHandler(Func<HttpRequestMessage, HttpResponseMessage>\
+    \ impl) => _impl = impl;\n    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage\
+    \ request, CancellationToken cancellationToken)\n      => Task.FromResult(_impl(request));\n  }\n\
+    }\n"
+  companion_required: true
+  invariants:
+  - Default UserInfoEndpoint is http://auth-service:5000/uaa/users/current
+  - JSON property error causes Fail
+  - Principal key scan order matches PRINCIPAL_KEYS array
+  edge_cases:
+  - Missing Authorization header => NoResult
+  - Non-Bearer scheme => NoResult
+  machine_verify:
+  - dotnet test Shared.Tests/Shared.Tests.csproj --filter FullyQualifiedName~UserInfoBearerHandlerTests
+  human_verify:
+  - Two test methods named Accepts_* and Refuses_* exist
+- id: STEP-003
+  title: P1.T3 Shared MongoDB store conventions and document serializers
+  depends_on:
+  - STEP-001
+  requirement_refs:
+  - REQ-P1-T3
+  decision_refs:
+  - D-003
+  evidence_refs:
+  - R-003
+  files:
+  - Shared/Store/PiggyMongoConventions.cs
+  - Shared/Store/AccountDocument.cs
+  - Shared/Store/DataPointDocument.cs
+  - Shared/Store/UserDocument.cs
+  exact_files:
+  - Shared/Store/PiggyMongoConventions.cs
+  - Shared/Store/AccountDocument.cs
+  - Shared/Store/DataPointDocument.cs
+  - Shared/Store/UserDocument.cs
+  existing_implementation: Account.java @Document accounts @Id name; DataPoint.java datapoints; User.java
+    username/_id
+  creates_file: true
+  change: Add PiggyMongoConventions.Register with CamelCaseElementNameConvention, IgnoreExtraElementsConvention(true),
+    EnumRepresentationConvention(String), constants for database piggymetrics and collections accounts/datapoints/users;
+    add AccountDocument/DataPointDocument/UserDocument with BsonId and BsonElement names matching Java
+    field names and _id semantics.
+  do_not:
+  - Rename BSON fields to PascalCase in storage
+  - Use collection names other than accounts, datapoints, users
+  - Introduce EF Core Mongo provider
+  compatibility: Existing Java-written Mongo documents remain readable
+  error_handling: Register is idempotent via Interlocked flag
+  tests:
+  - dotnet build Shared/Shared.csproj
+  acceptance:
+  - PiggyMongoConventions.AccountsCollection == accounts
+  - AccountDocument.Name is BsonId
+  - DataPointDocument.Id is DataPointIdDocument with account+date elements
+  - UserDocument uses username as BsonId
+  rollback: Delete Shared/Store/*
+  why: P1.T3 requires Shared store conventions for document field names and ids on MongoDB.Driver
+  expected_result: Shared.Store serializes accounts/datapoints/users with the same BSON shape as the Java
+    services.
+  exact_commands:
+  - dotnet build Shared/Shared.csproj
+  exact_snippet: "namespace PiggyMetrics.Shared.Store;\n\nusing MongoDB.Bson;\nusing MongoDB.Bson.Serialization.Conventions;\n\
+    \npublic static class PiggyMongoConventions\n{\n  public const string RegistryName = \"piggymetrics\"\
+    ;\n  public const string AccountsCollection = \"accounts\";\n  public const string DatapointsCollection\
+    \ = \"datapoints\";\n  public const string UsersCollection = \"users\";\n  public const string DatabaseName\
+    \ = \"piggymetrics\";\n\n  private static int _registered;\n\n  public static void Register()\n  {\n\
+    \    if (Interlocked.Exchange(ref _registered, 1) == 1)\n    {\n      return;\n    }\n\n    var pack\
+    \ = new ConventionPack\n    {\n      new CamelCaseElementNameConvention(),\n      new IgnoreExtraElementsConvention(true),\n\
+    \      new EnumRepresentationConvention(BsonType.String),\n    };\n    ConventionRegistry.Register(RegistryName,\
+    \ pack, _ => true);\n  }\n}\n"
+  exact_companion: "FILE Shared/Store/AccountDocument.cs\nnamespace PiggyMetrics.Shared.Store;\n\nusing\
+    \ MongoDB.Bson;\nusing MongoDB.Bson.Serialization.Attributes;\n\n[BsonIgnoreExtraElements]\npublic\
+    \ sealed class AccountDocument\n{\n  [BsonId]\n  public string Name { get; set; } = string.Empty;\n\
+    \n  [BsonElement(\"lastSeen\")]\n  public DateTime? LastSeen { get; set; }\n\n  [BsonElement(\"incomes\"\
+    )]\n  public List<ItemDocument> Incomes { get; set; } = new();\n\n  [BsonElement(\"expenses\")]\n\
+    \  public List<ItemDocument> Expenses { get; set; } = new();\n\n  [BsonElement(\"saving\")]\n  public\
+    \ SavingDocument Saving { get; set; } = new();\n\n  [BsonElement(\"note\")]\n  public string? Note\
+    \ { get; set; }\n}\n\npublic sealed class ItemDocument\n{\n  [BsonElement(\"title\")]\n  public string\
+    \ Title { get; set; } = string.Empty;\n\n  [BsonElement(\"amount\")]\n  public decimal Amount { get;\
+    \ set; }\n\n  [BsonElement(\"currency\")]\n  public string Currency { get; set; } = \"USD\";\n\n \
+    \ [BsonElement(\"period\")]\n  public string Period { get; set; } = \"MONTH\";\n\n  [BsonElement(\"\
+    icon\")]\n  public string Icon { get; set; } = string.Empty;\n}\n\npublic sealed class SavingDocument\n\
+    {\n  [BsonElement(\"amount\")]\n  public decimal Amount { get; set; }\n\n  [BsonElement(\"currency\"\
+    )]\n  public string Currency { get; set; } = \"USD\";\n\n  [BsonElement(\"interest\")]\n  public decimal\
+    \ Interest { get; set; }\n\n  [BsonElement(\"deposit\")]\n  public bool Deposit { get; set; }\n\n\
+    \  [BsonElement(\"capitalization\")]\n  public bool Capitalization { get; set; }\n}\n\nFILE Shared/Store/DataPointDocument.cs\n\
+    namespace PiggyMetrics.Shared.Store;\n\nusing MongoDB.Bson.Serialization.Attributes;\n\n[BsonIgnoreExtraElements]\n\
+    public sealed class DataPointDocument\n{\n  [BsonId]\n  public DataPointIdDocument Id { get; set;\
+    \ } = new();\n\n  [BsonElement(\"incomes\")]\n  public HashSet<ItemMetricDocument> Incomes { get;\
+    \ set; } = new();\n\n  [BsonElement(\"expenses\")]\n  public HashSet<ItemMetricDocument> Expenses\
+    \ { get; set; } = new();\n\n  [BsonElement(\"statistics\")]\n  public Dictionary<string, decimal>\
+    \ Statistics { get; set; } = new();\n\n  [BsonElement(\"rates\")]\n  public Dictionary<string, decimal>\
+    \ Rates { get; set; } = new();\n}\n\npublic sealed class DataPointIdDocument\n{\n  [BsonElement(\"\
+    account\")]\n  public string Account { get; set; } = string.Empty;\n\n  [BsonElement(\"date\")]\n\
+    \  public DateTime Date { get; set; }\n}\n\npublic sealed class ItemMetricDocument\n{\n  [BsonElement(\"\
+    title\")]\n  public string Title { get; set; } = string.Empty;\n\n  [BsonElement(\"amount\")]\n  public\
+    \ decimal Amount { get; set; }\n}\n\nFILE Shared/Store/UserDocument.cs\nnamespace PiggyMetrics.Shared.Store;\n\
+    \nusing MongoDB.Bson.Serialization.Attributes;\n\n[BsonIgnoreExtraElements]\npublic sealed class UserDocument\n\
+    {\n  // Java User @Id username => Mongo _id value is the username (field name username in domain)\n\
+    \  [BsonId]\n  public string Username { get; set; } = string.Empty;\n\n  [BsonElement(\"password\"\
+    )]\n  public string Password { get; set; } = string.Empty;\n}\n"
+  companion_required: true
+  invariants:
+  - DatabaseName piggymetrics
+  - Enum BSON representation String
+  - Ignore extra elements true
+  edge_cases:
+  - Double Register() is safe
+  machine_verify:
+  - dotnet build Shared/Shared.csproj
+  human_verify:
+  - BsonElement attributes use camelCase Java field names
+- id: STEP-004
+  title: P1.T4 Shared typed-client base with 10s timeout and client-credentials cache
+  depends_on:
+  - STEP-001
+  requirement_refs:
+  - REQ-P1-T4
+  decision_refs:
+  - D-004
+  evidence_refs:
+  - R-004
+  files:
+  - Shared/Http/TypedClientBase.cs
+  - Shared/Http/TypedClientServiceCollectionExtensions.cs
+  exact_files:
+  - Shared/Http/TypedClientBase.cs
+  - Shared/Http/TypedClientServiceCollectionExtensions.cs
+  existing_implementation: application.yml hystrix 10000; OAuth2FeignRequestInterceptor client_credentials;
+    ExchangeRatesClientFallback pattern for later edges
+  creates_file: true
+  change: Add ClientCredentialsOptions (AccessTokenUri default http://auth-service:5000/uaa/oauth/token,
+    Scope server, TimeoutMilliseconds 10000), ClientCredentialsTokenCache caching access_token by clientId|scope,
+    TypedClientBase issuing authorized requests, and AddPiggyTypedClient registering Polly TimeoutAsync
+    for the configured milliseconds on both token and typed clients.
+  do_not:
+  - Change default timeout away from 10000
+  - Use password grant inside the typed-client base
+  - Omit token cache
+  compatibility: Service-specific clients in P3+ inherit TypedClientBase and register their own fallbacks
+  error_handling: Token endpoint non-success throws via EnsureSuccessStatusCode; edge fallbacks remain
+    per-client in later plans
+  tests:
+  - dotnet build Shared/Shared.csproj
+  acceptance:
+  - ClientCredentialsOptions.TimeoutMilliseconds default is 10000
+  - AddPiggyTypedClient applies Polly timeout of options.TimeoutMilliseconds
+  - Token cache returns cached token when not within 30s of expiry
+  rollback: Delete Shared/Http/*
+  why: P1.T4 requires typed-client base with source timeout and client-credentials token cache
+  expected_result: Shared HTTP helpers provide 10s Polly timeout and cached client_credentials tokens
+    for service edges.
+  exact_commands:
+  - dotnet build Shared/Shared.csproj
+  exact_snippet: "namespace PiggyMetrics.Shared.Http;\n\nusing System.Collections.Concurrent;\nusing System.Net.Http.Headers;\n\
+    using System.Text;\nusing System.Text.Json;\n\npublic sealed class ClientCredentialsOptions\n{\n \
+    \ public string AccessTokenUri { get; set; } = \"http://auth-service:5000/uaa/oauth/token\";\n  public\
+    \ string ClientId { get; set; } = string.Empty;\n  public string ClientSecret { get; set; } = string.Empty;\n\
+    \  public string Scope { get; set; } = \"server\";\n  public int TimeoutMilliseconds { get; set; }\
+    \ = 10000;\n}\n\npublic interface IClientCredentialsTokenCache\n{\n  Task<string> GetTokenAsync(ClientCredentialsOptions\
+    \ options, CancellationToken cancellationToken);\n}\n\npublic sealed class ClientCredentialsTokenCache\
+    \ : IClientCredentialsTokenCache\n{\n  private readonly IHttpClientFactory _httpClientFactory;\n \
+    \ private readonly ConcurrentDictionary<string, (string Token, DateTimeOffset Expires)> _cache = new();\n\
+    \n  public ClientCredentialsTokenCache(IHttpClientFactory httpClientFactory)\n  {\n    _httpClientFactory\
+    \ = httpClientFactory;\n  }\n\n  public async Task<string> GetTokenAsync(ClientCredentialsOptions\
+    \ options, CancellationToken cancellationToken)\n  {\n    var key = options.ClientId + \"|\" + options.Scope;\n\
+    \    if (_cache.TryGetValue(key, out var hit) && hit.Expires > DateTimeOffset.UtcNow.AddSeconds(30))\n\
+    \    {\n      return hit.Token;\n    }\n\n    var client = _httpClientFactory.CreateClient(\"client-credentials\"\
+    );\n    using var content = new FormUrlEncodedContent(new Dictionary<string, string>\n    {\n    \
+    \  [\"grant_type\"] = \"client_credentials\",\n      [\"scope\"] = options.Scope,\n    });\n    using\
+    \ var request = new HttpRequestMessage(HttpMethod.Post, options.AccessTokenUri) { Content = content\
+    \ };\n    var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes(options.ClientId + \":\" + options.ClientSecret));\n\
+    \    request.Headers.Authorization = new AuthenticationHeaderValue(\"Basic\", basic);\n    using var\
+    \ response = await client.SendAsync(request, cancellationToken);\n    response.EnsureSuccessStatusCode();\n\
+    \    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);\n    using\
+    \ var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);\n    var\
+    \ token = doc.RootElement.GetProperty(\"access_token\").GetString()\n      ?? throw new InvalidOperationException(\"\
+    access_token missing\");\n    var expiresIn = doc.RootElement.TryGetProperty(\"expires_in\", out var\
+    \ exp) ? exp.GetInt32() : 3600;\n    _cache[key] = (token, DateTimeOffset.UtcNow.AddSeconds(expiresIn));\n\
+    \    return token;\n  }\n}\n\npublic abstract class TypedClientBase\n{\n  protected TypedClientBase(HttpClient\
+    \ httpClient, IClientCredentialsTokenCache tokenCache, ClientCredentialsOptions options)\n  {\n  \
+    \  Http = httpClient;\n    TokenCache = tokenCache;\n    Options = options;\n    Http.Timeout = Timeout.InfiniteTimeSpan;\n\
+    \  }\n\n  protected HttpClient Http { get; }\n  protected IClientCredentialsTokenCache TokenCache\
+    \ { get; }\n  protected ClientCredentialsOptions Options { get; }\n\n  protected async Task<HttpRequestMessage>\
+    \ CreateAuthorizedRequestAsync(\n    HttpMethod method,\n    string uri,\n    CancellationToken cancellationToken)\n\
+    \  {\n    var token = await TokenCache.GetTokenAsync(Options, cancellationToken);\n    var request\
+    \ = new HttpRequestMessage(method, uri);\n    request.Headers.Authorization = new AuthenticationHeaderValue(\"\
+    Bearer\", token);\n    return request;\n  }\n}\n"
+  exact_companion: "namespace PiggyMetrics.Shared.Http;\n\nusing Microsoft.Extensions.DependencyInjection;\n\
+    using Polly;\nusing Polly.Extensions.Http;\n\npublic static class TypedClientServiceCollectionExtensions\n\
+    {\n  public static IHttpClientBuilder AddPiggyTypedClient<TClient>(\n    this IServiceCollection services,\n\
+    \    string name,\n    ClientCredentialsOptions options,\n    Action<IHttpClientBuilder>? configure\
+    \ = null)\n    where TClient : class\n  {\n    services.AddSingleton<IClientCredentialsTokenCache,\
+    \ ClientCredentialsTokenCache>();\n    services.AddHttpClient(\"client-credentials\")\n      .AddPolicyHandler(HttpPolicyExtensions\n\
+    \        .HandleTransientHttpError()\n        .OrResult(r => false)\n        .WaitAndRetryAsync(0,\
+    \ _ => TimeSpan.Zero)\n        .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(\n          TimeSpan.FromMilliseconds(options.TimeoutMilliseconds))));\n\
+    \n    var builder = services.AddHttpClient<TClient>(name, client =>\n      {\n        client.Timeout\
+    \ = Timeout.InfiniteTimeSpan;\n      })\n      .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(\n\
+    \        TimeSpan.FromMilliseconds(options.TimeoutMilliseconds)));\n    configure?.Invoke(builder);\n\
+    \    return builder;\n  }\n}\n"
+  companion_required: true
+  invariants:
+  - TimeoutMilliseconds default 10000
+  - grant_type client_credentials
+  - HttpClient.Timeout InfiniteTimeSpan with Polly timeout policy
+  edge_cases:
+  - Missing access_token property throws InvalidOperationException
+  machine_verify:
+  - dotnet build Shared/Shared.csproj
+  human_verify:
+  - TypedClientBase and token cache types exist under Shared/Http
+- id: STEP-005
+  title: P1.T5 Shared health checks and JSON options
+  depends_on:
+  - STEP-001
+  requirement_refs:
+  - REQ-P1-T5
+  decision_refs:
+  - D-005
+  evidence_refs:
+  - R-003
+  files:
+  - Shared/Serialization/PiggyJsonOptions.cs
+  - Shared/Serialization/PiggyMvcJsonExtensions.cs
+  - Shared/Health/PiggyHealthExtensions.cs
+  exact_files:
+  - Shared/Serialization/PiggyJsonOptions.cs
+  - Shared/Serialization/PiggyMvcJsonExtensions.cs
+  - Shared/Health/PiggyHealthExtensions.cs
+  existing_implementation: Account.java @JsonIgnoreProperties(ignoreUnknown=true); Spring Boot 2 Jackson
+    enum names + ISO-8601 dates; actuator health
+  creates_file: true
+  change: Add PiggyJsonOptions.Create with camelCase naming, case-insensitive properties, JsonStringEnumConverter
+    (no integer enums), Iso8601DateTimeConverter format yyyy-MM-dd'T'HH:mm:ss.fffK; System.Text.Json ignores
+    unknown fields by default; AddPiggyJsonOptions MVC extension; AddPiggyHealthChecks + MapPiggyHealthChecks
+    mapping /health.
+  do_not:
+  - Enable integer enum reading
+  - Use Newtonsoft.Json
+  - Map health to a path other than /health
+  compatibility: Unknown JSON fields ignored like @JsonIgnoreProperties(ignoreUnknown=true)
+  error_handling: Date parse uses RoundtripKind TryParse then GetDateTime fallback
+  tests:
+  - dotnet build Shared/Shared.csproj
+  acceptance:
+  - PiggyJsonOptions.Create uses JsonStringEnumConverter
+  - MapPiggyHealthChecks maps /health
+  - No Newtonsoft PackageReference added
+  rollback: Delete Shared/Serialization/* and Shared/Health/*
+  why: P1.T5 requires Shared health checks and JSON options matching source enum/date/unknown-field behaviour
+  expected_result: Shared exposes health mapping and JSON options services will call in later plans.
+  exact_commands:
+  - dotnet build Shared/Shared.csproj
+  exact_snippet: "namespace PiggyMetrics.Shared.Serialization;\n\nusing System.Text.Json;\nusing System.Text.Json.Serialization;\n\
+    \npublic static class PiggyJsonOptions\n{\n  public static JsonSerializerOptions Create()\n  {\n \
+    \   var options = new JsonSerializerOptions\n    {\n      PropertyNamingPolicy = JsonNamingPolicy.CamelCase,\n\
+    \      PropertyNameCaseInsensitive = true,\n      DefaultIgnoreCondition = JsonIgnoreCondition.Never,\n\
+    \      ReadCommentHandling = JsonCommentHandling.Skip,\n      AllowTrailingCommas = false,\n     \
+    \ WriteIndented = false,\n    };\n    options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase,\
+    \ allowIntegerValues: false));\n    options.Converters.Add(new Iso8601DateTimeConverter());\n    return\
+    \ options;\n  }\n\n  private sealed class Iso8601DateTimeConverter : JsonConverter<DateTime>\n  {\n\
+    \    private const string Format = \"yyyy-MM-dd'T'HH:mm:ss.fffK\";\n\n    public override DateTime\
+    \ Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)\n    {\n    \
+    \  if (reader.TokenType == JsonTokenType.String)\n      {\n        var s = reader.GetString();\n \
+    \       if (DateTime.TryParse(s, null, System.Globalization.DateTimeStyles.RoundtripKind, out var\
+    \ dt))\n        {\n          return dt;\n        }\n      }\n      return reader.GetDateTime();\n\
+    \    }\n\n    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions\
+    \ options)\n    {\n      writer.WriteStringValue(value.ToString(Format));\n    }\n  }\n}\n"
+  exact_companion: "FILE Shared/Serialization/PiggyMvcJsonExtensions.cs\nnamespace PiggyMetrics.Shared.Serialization;\n\
+    \nusing Microsoft.Extensions.DependencyInjection;\n\npublic static class PiggyMvcJsonExtensions\n\
+    {\n  public static IMvcBuilder AddPiggyJsonOptions(this IMvcBuilder mvc)\n  {\n    return mvc.AddJsonOptions(o\
+    \ =>\n    {\n      var shared = PiggyJsonOptions.Create();\n      o.JsonSerializerOptions.PropertyNamingPolicy\
+    \ = shared.PropertyNamingPolicy;\n      o.JsonSerializerOptions.PropertyNameCaseInsensitive = shared.PropertyNameCaseInsensitive;\n\
+    \      o.JsonSerializerOptions.DefaultIgnoreCondition = shared.DefaultIgnoreCondition;\n      o.JsonSerializerOptions.Converters.Clear();\n\
+    \      foreach (var c in shared.Converters)\n      {\n        o.JsonSerializerOptions.Converters.Add(c);\n\
+    \      }\n    });\n  }\n}\n\nFILE Shared/Health/PiggyHealthExtensions.cs\nnamespace PiggyMetrics.Shared.Health;\n\
+    \nusing Microsoft.AspNetCore.Builder;\nusing Microsoft.Extensions.DependencyInjection;\n\npublic static\
+    \ class PiggyHealthExtensions\n{\n  public static IServiceCollection AddPiggyHealthChecks(this IServiceCollection\
+    \ services)\n  {\n    services.AddHealthChecks();\n    return services;\n  }\n\n  public static WebApplication\
+    \ MapPiggyHealthChecks(this WebApplication app)\n  {\n    app.MapHealthChecks(\"/health\");\n    return\
+    \ app;\n  }\n}\n"
+  companion_required: true
+  invariants:
+  - Enums serialized as names
+  - Unknown fields ignored
+  - Health path /health
+  edge_cases:
+  - DateTime converter accepts RoundtripKind strings
+  machine_verify:
+  - dotnet build Shared/Shared.csproj
+  human_verify:
+  - PiggyHealthExtensions and PiggyJsonOptions types present
+- id: STEP-006
+  title: P1 Done-when verify full solution build and bearer tests
+  depends_on:
+  - STEP-002
+  - STEP-003
+  - STEP-004
+  - STEP-005
+  requirement_refs:
+  - REQ-P1-DONE
+  decision_refs:
+  - D-001
+  - D-002
+  evidence_refs:
+  - R-001
+  - R-002
+  files:
+  - PiggyMetrics.sln
+  exact_files:
+  - PiggyMetrics.sln
+  existing_implementation: P1 Done when clause in Spec
+  creates_file: true
+  change: 'Run the strongest acceptance: restore, build, and test the entire solution so every project
+    compiles and Shared bearer accept/refuse tests are green. Commit message for the implementing change
+    set must name todo ids P1.T1 P1.T2 P1.T3 P1.T4 P1.T5.'
+  do_not:
+  - Use dotnet build alone as final acceptance
+  - Use test-compile or -DskipTests equivalents
+  - Mark P1 done with failing Shared.Tests
+  compatibility: N/A verification step
+  error_handling: Any failing test fails the plan
+  tests:
+  - dotnet test PiggyMetrics.sln
+  acceptance:
+  - dotnet build PiggyMetrics.sln exits 0
+  - dotnet test PiggyMetrics.sln exits 0
+  - Accept and refuse bearer tests executed
+  rollback: N/A verification-only
+  why: Spec Done-when and gate floor require full build plus tests, not compile-only
+  expected_result: Solution builds and Shared bearer tests prove issued tokens accepted and unissued tokens
+    refused.
+  exact_commands:
+  - dotnet restore PiggyMetrics.sln
+  - dotnet build PiggyMetrics.sln --no-restore
+  - dotnet test PiggyMetrics.sln --no-build
+  companion_required: false
+  invariants:
+  - Final gate is dotnet test, not build-only
+  edge_cases:
+  - If restore needed after package pin edits, rerun restore before test
+  machine_verify:
+  - dotnet restore PiggyMetrics.sln
+  - dotnet build PiggyMetrics.sln --no-restore
+  - dotnet test PiggyMetrics.sln --no-build
+  human_verify:
+  - Test output shows UserInfoBearerHandlerTests passed

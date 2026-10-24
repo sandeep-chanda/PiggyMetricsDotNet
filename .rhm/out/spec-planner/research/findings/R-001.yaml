@@ -1,0 +1,7 @@
+id: R-001
+claim: Target repo is greenfield .NET migration shell with no .sln/.csproj; implementer must create solution
+  from scratch on net8.0.
+evidence:
+- README.md Sample .NET Migration
+- 'find maxdepth: no csproj'
+confidence: high

@@ -1,0 +1,25 @@
+questions:
+- id: Q-001
+  question: What stack does the empty target use?
+  dimension: environment
+  status: resolved
+  finding_refs:
+  - R-001
+- id: Q-002
+  question: How do Java resource servers validate bearer tokens?
+  dimension: cross-repo
+  status: resolved
+  finding_refs:
+  - R-002
+- id: Q-003
+  question: What BSON field/_id semantics must Shared preserve?
+  dimension: cross-repo
+  status: resolved
+  finding_refs:
+  - R-003
+- id: Q-004
+  question: What client timeout and token grant does the source use?
+  dimension: cross-repo
+  status: resolved
+  finding_refs:
+  - R-004

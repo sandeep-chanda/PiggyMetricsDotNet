@@ -1,0 +1,8 @@
+target: sandeep-chanda/PiggyMetricsDotNet
+findings:
+- Empty product tree — Sample .NET Migration README only
+- No existing Shared library or solution to extend
+precedents: []
+constraints:
+- Do not invent production code during planning; only .rhm/out outcomes
+- Commit messages for implementers must name todo ids P1.T*

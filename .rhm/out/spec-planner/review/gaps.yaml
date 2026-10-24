@@ -1,0 +1,4 @@
+gaps: []
+resolved:
+- id: G-001
+  fix: Pinned all PackageReference coordinates for dotnet test

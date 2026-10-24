@@ -1,0 +1,166 @@
+nodes:
+- id: STEP-001
+  playbook_ref: STEP-001
+  title: P1.T1 Create PiggyMetrics.sln with Shared and five service projects
+  depends_on: []
+  critical_path: true
+  exact_files:
+  - global.json
+  - Directory.Build.props
+  - PiggyMetrics.sln
+  - Shared/Shared.csproj
+  - Gateway/Gateway.csproj
+  - AuthService/AuthService.csproj
+  - AccountService/AccountService.csproj
+  - StatisticsService/StatisticsService.csproj
+  - NotificationService/NotificationService.csproj
+  - Gateway/Program.cs
+  - AuthService/Program.cs
+  - AccountService/Program.cs
+  - StatisticsService/Program.cs
+  - NotificationService/Program.cs
+  - Shared.Tests/Shared.Tests.csproj
+  summary_spec: A buildable net8.0 solution exists with one project per runtime service plus Shared and
+    Shared.Tests, including every PackageReference coordinate later Shared code needs.
+  verification:
+    machine:
+    - dotnet build PiggyMetrics.sln
+    human:
+    - Solution explorer shows six product projects plus Shared.Tests
+  acceptance:
+  - PiggyMetrics.sln lists Shared, Gateway, AuthService, AccountService, StatisticsService, NotificationService,
+    Shared.Tests
+  - dotnet build PiggyMetrics.sln succeeds
+  no_imagination: true
+- id: STEP-002
+  playbook_ref: STEP-002
+  title: P1.T2 Shared UserInfoBearerHandler validating via auth-service user-info
+  depends_on:
+  - STEP-001
+  critical_path: true
+  exact_files:
+  - Shared/Security/UserInfoBearerOptions.cs
+  - Shared/Security/UserInfoBearerHandler.cs
+  - Shared/Security/UserInfoBearerExtensions.cs
+  - Shared.Tests/Security/UserInfoBearerHandlerTests.cs
+  summary_spec: Shared authentication handler mirrors Java resource-server user-info validation with green
+    accept/refuse tests.
+  verification:
+    machine:
+    - dotnet test Shared.Tests/Shared.Tests.csproj --filter FullyQualifiedName~UserInfoBearerHandlerTests
+    human:
+    - Two test methods named Accepts_* and Refuses_* exist
+  acceptance:
+  - dotnet test --filter UserInfoBearerHandlerTests succeeds
+  - Accept test returns 200 with principal name demo for issued token stub
+  - Refuse test returns 401 for forged token stub
+  no_imagination: true
+- id: STEP-003
+  playbook_ref: STEP-003
+  title: P1.T3 Shared MongoDB store conventions and document serializers
+  depends_on:
+  - STEP-001
+  critical_path: true
+  exact_files:
+  - Shared/Store/PiggyMongoConventions.cs
+  - Shared/Store/AccountDocument.cs
+  - Shared/Store/DataPointDocument.cs
+  - Shared/Store/UserDocument.cs
+  summary_spec: Shared.Store serializes accounts/datapoints/users with the same BSON shape as the Java
+    services.
+  verification:
+    machine:
+    - dotnet build Shared/Shared.csproj
+    human:
+    - BsonElement attributes use camelCase Java field names
+  acceptance:
+  - PiggyMongoConventions.AccountsCollection == accounts
+  - AccountDocument.Name is BsonId
+  - DataPointDocument.Id is DataPointIdDocument with account+date elements
+  - UserDocument uses username as BsonId
+  no_imagination: true
+- id: STEP-004
+  playbook_ref: STEP-004
+  title: P1.T4 Shared typed-client base with 10s timeout and client-credentials cache
+  depends_on:
+  - STEP-001
+  critical_path: true
+  exact_files:
+  - Shared/Http/TypedClientBase.cs
+  - Shared/Http/TypedClientServiceCollectionExtensions.cs
+  summary_spec: Shared HTTP helpers provide 10s Polly timeout and cached client_credentials tokens for
+    service edges.
+  verification:
+    machine:
+    - dotnet build Shared/Shared.csproj
+    human:
+    - TypedClientBase and token cache types exist under Shared/Http
+  acceptance:
+  - ClientCredentialsOptions.TimeoutMilliseconds default is 10000
+  - AddPiggyTypedClient applies Polly timeout of options.TimeoutMilliseconds
+  - Token cache returns cached token when not within 30s of expiry
+  no_imagination: true
+- id: STEP-005
+  playbook_ref: STEP-005
+  title: P1.T5 Shared health checks and JSON options
+  depends_on:
+  - STEP-001
+  critical_path: true
+  exact_files:
+  - Shared/Serialization/PiggyJsonOptions.cs
+  - Shared/Serialization/PiggyMvcJsonExtensions.cs
+  - Shared/Health/PiggyHealthExtensions.cs
+  summary_spec: Shared exposes health mapping and JSON options services will call in later plans.
+  verification:
+    machine:
+    - dotnet build Shared/Shared.csproj
+    human:
+    - PiggyHealthExtensions and PiggyJsonOptions types present
+  acceptance:
+  - PiggyJsonOptions.Create uses JsonStringEnumConverter
+  - MapPiggyHealthChecks maps /health
+  - No Newtonsoft PackageReference added
+  no_imagination: true
+- id: STEP-006
+  playbook_ref: STEP-006
+  title: P1 Done-when verify full solution build and bearer tests
+  depends_on:
+  - STEP-002
+  - STEP-003
+  - STEP-004
+  - STEP-005
+  critical_path: true
+  exact_files:
+  - PiggyMetrics.sln
+  summary_spec: Solution builds and Shared bearer tests prove issued tokens accepted and unissued tokens
+    refused.
+  verification:
+    machine:
+    - dotnet restore PiggyMetrics.sln
+    - dotnet build PiggyMetrics.sln --no-restore
+    - dotnet test PiggyMetrics.sln --no-build
+    human:
+    - Test output shows UserInfoBearerHandlerTests passed
+  acceptance:
+  - dotnet build PiggyMetrics.sln exits 0
+  - dotnet test PiggyMetrics.sln exits 0
+  - Accept and refuse bearer tests executed
+  no_imagination: true
+edges:
+- from: STEP-001
+  to: STEP-002
+- from: STEP-001
+  to: STEP-003
+- from: STEP-001
+  to: STEP-004
+- from: STEP-001
+  to: STEP-005
+- from: STEP-002
+  to: STEP-006
+- from: STEP-003
+  to: STEP-006
+- from: STEP-004
+  to: STEP-006
+- from: STEP-005
+  to: STEP-006
+parallel_groups: []

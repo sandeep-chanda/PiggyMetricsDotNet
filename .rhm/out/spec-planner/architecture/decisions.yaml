@@ -1,0 +1,87 @@
+- id: D-001
+  decision: Use net8.0 SDK-style solution PiggyMetrics.sln with projects Shared, Gateway, AuthService,
+    AccountService, StatisticsService, NotificationService, Shared.Tests
+  alternatives:
+  - net6.0 LTS
+  - net9.0
+  - single host project
+  chosen: net8.0 multi-project matching Java runtime services + Shared
+  rationale: Spec names those five services plus Shared; net8.0 is current LTS for greenfield .NET
+  evidence_refs:
+  - R-001
+  consequences:
+  - All Dockerfiles in later plans must use mcr.microsoft.com/dotnet/aspnet:8.0
+  constraints:
+  - Do not add Java modules config/registry/monitoring/turbine to the .NET solution
+  rejected_with_reason:
+  - alt: net6.0
+    why: Leaving support window; greenfield should land on current LTS
+  - alt: single host
+    why: Breaks per-service plans P2+
+- id: D-002
+  decision: Port CustomUserInfoTokenServices as UserInfoBearerHandler AuthenticationHandler calling GET
+    user-info URI
+  alternatives:
+  - JWT local validation
+  - introspection endpoint
+  chosen: Remote user-info bearer handler
+  rationale: Letter match to source resource-server behaviour and P1.T2 URI
+  evidence_refs:
+  - R-002
+  consequences:
+  - AuthService P2 must expose /uaa/users/current in the same JSON shape
+  constraints:
+  - UserInfoEndpoint default http://auth-service:5000/uaa/users/current
+  rejected_with_reason:
+  - alt: JWT-only
+    why: Source uses opaque tokens + user-info, not JWK validation
+- id: D-003
+  decision: MongoDB.Driver ConventionPack camelCase + string enums + IgnoreExtraElements; document types
+    with BsonId/_id semantics
+  alternatives:
+  - EF Core Mongo provider
+  - manual BsonDocument
+  chosen: MongoDB.Driver conventions + document POCOs in Shared.Store
+  rationale: Spec requires MongoDB.Driver and same BSON field names
+  evidence_refs:
+  - R-003
+  consequences:
+  - Service repos in P2+ use these document types/collections
+  constraints:
+  - Database name piggymetrics; collections accounts, datapoints, users
+  rejected_with_reason:
+  - alt: EF Core
+    why: Spec names MongoDB.Driver
+- id: D-004
+  decision: TypedClientBase + ClientCredentialsTokenCache with Polly timeout 10000ms
+  alternatives:
+  - Refit only
+  - Bare HttpClient without cache
+  chosen: TypedClientBase with token cache and Polly timeout
+  rationale: Matches hystrix 10s and client_credentials edges
+  evidence_refs:
+  - R-004
+  consequences:
+  - Per-edge clients inherit timeout; fallbacks registered per edge in later plans
+  constraints:
+  - TimeoutMilliseconds default 10000
+  rejected_with_reason:
+  - alt: No cache
+    why: Source OAuth2FeignRequestInterceptor reuses client context token
+- id: D-005
+  decision: 'PiggyJsonOptions: camelCase, JsonStringEnumConverter, ignore unknown by STJ default, ISO-8601
+    DateTime converter; MapHealthChecks /health'
+  alternatives:
+  - Newtonsoft.Json
+  chosen: System.Text.Json shared options + ASP.NET health checks
+  rationale: Matches @JsonIgnoreProperties ignoreUnknown and Boot 2 date/enum defaults without Newtonsoft
+  evidence_refs:
+  - R-003
+  - A-002
+  consequences:
+  - Services call AddPiggyJsonOptions / AddPiggyHealthChecks
+  constraints:
+  - Do not enable JsonNumberEnumConverter integer enums
+  rejected_with_reason:
+  - alt: Newtonsoft
+    why: Unnecessary coordinate for net8 greenfield

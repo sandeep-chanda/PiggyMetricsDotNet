@@ -1,0 +1,32 @@
+task_id: walk-24-oct-migration-P1
+title: Walk 24 Oct migration
+plan_key: P1
+summary: Greenfield .NET solution skeleton plus Shared bearer, Mongo conventions, typed-client base, health/JSON.
+requirements:
+- id: REQ-P1-T1
+  text: Create .NET solution with Gateway, AuthService, AccountService, StatisticsService, NotificationService,
+    Shared from Java account-service/pom.xml module set
+  todo: P1.T1
+- id: REQ-P1-T2
+  text: Shared bearer handler validates tokens via GET http://auth-service:5000/uaa/users/current like
+    CustomUserInfoTokenServices
+  todo: P1.T2
+- id: REQ-P1-T3
+  text: Shared MongoDB.Driver conventions preserve BSON field names and _id semantics for accounts/datapoints/users
+  todo: P1.T3
+- id: REQ-P1-T4
+  text: Shared typed-client base with 10000ms timeout and client-credentials token cache
+  todo: P1.T4
+- id: REQ-P1-T5
+  text: 'Shared health checks and JSON options: enums as names, unknown fields ignored, ISO-8601 dates'
+  todo: P1.T5
+- id: REQ-P1-DONE
+  text: Every project builds; bearer accepts issued token and refuses unissued; verified with dotnet test
+  todo: P1
+done_when:
+- dotnet build succeeds for all projects
+- dotnet test proves bearer accept and refuse
+out_of_scope:
+- P2–Pn service endpoint ports (Auth/Account/Statistics/Notification business logic)
+- Cloning piggymetricsJava into the workspace
+- Reintroducing Spring Cloud Config / Eureka / Zuul

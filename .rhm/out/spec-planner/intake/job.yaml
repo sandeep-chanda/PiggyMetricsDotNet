@@ -1,0 +1,12 @@
+task_id: walk-24-oct-migration-P1
+spec_path: /agent/PiggyMetricsDotNet/.rhm/out/spec-planner/intake/raw-spec.md
+target_repo_path: /agent/PiggyMetricsDotNet
+connection_meta_path: /agent/PiggyMetricsDotNet/.rhm/out/spec-planner/intake/connection.meta.json
+related_repos: []
+mode: plan_only
+plan_key: P1
+constraints:
+- 'HM Harness: skip SwitchMode; write under .rhm/out/spec-planner/'
+- No writes to product tree except committing planner outcomes under .rhm/out/
+- Do not fetch another repository via git clone
+created_at: '2026-10-24T05:20:14Z'

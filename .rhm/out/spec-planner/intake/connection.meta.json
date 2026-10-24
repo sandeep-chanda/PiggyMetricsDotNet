@@ -1,0 +1,30 @@
+{
+  "source": "hm-harness",
+  "target_repo_name": "PiggyMetricsDotNet",
+  "target_repo_slug": "sandeep-chanda/PiggyMetricsDotNet",
+  "target_repo_remote_url": "https://github.com/sandeep-chanda/PiggyMetricsDotNet",
+  "target_repo_provider": "github",
+  "target_repo_default_branch": "main",
+  "scm_root": {
+    "host": "github.com",
+    "organization": "sandeep-chanda",
+    "project": ""
+  },
+  "sibling_repos": [
+    {
+      "name": "piggymetricsJava",
+      "full_name": "sandeep-chanda/piggymetricsJava",
+      "remote_url": "https://github.com/sandeep-chanda/piggymetricsJava",
+      "role": "java_source_of_truth"
+    }
+  ],
+  "related_trackers": [],
+  "auth": {
+    "provider": "github",
+    "method": "env_token",
+    "env_refs": [
+      "HM_HARNESS_SCM_TOKEN"
+    ],
+    "notes": "HTTPS git user x-access-token; password HM_HARNESS_SCM_TOKEN."
+  }
+}

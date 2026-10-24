@@ -1,0 +1,7 @@
+risks:
+- id: RISK-001
+  text: Implementer might switch to JWT validation
+  mitigation: D-002 + exact UserInfoBearerHandler snippet
+- id: RISK-002
+  text: BSON field case drift breaks existing Mongo data
+  mitigation: CamelCaseElementNameConvention + BsonElement pins

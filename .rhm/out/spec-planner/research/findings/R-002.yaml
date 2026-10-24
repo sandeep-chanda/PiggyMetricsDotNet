@@ -1,0 +1,9 @@
+id: R-002
+claim: Resource servers validate opaque tokens by calling user-info-uri http://auth-service:5000/uaa/users/current
+  with the bearer token; error key or failed fetch => invalid token; principal keys user/username/userid/user_id/login/id/name;
+  oauth2Request carries clientId and scope.
+evidence:
+- CustomUserInfoTokenServices.java
+- ResourceServerConfig.java tokenServices bean
+- application.yml security.oauth2.resource.user-info-uri
+confidence: high

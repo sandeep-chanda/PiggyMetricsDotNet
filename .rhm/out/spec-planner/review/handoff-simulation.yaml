@@ -1,0 +1,11 @@
+result: PASS
+critical_unanswered: []
+qa:
+- q: Which TFM and solution layout?
+  a: Final artifact global.json + csproj companions pin net8.0 Shared and five services
+- q: What exact_snippet implements bearer validation?
+  a: STEP-002 exact_snippet UserInfoBearerHandler.cs plus companion options/extensions/tests
+- q: What Mongo document artifact shape is required?
+  a: STEP-003 exact_companion AccountDocument/DataPointDocument/UserDocument with BsonId/_id semantics
+- q: Which acceptance command proves Done-when?
+  a: dotnet test PiggyMetrics.sln after all Shared snippets are applied

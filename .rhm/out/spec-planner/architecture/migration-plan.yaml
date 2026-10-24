@@ -1,0 +1,8 @@
+triggered: true
+from: Java Spring Cloud PiggyMetrics (piggymetricsJava)
+to: PiggyMetricsDotNet net8.0
+wave: P1 Shared foundation
+notes:
+- Config server retired — appsettings + env vars in later service plans
+- No JVM Dockerfiles in P1; when later plans add Dockerfiles they MUST use dotnet aspnet:8.0 not java
+  images

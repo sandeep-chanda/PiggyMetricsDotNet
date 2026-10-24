@@ -1,0 +1,66 @@
+vectors:
+- vector: wrong_paths
+  checked: true
+  evidence: Cited Java paths resolved via HTTPS on piggymetricsJava; target creates_file paths are new
+  finding: clean
+- vector: missing_scripts
+  checked: true
+  evidence: Acceptance uses dotnet build/test from SDK; global.json pins SDK 8.0.400
+  finding: clean
+- vector: scope_creep
+  checked: true
+  evidence: STEPs limited to P1.T1–T5; P2+ endpoints listed out of scope
+  finding: clean
+- vector: weak_evidence
+  checked: true
+  evidence: R-001..R-004 cite ResourceServerConfig, CustomUserInfoTokenServices, Account.java, hystrix
+    yml
+  finding: clean
+- vector: missing_alternatives
+  checked: true
+  evidence: D-001..D-005 each record rejected alternatives with reasons
+  finding: clean
+- vector: dag_order
+  checked: true
+  evidence: STEP-006 depends on STEP-002..005; skeleton STEP-001 precedes Shared features
+  finding: clean
+- vector: residual_entropy
+  checked: true
+  evidence: decision-entropy critical_unresolved_count=0
+  finding: clean
+- vector: a11y_or_security_or_ops
+  checked: true
+  evidence: Bearer refuse path + no secrets in pins; health at /health
+  finding: clean
+- vector: test_gaps
+  checked: true
+  evidence: Accept and refuse bearer tests pinned; final gate dotnet test
+  finding: clean
+- vector: spec_plan_contradiction
+  checked: true
+  evidence: Done-when maps to STEP-006 dotnet test; user-info URI matches Spec
+  finding: clean
+- vector: soft_shape_variance
+  checked: true
+  evidence: No e.g./or-equivalent in PlanStep pins; single TFM net8.0
+  finding: clean
+- vector: instructional_pin
+  checked: true
+  evidence: exact_snippet/companion are final file bodies, not edit recipes
+  finding: clean
+- vector: reference_trace
+  checked: true
+  evidence: Greenfield creates_file; no renames leaving stale references
+  finding: clean
+- vector: constraint_risk
+  checked: true
+  evidence: Timeout 10000 and BSON camelCase pinned; no UI layout weight change
+  finding: clean
+- vector: imagination_gap
+  checked: true
+  evidence: Shared types fully pinned; coding agent has no free design surface
+  finding: clean
+- vector: thin_dag
+  checked: true
+  evidence: Every DAG node has summary_spec, verification, acceptance, exact_files, no_imagination
+  finding: clean

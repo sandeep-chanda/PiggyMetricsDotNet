@@ -1,0 +1,16 @@
+stack:
+  language: C#
+  runtime: net8.0
+  sdk: 8.0.x
+  build: dotnet build
+  test: dotnet test
+  evidence: Target tree has no .sln/.csproj yet (greenfield). Spec mandates .NET. Sibling Java uses Spring
+    Boot 2.0.3 / Java 8.
+target_tree:
+  product_code_present: false
+  paths_present:
+  - README.md
+  - AGENTS.md
+  - .harnessmatters/
+  - .rhm/agent-packs/
+pass: true

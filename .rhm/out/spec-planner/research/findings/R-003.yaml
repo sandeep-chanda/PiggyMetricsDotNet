@@ -1,0 +1,10 @@
+id: R-003
+claim: Account @Document(collection=accounts) @Id name; fields lastSeen,incomes,expenses,saving,note;
+  JsonIgnoreProperties ignoreUnknown; DataPoint collection datapoints with embedded DataPointId account+date
+  as @Id; User _id=username with username+password fields.
+evidence:
+- Account.java
+- DataPoint.java
+- DataPointId.java
+- User.java
+confidence: high

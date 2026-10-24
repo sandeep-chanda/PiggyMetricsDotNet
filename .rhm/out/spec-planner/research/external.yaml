@@ -1,0 +1,5 @@
+notes:
+- ASP.NET Core AuthenticationHandler + IHttpClientFactory for remote user-info validation mirrors CustomUserInfoTokenServices
+- MongoDB.Driver ConventionPack camelCase + enum string matches Spring Data Mongo defaults used by @Document
+  accounts/datapoints
+- Polly TimeoutAsync 10000ms matches hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds

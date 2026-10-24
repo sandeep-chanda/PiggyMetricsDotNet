@@ -1,0 +1,8 @@
+id: R-004
+claim: Default Feign/Hystrix timeout is 10000ms; inter-service OAuth uses client_credentials against http://auth-service:5000/uaa/oauth/token
+  with scope server; ExchangeRatesClientFallback returns empty rates map on failure.
+evidence:
+- 'application.yml hystrix timeoutInMilliseconds: 10000'
+- account-service.yml security.oauth2.client
+- ExchangeRatesClientFallback.java
+confidence: high

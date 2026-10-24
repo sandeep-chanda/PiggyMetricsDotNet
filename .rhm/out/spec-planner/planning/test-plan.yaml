@@ -1,0 +1,5 @@
+framework: xunit
+command: dotnet test PiggyMetrics.sln --no-restore
+cases:
+- UserInfoBearerHandlerTests.Accepts_token_authorization_server_issued
+- UserInfoBearerHandlerTests.Refuses_token_authorization_server_did_not_issue
