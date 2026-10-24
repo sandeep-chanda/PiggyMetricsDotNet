@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "migration-plan.schema.json",
+  "title": "MigrationPlan",
+  "type": "object",
+  "required": ["required"],
+  "properties": {
+    "required": { "type": "boolean" },
+    "na_justification": { "type": "string" },
+    "current_state": { "type": "string" },
+    "breaking_changes": { "type": "array", "items": { "type": "string" } },
+    "repo_usage": { "type": "array", "items": { "type": "string" } },
+    "transitive_dependencies": { "type": "array", "items": { "type": "string" } },
+    "cross_repo_consumers": { "type": "array", "items": { "type": "string" } },
+    "compatibility_analysis": { "type": "string" },
+    "target_state": { "type": "string" },
+    "transition_strategy": { "type": "string" },
+    "sequence": { "type": "array", "items": { "type": "string" } },
+    "validation": { "type": "array", "items": { "type": "string" } },
+    "rollback": { "type": "string" }
+  },
+  "additionalProperties": true
+}

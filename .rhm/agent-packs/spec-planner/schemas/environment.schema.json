@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "environment.schema.json",
+  "title": "Environment",
+  "type": "object",
+  "required": ["discovered", "evidence"],
+  "properties": {
+    "language": { "type": "string" },
+    "framework": { "type": "string" },
+    "versions": { "type": "object", "additionalProperties": { "type": "string" } },
+    "runtime": { "type": "string" },
+    "cloud": { "type": "string" },
+    "deployment": { "type": "string" },
+    "ci": { "type": "string" },
+    "dependencies_summary": { "type": "array", "items": { "type": "string" } },
+    "databases": { "type": "array", "items": { "type": "string" } },
+    "apis": { "type": "array", "items": { "type": "string" } },
+    "conventions": { "type": "array", "items": { "type": "string" } },
+    "discovered": { "const": true },
+    "evidence": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+  },
+  "additionalProperties": true
+}

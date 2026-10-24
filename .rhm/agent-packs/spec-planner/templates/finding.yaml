@@ -1,0 +1,10 @@
+id: R-000
+question: ""
+conclusion: ""
+evidence:
+  - repository: target
+    file: ""
+    location: ""
+confidence: medium
+implication: ""
+conflicts_with: []

@@ -1,0 +1,11 @@
+---
+description: Architecture — alternatives fit discovered repo, not a foreign stack
+alwaysApply: false
+globs: workspace/**/architecture/**
+---
+
+# Solution design
+
+Produce ≥2 real options (+ existing abstraction when present). Score and choose with evidence refs.
+Prefer options consistent with **discovered** precedents. Do not import another ecosystem’s defaults without a Decision.
+Write `options.yaml`, `decisions.yaml`, `rejected.yaml`.

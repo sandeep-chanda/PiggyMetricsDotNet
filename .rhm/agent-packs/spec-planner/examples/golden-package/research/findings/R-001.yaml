@@ -1,0 +1,13 @@
+id: R-001
+question: How are similar features implemented in this repository?
+conclusion: Use IncrementalPipeline with an extract function and watermark, as orders/payments do.
+evidence:
+  - repository: target
+    file: src/pipeline.py
+    location: "lines 12-28"
+  - repository: target
+    file: src/payments.py
+    location: "lines 1-12"
+confidence: high
+implication: Do not implement custom watermark handling.
+conflicts_with: []

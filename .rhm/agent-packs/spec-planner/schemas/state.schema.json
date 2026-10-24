@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "state.schema.json",
+  "title": "State",
+  "type": "object",
+  "required": ["task_id", "phase", "loops", "approved", "plan_mode"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "intake", "spec_analysis", "research_parallel", "research_synthesis",
+        "architecture", "migration", "planning", "dag_build", "critic",
+        "gap_loop", "quality_gate", "package", "approved", "blocked"
+      ]
+    },
+    "loops": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "blockers": { "type": "array", "items": { "type": "string" } },
+    "approved": { "type": "boolean" },
+    "plan_mode": { "const": true },
+    "target_repo_writes_allowed": { "const": false }
+  },
+  "additionalProperties": true
+}

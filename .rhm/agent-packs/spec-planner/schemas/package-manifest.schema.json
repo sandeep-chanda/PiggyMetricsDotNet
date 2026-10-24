@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "package-manifest.schema.json",
+  "title": "PackageManifest",
+  "type": "object",
+  "required": ["task_id", "files", "quality_gate_result", "plan_mode"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "files": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "quality_gate_result": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "plan_mode": { "const": true },
+    "target_repo_modified": { "const": false },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": true
+}
