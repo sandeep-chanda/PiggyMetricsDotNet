@@ -1,8 +1,8 @@
 {
-  "source_plan": "/tmp/rhm-PLAYBOOK.md",
+  "source_plan": "/tmp/write-PLAYBOOK.md",
   "dest": "/agent/PiggyMetricsDotNet/.rhm/out/spec-planner/final/PLAYBOOK.md",
-  "imported_at_unix": 1792819405.2818556,
+  "imported_at_unix": 1792819468.3153074,
   "bytes": 32667,
   "importer": "scripts/import-cursor-plan.py",
-  "imported_at": "2026-10-24T05:23:25Z"
+  "imported_at": "2026-10-24T05:24:28Z"
 }
