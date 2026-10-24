@@ -1,7 +1,7 @@
 {
-  "importer": "hm-harness-skip-switchmode",
-  "workspace": "/agent/PiggyMetricsDotNet/.rhm/out/spec-planner",
-  "plan_path": "/agent/PiggyMetricsDotNet/.rhm/out/spec-planner/final/PLAYBOOK.md",
-  "imported_at": "2026-10-24T05:20:14Z",
-  "note": "HM Harness Omnigent path: SwitchMode skipped per pack harness notes; PLAYBOOK is Cursor-plan shaped and validated by validate-playbook.py"
+  "source_plan": "/tmp/spec-planner-PLAYBOOK.md",
+  "dest": "/agent/PiggyMetricsDotNet/.rhm/out/spec-planner/final/PLAYBOOK.md",
+  "imported_at_unix": 1792819299.5360649,
+  "bytes": 32667,
+  "importer": "scripts/import-cursor-plan.py"
 }
