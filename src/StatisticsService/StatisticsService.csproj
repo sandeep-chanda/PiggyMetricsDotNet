@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<RootNamespace>PiggyMetrics.StatisticsService</RootNamespace>
+		<AssemblyName>StatisticsService</AssemblyName>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="../Shared/Shared.csproj" />
+	</ItemGroup>
+</Project>

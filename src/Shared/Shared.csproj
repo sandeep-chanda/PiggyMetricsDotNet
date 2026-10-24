@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<RootNamespace>PiggyMetrics.Shared</RootNamespace>
+		<AssemblyName>Shared</AssemblyName>
+	</PropertyGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="MongoDB.Driver" />
+	</ItemGroup>
+</Project>
