@@ -1,0 +1,18 @@
+---
+description: STEP-grade letter-to-letter playbook — no coding-agent imagination
+alwaysApply: false
+globs: workspace/**/planning/**
+---
+
+# Implementation plan + iDAG
+
+Follow `docs/EXECUTION_SPEC.md`.
+
+Every product STEP: before/after final artifacts, invariants, edge_cases, machine_verify, human_verify, exact pins.
+Every iDAG node: summary_spec, verification, acceptance, exact_files, no_imagination: true — not titles only.
+
+Forbidden: outline STEPs; leaving design to the coding agent. Planner never edits the target repo.
+
+When a step's acceptance is a compile or test command, the snippets must declare every coordinate that command needs and the tree does not already resolve. A source import the chosen stack does not provide is a missing coordinate in the snippet, not a source edit. Do not forbid that coordinate, and do not leave an acceptance the snippets cannot meet: meet it by adding the coordinate, never by lowering the acceptance below the spec's Done-when (`test-compile` does not run the tests). A target that raises the JVM major moves every runtime image (Dockerfile `FROM`) to that JVM; a Do-not never bans a file the target stack needs changed.
+
+When those STEPs are presented in PLAYBOOK/HANDOFF, every `exact_snippet` / command uses the placeholder in `docs/PLAYBOOK_FORMAT.md` — not a loose dump.

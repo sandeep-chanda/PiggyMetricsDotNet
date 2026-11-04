@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "option.schema.json",
+  "title": "ArchitectureOption",
+  "type": "object",
+  "required": ["id", "title", "summary", "scores"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "summary": { "type": "string" },
+    "scores": {
+      "type": "object",
+      "properties": {
+        "correctness": { "type": "number" },
+        "repo_consistency": { "type": "number" },
+        "complexity": { "type": "number" },
+        "risk": { "type": "number" },
+        "performance": { "type": "number" },
+        "security": { "type": "number" },
+        "cost": { "type": "number" },
+        "migration": { "type": "number" },
+        "maintainability": { "type": "number" },
+        "operational_impact": { "type": "number" }
+      },
+      "additionalProperties": { "type": "number" }
+    },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

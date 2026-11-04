@@ -1,0 +1,21 @@
+{
+  "source": "example",
+  "target_repo_name": "",
+  "target_repo_slug": "",
+  "target_repo_remote_url": "",
+  "target_repo_provider": "",
+  "target_repo_default_branch": "main",
+  "scm_root": {
+    "host": "",
+    "organization": "",
+    "project": ""
+  },
+  "sibling_repos": [],
+  "related_trackers": [],
+  "auth": {
+    "provider": "",
+    "method": "",
+    "env_refs": [],
+    "notes": "Fill from Connections / RHM master tip — never hardcode a demo repo or PAT here"
+  }
+}

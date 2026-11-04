@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "azure-devops": {
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "${env:ADO_ORG}"],
+      "env": {
+        "ADO_ORG": "${env:ADO_ORG}"
+      }
+    },
+    "atlassian": {
+      "url": "https://mcp.atlassian.com/v2/mcp"
+    }
+  }
+}

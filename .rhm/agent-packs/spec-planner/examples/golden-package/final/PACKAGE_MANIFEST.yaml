@@ -1,0 +1,13 @@
+task_id: golden-demo
+files:
+  - final/PLAYBOOK.md
+  - final/DAG.yaml
+  - final/HANDOFF.md
+  - planning/implementation-plan.yaml
+  - planning/implementation-dag.yaml
+  - architecture/decisions.yaml
+  - research/findings/R-001.yaml
+quality_gate_result: PASS
+plan_mode: true
+target_repo_modified: false
+created_at: "2026-09-04T00:00:00Z"

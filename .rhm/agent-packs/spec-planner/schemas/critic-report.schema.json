@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "critic-report.schema.json",
+  "title": "CriticReport",
+  "type": "object",
+  "required": ["result", "issues"],
+  "properties": {
+    "result": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "description", "proposed_correction"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+          "description": { "type": "string" },
+          "evidence": { "type": "string" },
+          "proposed_correction": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

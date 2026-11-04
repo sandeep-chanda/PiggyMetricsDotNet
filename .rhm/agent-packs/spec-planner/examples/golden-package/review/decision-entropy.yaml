@@ -1,0 +1,6 @@
+items:
+  - category: TESTING
+    question: Exact test framework file layout?
+    severity: minor
+    action: ALLOW
+critical_unresolved_count: 0

@@ -1,0 +1,23 @@
+title: Incremental customer ingestion
+summary: Reuse IncrementalPipeline for customer fetch with watermark.
+requirements:
+  - id: REQ-001
+    type: functional
+    text: Fetch customers incrementally using a watermark
+    acceptance:
+      - Customers are fetched relative to a stored watermark
+  - id: REQ-002
+    type: constraint
+    text: Reuse IncrementalPipeline; do not invent custom watermark framework
+    acceptance:
+      - Implementation uses IncrementalPipeline
+  - id: REQ-003
+    type: constraint
+    text: Do not replace CustomerClient authentication
+  - id: REQ-004
+    type: acceptance
+    text: Add tests for empty results and API failure
+ambiguities: []
+assumptions:
+  - text: CustomerClient.fetch can be called from an extract closure
+    confidence: medium

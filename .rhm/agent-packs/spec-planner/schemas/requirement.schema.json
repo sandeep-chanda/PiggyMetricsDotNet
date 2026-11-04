@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "requirement.schema.json",
+  "title": "Requirement",
+  "type": "object",
+  "required": ["id", "type", "text"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^REQ-" },
+    "type": {
+      "type": "string",
+      "enum": ["functional", "non_functional", "acceptance", "implicit", "constraint", "operational", "migration"]
+    },
+    "text": { "type": "string" },
+    "acceptance": { "type": "array", "items": { "type": "string" } },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

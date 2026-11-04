@@ -1,0 +1,75 @@
+task_id: golden-demo
+summary: Add customer incremental ingestion reusing IncrementalPipeline
+steps:
+  - id: STEP-001
+    title: Add customer extract helper using CustomerClient.fetch
+    depends_on: []
+    requirement_refs: [REQ-001, REQ-003]
+    decision_refs: [D-001]
+    evidence_refs: [R-001]
+    files:
+      - src/customers.py
+    existing_implementation: "src/payments.py:1-12"
+    change: >
+      Create extract_customers(watermark) that calls CustomerClient.fetch for
+      incremental batch semantics consistent with payments extract style.
+    do_not:
+      - Modify CustomerClient authentication
+      - Introduce a new HTTP client
+    compatibility: CustomerClient.fetch return shape unchanged
+    error_handling: Propagate fetch exceptions to caller tests
+    tests:
+      - Unit test extract with mocked CustomerClient
+    acceptance:
+      - src/customers.py exists with extract_customers
+    rollback: Delete src/customers.py
+    why: Need an extract callable for IncrementalPipeline
+    expected_result: extract_customers available for pipeline wiring
+  - id: STEP-002
+    title: Wire IncrementalPipeline for customers
+    depends_on: [STEP-001]
+    requirement_refs: [REQ-001, REQ-002]
+    decision_refs: [D-001]
+    evidence_refs: [R-001]
+    files:
+      - src/customers.py
+    existing_implementation: "src/pipeline.py:12-28"
+    change: >
+      Add build_customers_pipeline() returning IncrementalPipeline configured
+      with watermark and extract_customers.
+    do_not:
+      - Implement custom watermark storage outside IncrementalPipeline
+      - Change orders/payments pipelines
+    compatibility: Orders and payments pipelines unchanged
+    error_handling: Retain IncrementalPipeline.run behaviour
+    tests:
+      - Empty result test
+      - API failure test
+    acceptance:
+      - build_customers_pipeline uses IncrementalPipeline
+      - Existing orders/payments still importable
+    rollback: Revert customer pipeline function
+    why: Satisfies reuse constraint and matches repo precedent
+    expected_result: Customer incremental pipeline available
+  - id: STEP-003
+    title: Add tests for empty results and API failure
+    depends_on: [STEP-002]
+    requirement_refs: [REQ-004]
+    decision_refs: [D-001]
+    evidence_refs: [R-001]
+    files:
+      - tests/test_customers.py
+    existing_implementation: ""
+    change: Add tests covering empty extract results and CustomerClient failure
+    do_not:
+      - Skip failure-path coverage
+    compatibility: N/A
+    error_handling: Assert failures surface to test expectations
+    tests:
+      - test_empty_results
+      - test_api_failure
+    acceptance:
+      - Both tests exist and assert expected behaviour
+    rollback: Delete tests/test_customers.py
+    why: REQ-004 acceptance
+    expected_result: Test coverage for empty and failure paths

@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "python .cursor/hooks/shell-guard.py",
+        "failClosed": true
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "python .cursor/hooks/block-production-edits.py",
+        "matcher": "Write|Edit|Delete|ApplyPatch",
+        "failClosed": true
+      }
+    ],
+    "beforeMCPExecution": [
+      {
+        "command": "python .cursor/hooks/tool-allowlist.py",
+        "failClosed": false
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": "python .cursor/hooks/subagent-prereqs.py",
+        "failClosed": false
+      }
+    ],
+    "stop": [
+      {
+        "command": "python .cursor/hooks/final-handoff-gate.py",
+        "failClosed": false
+      }
+    ]
+  }
+}

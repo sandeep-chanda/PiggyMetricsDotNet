@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "connection.schema.json",
+  "title": "ConnectionMeta",
+  "type": "object",
+  "required": ["target_repo_provider", "target_repo_name"],
+  "properties": {
+    "source": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "title": { "type": "string" },
+    "plan_key": { "type": "string" },
+    "status": { "type": "string" },
+    "master_id": { "type": "string" },
+    "master_title": { "type": "string" },
+    "target_repo_name": { "type": "string" },
+    "target_repo_slug": { "type": "string" },
+    "target_repo_remote_url": { "type": "string" },
+    "target_repo_provider": {
+      "type": "string",
+      "description": "azure_devops | github | gitlab | bitbucket | …"
+    },
+    "target_repo_default_branch": { "type": "string" },
+    "target_repo_connector_id": { "type": "string" },
+    "scm_root": {
+      "type": "object",
+      "description": "Provider project/org root for sibling discovery",
+      "properties": {
+        "organization": { "type": "string" },
+        "project": { "type": "string" },
+        "org_or_group": { "type": "string" },
+        "host": { "type": "string" }
+      }
+    },
+    "sibling_repos": {
+      "type": "array",
+      "description": "Repos under the same project/org root (ADO project filter / GitHub org / …)",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "remote_url": { "type": "string" },
+          "slug": { "type": "string" },
+          "local_path": { "type": "string" },
+          "role": {
+            "type": "string",
+            "description": "target | sibling | dependency | consumer | unknown"
+          }
+        }
+      }
+    },
+    "related_trackers": {
+      "type": "array",
+      "description": "Optional Jira/ADO WI/GitHub issue links — not code siblings",
+      "items": { "type": "object" }
+    },
+    "auth": {
+      "type": "object",
+      "description": "Auth refs only — never embed secrets",
+      "properties": {
+        "provider": { "type": "string" },
+        "method": { "type": "string" },
+        "env_refs": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      }
+    },
+    "master_metadata": { "type": "object" }
+  },
+  "additionalProperties": true
+}

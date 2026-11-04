@@ -1,0 +1,15 @@
+result: FAIL
+checks:
+  spec_coverage: false
+  evidence_coverage: false
+  decision_coverage: false
+  research_coverage: false
+  repo_consistency: false
+  dag_validity: false
+  test_completeness: false
+  migration_safety: false
+  operational_safety: false
+  decision_entropy_critical_zero: false
+  handoff_test: false
+  plan_mode_no_target_writes: true
+notes: []

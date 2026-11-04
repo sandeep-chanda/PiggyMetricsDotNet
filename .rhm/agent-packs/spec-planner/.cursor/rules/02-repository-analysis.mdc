@@ -1,0 +1,12 @@
+---
+description: Repository archaeology — precedents constrain; reference-trace
+alwaysApply: false
+globs: workspace/**/research/**
+---
+
+# Repository analysis
+
+Search for similar features, abstractions, tests, anti-patterns, reusable modules in **this** tree.
+Cite `file:lines`. Do not invent architecture when a precedent exists unless a Decision rejects it with evidence.
+If the plan will rename/remove symbols: list every repo-wide reference hit in findings.
+If copy/affordance grows: document containing layout/constraints for this stack.
